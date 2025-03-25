@@ -508,6 +508,11 @@ class EmployeeController extends Controller
                 $employee->user()->update(['avatar' => $filename]);
             }
 
+            $employee->user()->update([
+                'name'       => $validatedData['name'],
+                'email'      => $validatedData['email'],
+            ]);
+
             DB::commit();
 
             \Log::info('Profile updated successfully', ['emp_id' => $employee->emp_id]);
@@ -1288,7 +1293,9 @@ class EmployeeController extends Controller
         $users = $query->get();
         $userList = User::all();
 
-        return view('employees.allemployeecard', compact('users', 'userList'));
+        $departments = Department::all();
+
+        return view('employees.allemployeecard', compact('users', 'userList', 'departments'));
     }
 
 
@@ -1296,39 +1303,41 @@ class EmployeeController extends Controller
     public function employeeListSearch(Request $request)
     {
         $query = User::with([
-            'employee', // Load Employee details (birth_date, gender)
-            'employee.employment' // Load Employment details (line_manager)
+            'employee',
+            'employee.contact',
+            'employee.governmentIds',
+            'employee.familyInfo',
+            'employee.education',
+            'employee.employment',
+            'employee.children',
+            'employee.civilServiceEligibility',
+            'employee.workExperiences',
+            'employee.voluntaryWorks',
+            'employee.trainings',
+            'employee.otherInformations'
         ]);
 
-        // Filter by Employee ID (Stored in employees table)
+        // Filtering by emp_id
         if ($request->emp_id) {
-            $query->whereHas('employee', function ($q) use ($request) {
-                $q->where('emp_id', 'LIKE', '%' . $request->emp_id . '%');
-            });
+            $query->where('users.user_id', 'LIKE', '%' . $request->emp_id . '%');
         }
 
-        // Filter by Name (users table)
+        // Filtering by name
         if ($request->name) {
-            $query->where('name', 'LIKE', '%' . $request->name . '%');
+            $query->where('users.name', 'LIKE', '%' . $request->name . '%');
         }
 
-        // Filter by Position (users table)
+        // Filtering by position
         if ($request->position) {
-            $query->where('position', 'LIKE', '%' . $request->position . '%');
+            $query->where('users.position', 'LIKE', '%' . $request->position . '%');
         }
 
-        // Filter by Line Manager (Stored in employee_employment table)
-        if ($request->line_manager) {
-            $query->whereHas('employee.employment', function ($q) use ($request) {
-                $q->where('line_manager', 'LIKE', '%' . $request->line_manager . '%');
-            });
-        }
-
-        // Fetch users with filters applied
         $users = $query->get();
         $userList = User::all();
 
-        return view('employees.employeelist', compact('users', 'userList'));
+        $departments = Department::all();
+
+        return view('employees.employeelist', compact('users', 'userList', 'departments'));
     }
 
 

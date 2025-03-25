@@ -80,3 +80,5 @@
     <!-- /Page Content -->
 
    <x-layouts.add-emp-modal :$departments :$userList :$users/>
+
+   @endsection

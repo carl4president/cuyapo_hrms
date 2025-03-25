@@ -1,10 +1,5 @@
 @extends('layouts.master')
 @section('content')
-    @section('style')
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" >
-    <!-- checkbox style -->
-    <link rel="stylesheet" href="{{ URL::to('assets/css/checkbox-style.css') }}">
-    @endsection
     <!-- Page Wrapper -->
     <div class="page-wrapper">
         <!-- Page Content -->
@@ -109,3 +104,4 @@
         <!-- /Page Content -->
 
        <x-layouts.add-emp-modal :$departments :$userList :$users/>
+@endsection

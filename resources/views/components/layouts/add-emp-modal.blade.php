@@ -1333,382 +1333,381 @@
 
 @section('script')
 
-<script>
-    $(document).ready(function() {
-        var url = "{{ route('hr/get/information/emppos') }}";
+        <script>
+            $(document).ready(function() {
+                var url = "{{ route('hr/get/information/emppos') }}";
 
-        $('#department').change(function() {
-            const departmentId = $(this).val();
-            $('#designation').html('<option value="" disabled selected>-- Select Designation --</option>'); // Clear designation dropdown
-            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
+                $('#department').change(function() {
+                    const departmentId = $(this).val();
+                    $('#designation').html('<option value="" disabled selected>-- Select Designation --</option>'); // Clear designation dropdown
+                    $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
 
-            if (departmentId) {
-                $.ajax({
-                    url: url
-                    , type: "POST"
-                    , data: {
-                        id: departmentId
-                        , _token: $('meta[name="csrf-token"]').attr('content')
-                    }
-                    , dataType: "json"
-                    , success: function(response) {
-                        if (response.designations) {
-                            response.designations.forEach(designation => {
-                                $('#designation').append(
-                                    `<option value="${designation.id}">${designation.designation_name}</option>`
-                                );
-                            });
-                        }
-                    }
-                    , error: function(xhr, status, error) {
-                        console.error("Error fetching designations:", error);
-                    }
-                });
-            }
-        });
-
-        // On designation change
-        $('#designation').change(function() {
-            const designationId = $(this).val();
-            console.log("Selected Designation ID:", designationId);
-            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
-
-            if (designationId) {
-                $.ajax({
-                    url: url
-                    , type: "POST"
-                    , data: {
-                        id: designationId
-                        , _token: $('meta[name="csrf-token"]').attr('content')
-                    }
-                    , dataType: "json"
-                    , success: function(response) {
-                        if (response.positions) {
-                            response.positions.forEach(position => {
-                                $('#position').append(
-                                    `<option value="${position.id}">${position.position_name}</option>`
-                                );
-                            });
-                        }
-                    }
-                    , error: function(xhr, status, error) {
-                        console.error("Error fetching positions:", error);
+                    if (departmentId) {
+                        $.ajax({
+                            url: url
+                            , type: "POST"
+                            , data: {
+                                id: departmentId
+                                , _token: $('meta[name="csrf-token"]').attr('content')
+                            }
+                            , dataType: "json"
+                            , success: function(response) {
+                                if (response.designations) {
+                                    response.designations.forEach(designation => {
+                                        $('#designation').append(
+                                            `<option value="${designation.id}">${designation.designation_name}</option>`
+                                        );
+                                    });
+                                }
+                            }
+                            , error: function(xhr, status, error) {
+                                console.error("Error fetching designations:", error);
+                            }
+                        });
                     }
                 });
-            }
-        });
-    });
 
-</script>
+                // On designation change
+                $('#designation').change(function() {
+                    const designationId = $(this).val();
+                    console.log("Selected Designation ID:", designationId);
+                    $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
 
-
-<script>
-    $(document).ready(function() {
-        $('.select2s-hidden-accessible').select2({
-            closeOnSelect: false
-        });
-    });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        $('.yearpicker').datetimepicker({
-            format: 'YYYY'
-            , viewMode: 'years'
-            , maxDate: moment()
-        });
-    });
-
-</script>
-
-
-<script>
-    $(document).ready(function() {
-        function toggleAddButton(section, buttonId) {
-            if ($(section).children().length === 0) {
-                $(buttonId).show(); // Show the Add button
-            } else {
-                $(buttonId).hide(); // Hide the Add button
-            }
-        }
-
-        function initializeDatetimepickers() {
-            $('.datetimepicker').datetimepicker({
-                format: 'DD MMM, YYYY'
-                , useCurrent: false
-                , showTodayButton: false, // 🔹 Removes the "Today" button
-                widgetPositioning: {
-                    horizontal: 'auto', // Keeps it aligned horizontally
-                    vertical: 'bottom' // Forces calendar to appear below
-                }
-                , icons: {
-                    time: 'fa fa-clock'
-                    , date: 'fa fa-calendar'
-                    , up: 'fa fa-chevron-up'
-                    , down: 'fa fa-chevron-down'
-                    , previous: 'fa fa-chevron-left'
-                    , next: 'fa fa-chevron-right'
-                    , clear: 'fa fa-trash'
-                    , close: 'fa fa-times'
-                }
+                    if (designationId) {
+                        $.ajax({
+                            url: url
+                            , type: "POST"
+                            , data: {
+                                id: designationId
+                                , _token: $('meta[name="csrf-token"]').attr('content')
+                            }
+                            , dataType: "json"
+                            , success: function(response) {
+                                if (response.positions) {
+                                    response.positions.forEach(position => {
+                                        $('#position').append(
+                                            `<option value="${position.id}">${position.position_name}</option>`
+                                        );
+                                    });
+                                }
+                            }
+                            , error: function(xhr, status, error) {
+                                console.error("Error fetching positions:", error);
+                            }
+                        });
+                    }
+                });
             });
-        }
 
-        $(document).on('click', '.add-child', function() {
-            var newChild = $('#child-template').html();
-            $('#children-container').append(newChild);
-            toggleAddButton('#children-container', '#heading-add-child');
-            initializeDatetimepickers();
-        });
+        </script>
 
 
-        $(document).on('click', '.remove-child', function() {
-            $(this).closest('.child-entry').remove();
-            toggleAddButton('#children-container', '#heading-add-child');
-        });
+        <script>
+            $(document).ready(function() {
+                $('.select2s-hidden-accessible').select2({
+                    closeOnSelect: false
+                });
+            });
+
+        </script>
+
+        <script>
+            $(document).ready(function() {
+                $('.yearpicker').datetimepicker({
+                    format: 'YYYY'
+                    , viewMode: 'years'
+                    , maxDate: moment()
+                });
+            });
+
+        </script>
 
 
-        $(document).on('click', '.add-entry', function() {
-            var newEntry = $('#eligibility-template').html();
-            $('#eligibility-container').append(newEntry); // Append correctly
-            toggleAddButton('#eligibility-container', '#heading-add-eligibility');
-            initializeDatetimepickers();
-        });
-
-
-        $(document).on('click', '.remove-civil-service', function() {
-            $(this).closest('.civil-service-entry').remove(); // Remove correctly
-            toggleAddButton('#eligibility-container', '#heading-add-eligibility');
-        });
-
-
-        $(document).on('click', '.add-experience', function() {
-            var newExperience = $('#experience-template').html();
-            $('#experience-container').append(newExperience);
-            toggleAddButton('#experience-container', '#heading-add-experience');
-            initializeDatetimepickers();
-        });
-
-        $(document).on('click', '.remove-experience', function() {
-            $(this).closest('.work-experience-entry').remove();
-            toggleAddButton('#experience-container', '#heading-add-experience');
-        });
-
-        $(document).on('click', '.add-voluntary-work', function() {
-            var newVoluntaryWork = $('#voluntary-work-template').html();
-            $('#voluntary-work-container').append(newVoluntaryWork);
-            toggleAddButton('#voluntary-work-container', '#heading-add-voluntary-work');
-            initializeDatetimepickers();
-        });
-
-        $(document).on('click', '.remove-voluntary-work', function() {
-            $(this).closest('.voluntary-work-entry').remove();
-            toggleAddButton('#voluntary-work-container', '#heading-add-voluntary-work');
-        });
-
-
-        $(document).on('click', '.add-training', function() {
-            var newTraining = $('#training-template').html();
-            $('#training-container').append(newTraining);
-            toggleAddButton('#training-container', '#heading-add-training');
-            initializeDatetimepickers();
-        });
-
-        $(document).on('click', '.remove-training', function() {
-            $(this).closest('.training-entry').remove();
-            toggleAddButton('#training-container', '#heading-add-training');
-        });
-
-        $(document).on('click', '.add-other-info', function() {
-            var newInfo = $('#other-info-template').html();
-            $('#other-info-container').append(newInfo);
-            toggleAddButton('#other-info-container', '#heading-add-other-info');
-            initializeDatetimepickers();
-        });
-
-        // Employee Other Information - Remove
-        $(document).on('click', '.remove-other-info', function() {
-            $(this).closest('.other-info-entry').remove();
-            toggleAddButton('#other-info-container', '#heading-add-other-info');
-        });
-
-        // Initialize existing sections
-        toggleAddButton('#children-container', '#heading-add-child');
-        toggleAddButton('#eligibility-container', '#heading-add-eligibility');
-        toggleAddButton('#experience-container', '#heading-add-experience');
-        toggleAddButton('#voluntary-work-container', '#heading-add-voluntary-work');
-        toggleAddButton('#training-container', '#heading-add-training');
-        toggleAddButton('#other-info-container', '#heading-add-other-info');
-
-        initializeDatetimepickers();
-    });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Validate the employee form
-        function validateDynamicForm(formId, rules, messages) {
-            // Initialize form validation
-            $(formId).validate({
-                ignore: []
-                , rules: rules
-                , messages: messages
-                , errorPlacement: function(error, element) {
-                    error.insertAfter(element);
+        <script>
+            $(document).ready(function() {
+                function toggleAddButton(section, buttonId) {
+                    if ($(section).children().length === 0) {
+                        $(buttonId).show(); // Show the Add button
+                    } else {
+                        $(buttonId).hide(); // Hide the Add button
+                    }
                 }
-                , submitHandler: function(form) {
-                    // This is where the form submission should be triggered only if valid
-                    console.log("✅ Form validation passed, attempting to submit...");
-                    form.submit(); // Submit the form if valid
-                }
-                , invalidHandler: function(event, validator) {
-                    // Log validation errors if there are any invalid fields
-                    console.log("❌ Form validation failed. Invalid fields:");
-                    validator.errorList.forEach(function(error) {
-                        console.log(error.message); // Log error messages in the console
+
+                function initializeDatetimepickers() {
+                    $('.datetimepicker').datetimepicker({
+                        format: 'DD MMM, YYYY'
+                        , useCurrent: false
+                        , showTodayButton: false, // 🔹 Removes the "Today" button
+                        widgetPositioning: {
+                            horizontal: 'auto', // Keeps it aligned horizontally
+                            vertical: 'bottom' // Forces calendar to appear below
+                        }
+                        , icons: {
+                            time: 'fa fa-clock'
+                            , date: 'fa fa-calendar'
+                            , up: 'fa fa-chevron-up'
+                            , down: 'fa fa-chevron-down'
+                            , previous: 'fa fa-chevron-left'
+                            , next: 'fa fa-chevron-right'
+                            , clear: 'fa fa-trash'
+                            , close: 'fa fa-times'
+                        }
                     });
                 }
-            });
-        }
 
-        // Ensure the form ID is correct and validate
-        if ($('#employeeForm').length) {
-            validateDynamicForm('#employeeForm', {
-                "name": {
-                    required: true
-                }
-                , "email": {
-                    required: true
-                    , email: true
-                }
-                , "birth_date": {
-                    required: true
-                }
-                , "place_of_birth": {
-                    required: true
-                }
-                , "height": {
-                    required: true
-                    , number: true
-                    , min: 0.5, // Minimum valid height (e.g., 50 cm)
-                    max: 3 // Maximum valid height (e.g., 3 meters)
-                }
-                , "weight": {
-                    required: true
-                    , number: true
-                    , min: 1, // Minimum valid weight (1 kg)
-                    max: 500 // Maximum valid weight (500 kg)
-                }
-                , "blood_type": {
-                    required: true
-                }
-                , "gender": {
-                    required: true
-                }
-                , "civil_status": {
-                    required: true
-                }
-                , "nationality": {
-                    required: true
-                },
-                // New validation rules for address and contact fields
-                "residential_address": {
-                    required: true
-                }
-                , "residential_zip": {
-                    required: true
-                    , digits: true
-                    , minlength: 4
-                    , maxlength: 4
-                }
-                , "permanent_address": {
-                    required: true
-                }
-                , "permanent_zip": {
-                    required: true
-                    , digits: true
-                    , minlength: 4
-                    , maxlength: 4
-                }
-                , "phone_number": {
-                    required: true
-                    , digits: true
-                    , minlength: 7
-                    , maxlength: 15
-                }
-                , "mobile_number": {
-                    required: true
-                    , digits: true
-                    , minlength: 10
-                    , maxlength: 15
-                }
-                , "father_name": {
-                    required: true
-                }
-                , "mother_name": {
-                    required: true
-                }
-            }, {
-                "name": "Please enter full name"
-                , "email": {
-                    required: "Please enter an email address"
-                    , email: "Please enter a valid email address"
-                }
-                , "birth_date": "Please select a birth date"
-                , "place_of_birth": "Please enter place of birth"
-                , "height": {
-                    required: 'Please enter height'
-                    , number: 'Height must be a valid number'
-                    , min: 'Height must be at least 0.5 meters'
-                    , max: 'Height cannot exceed 3 meters'
-                }
-                , "weight": {
-                    required: 'Please enter weight'
-                    , number: 'Weight must be a valid number'
-                    , min: 'Weight must be at least 1 kg'
-                    , max: 'Weight cannot exceed 500 kg'
-                }
-                , "blood_type": "Please select a blood type"
-                , "gender": "Please select gender"
-                , "civil_status": "Please select civil status"
-                , "nationality": "Please enter nationality"
-                , "residential_address": "Please enter your residential address"
-                , "residential_zip": {
-                    required: "Please enter your residential zip code"
-                    , digits: "Zip code must be numeric"
-                    , minlength: "Zip code must be 4 digits"
-                    , maxlength: "Zip code must be 4 digits"
-                }
-                , "permanent_address": "Please enter your permanent address"
-                , "permanent_zip": {
-                    required: "Please enter your permanent zip code"
-                    , digits: "Zip code must be numeric"
-                    , minlength: "Zip code must be 4 digits"
-                    , maxlength: "Zip code must be 4 digits"
-                }
-                , "phone_number": {
-                    required: "Please enter your phone number"
-                    , digits: "Phone number must be numeric"
-                    , minlength: "Phone number must be at least 7 digits"
-                    , maxlength: "Phone number can be a maximum of 15 digits"
-                }
-                , "mobile_number": {
-                    required: "Please enter your mobile number"
-                    , digits: "Mobile number must be numeric"
-                    , minlength: "Mobile number must be at least 10 digits"
-                    , maxlength: "Mobile number can be a maximum of 15 digits"
-                }
-                , "father_name": "Please enter father's name"
-                , "mother_name": "Please enter mother's name"
-            });
-        } else {
-            console.log("❌ Form with ID 'employeeForm' not found.");
-        }
-    });
+                $(document).on('click', '.add-child', function() {
+                    var newChild = $('#child-template').html();
+                    $('#children-container').append(newChild);
+                    toggleAddButton('#children-container', '#heading-add-child');
+                    initializeDatetimepickers();
+                });
 
-</script>
+
+                $(document).on('click', '.remove-child', function() {
+                    $(this).closest('.child-entry').remove();
+                    toggleAddButton('#children-container', '#heading-add-child');
+                });
+
+
+                $(document).on('click', '.add-entry', function() {
+                    var newEntry = $('#eligibility-template').html();
+                    $('#eligibility-container').append(newEntry); // Append correctly
+                    toggleAddButton('#eligibility-container', '#heading-add-eligibility');
+                    initializeDatetimepickers();
+                });
+
+
+                $(document).on('click', '.remove-civil-service', function() {
+                    $(this).closest('.civil-service-entry').remove(); // Remove correctly
+                    toggleAddButton('#eligibility-container', '#heading-add-eligibility');
+                });
+
+
+                $(document).on('click', '.add-experience', function() {
+                    var newExperience = $('#experience-template').html();
+                    $('#experience-container').append(newExperience);
+                    toggleAddButton('#experience-container', '#heading-add-experience');
+                    initializeDatetimepickers();
+                });
+
+                $(document).on('click', '.remove-experience', function() {
+                    $(this).closest('.work-experience-entry').remove();
+                    toggleAddButton('#experience-container', '#heading-add-experience');
+                });
+
+                $(document).on('click', '.add-voluntary-work', function() {
+                    var newVoluntaryWork = $('#voluntary-work-template').html();
+                    $('#voluntary-work-container').append(newVoluntaryWork);
+                    toggleAddButton('#voluntary-work-container', '#heading-add-voluntary-work');
+                    initializeDatetimepickers();
+                });
+
+                $(document).on('click', '.remove-voluntary-work', function() {
+                    $(this).closest('.voluntary-work-entry').remove();
+                    toggleAddButton('#voluntary-work-container', '#heading-add-voluntary-work');
+                });
+
+
+                $(document).on('click', '.add-training', function() {
+                    var newTraining = $('#training-template').html();
+                    $('#training-container').append(newTraining);
+                    toggleAddButton('#training-container', '#heading-add-training');
+                    initializeDatetimepickers();
+                });
+
+                $(document).on('click', '.remove-training', function() {
+                    $(this).closest('.training-entry').remove();
+                    toggleAddButton('#training-container', '#heading-add-training');
+                });
+
+                $(document).on('click', '.add-other-info', function() {
+                    var newInfo = $('#other-info-template').html();
+                    $('#other-info-container').append(newInfo);
+                    toggleAddButton('#other-info-container', '#heading-add-other-info');
+                    initializeDatetimepickers();
+                });
+
+                // Employee Other Information - Remove
+                $(document).on('click', '.remove-other-info', function() {
+                    $(this).closest('.other-info-entry').remove();
+                    toggleAddButton('#other-info-container', '#heading-add-other-info');
+                });
+
+                // Initialize existing sections
+                toggleAddButton('#children-container', '#heading-add-child');
+                toggleAddButton('#eligibility-container', '#heading-add-eligibility');
+                toggleAddButton('#experience-container', '#heading-add-experience');
+                toggleAddButton('#voluntary-work-container', '#heading-add-voluntary-work');
+                toggleAddButton('#training-container', '#heading-add-training');
+                toggleAddButton('#other-info-container', '#heading-add-other-info');
+
+                initializeDatetimepickers();
+            });
+
+        </script>
+
+        <script>
+            $(document).ready(function() {
+                // Validate the employee form
+                function validateDynamicForm(formId, rules, messages) {
+                    // Initialize form validation
+                    $(formId).validate({
+                        ignore: []
+                        , rules: rules
+                        , messages: messages
+                        , errorPlacement: function(error, element) {
+                            error.insertAfter(element);
+                        }
+                        , submitHandler: function(form) {
+                            // This is where the form submission should be triggered only if valid
+                            console.log("✅ Form validation passed, attempting to submit...");
+                            form.submit(); // Submit the form if valid
+                        }
+                        , invalidHandler: function(event, validator) {
+                            // Log validation errors if there are any invalid fields
+                            console.log("❌ Form validation failed. Invalid fields:");
+                            validator.errorList.forEach(function(error) {
+                                console.log(error.message); // Log error messages in the console
+                            });
+                        }
+                    });
+                }
+
+                // Ensure the form ID is correct and validate
+                if ($('#employeeForm').length) {
+                    validateDynamicForm('#employeeForm', {
+                        "name": {
+                            required: true
+                        }
+                        , "email": {
+                            required: true
+                            , email: true
+                        }
+                        , "birth_date": {
+                            required: true
+                        }
+                        , "place_of_birth": {
+                            required: true
+                        }
+                        , "height": {
+                            required: true
+                            , number: true
+                            , min: 0.5, // Minimum valid height (e.g., 50 cm)
+                            max: 3 // Maximum valid height (e.g., 3 meters)
+                        }
+                        , "weight": {
+                            required: true
+                            , number: true
+                            , min: 1, // Minimum valid weight (1 kg)
+                            max: 500 // Maximum valid weight (500 kg)
+                        }
+                        , "blood_type": {
+                            required: true
+                        }
+                        , "gender": {
+                            required: true
+                        }
+                        , "civil_status": {
+                            required: true
+                        }
+                        , "nationality": {
+                            required: true
+                        },
+                        // New validation rules for address and contact fields
+                        "residential_address": {
+                            required: true
+                        }
+                        , "residential_zip": {
+                            required: true
+                            , digits: true
+                            , minlength: 4
+                            , maxlength: 4
+                        }
+                        , "permanent_address": {
+                            required: true
+                        }
+                        , "permanent_zip": {
+                            required: true
+                            , digits: true
+                            , minlength: 4
+                            , maxlength: 4
+                        }
+                        , "phone_number": {
+                            required: true
+                            , digits: true
+                            , minlength: 7
+                            , maxlength: 15
+                        }
+                        , "mobile_number": {
+                            required: true
+                            , digits: true
+                            , minlength: 10
+                            , maxlength: 15
+                        }
+                        , "father_name": {
+                            required: true
+                        }
+                        , "mother_name": {
+                            required: true
+                        }
+                    }, {
+                        "name": "Please enter full name"
+                        , "email": {
+                            required: "Please enter an email address"
+                            , email: "Please enter a valid email address"
+                        }
+                        , "birth_date": "Please select a birth date"
+                        , "place_of_birth": "Please enter place of birth"
+                        , "height": {
+                            required: 'Please enter height'
+                            , number: 'Height must be a valid number'
+                            , min: 'Height must be at least 0.5 meters'
+                            , max: 'Height cannot exceed 3 meters'
+                        }
+                        , "weight": {
+                            required: 'Please enter weight'
+                            , number: 'Weight must be a valid number'
+                            , min: 'Weight must be at least 1 kg'
+                            , max: 'Weight cannot exceed 500 kg'
+                        }
+                        , "blood_type": "Please select a blood type"
+                        , "gender": "Please select gender"
+                        , "civil_status": "Please select civil status"
+                        , "nationality": "Please enter nationality"
+                        , "residential_address": "Please enter your residential address"
+                        , "residential_zip": {
+                            required: "Please enter your residential zip code"
+                            , digits: "Zip code must be numeric"
+                            , minlength: "Zip code must be 4 digits"
+                            , maxlength: "Zip code must be 4 digits"
+                        }
+                        , "permanent_address": "Please enter your permanent address"
+                        , "permanent_zip": {
+                            required: "Please enter your permanent zip code"
+                            , digits: "Zip code must be numeric"
+                            , minlength: "Zip code must be 4 digits"
+                            , maxlength: "Zip code must be 4 digits"
+                        }
+                        , "phone_number": {
+                            required: "Please enter your phone number"
+                            , digits: "Phone number must be numeric"
+                            , minlength: "Phone number must be at least 7 digits"
+                            , maxlength: "Phone number can be a maximum of 15 digits"
+                        }
+                        , "mobile_number": {
+                            required: "Please enter your mobile number"
+                            , digits: "Mobile number must be numeric"
+                            , minlength: "Mobile number must be at least 10 digits"
+                            , maxlength: "Mobile number can be a maximum of 15 digits"
+                        }
+                        , "father_name": "Please enter father's name"
+                        , "mother_name": "Please enter mother's name"
+                    });
+                } else {
+                    console.log("❌ Form with ID 'employeeForm' not found.");
+                }
+            });
+
+        </script>
 @endsection
 
-@endsection

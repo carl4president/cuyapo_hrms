@@ -28,4 +28,9 @@ class department extends Model
     {
         return $this->hasMany(EmployeeEmployment::class, 'department_id');
     }
+
+    public function add_job()
+    {
+        return $this->hasMany(AddJob::class, 'department_id');
+    }
 }

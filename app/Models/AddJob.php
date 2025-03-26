@@ -9,9 +9,9 @@ class AddJob extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'job_title',
-        'department',
-        'job_location',
+        'position_id',
+        'department_id',
+        'designation_id',
         'no_of_vacancies',
         'experience',
         'age',
@@ -23,4 +23,20 @@ class AddJob extends Model
         'expired_date',
         'description',
     ];
+
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'designation_id');
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class, 'position_id');
+    }
 }

@@ -1370,7 +1370,6 @@
                 // On designation change
                 $('#designation').change(function() {
                     const designationId = $(this).val();
-                    console.log("Selected Designation ID:", designationId);
                     $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
 
                     if (designationId) {

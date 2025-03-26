@@ -30,7 +30,12 @@ class Designation extends Model
 
     public function employee_employments()
     {
-        return $this->hasMany(EmployeeEmployment::class, 'department_id');
+        return $this->hasMany(EmployeeEmployment::class, 'designation_id');
+    }
+
+    public function add_job()
+    {
+        return $this->hasMany(AddJob::class, 'designation_id');
     }
 
 

@@ -21,8 +21,8 @@
             <div class="row">
                 <div class="col-md-8">
                     <div class="job-info job-widget">
-                        <h3 class="job-title">{{ $job_view_detail[0]->job_title }}</h3>
-                        <span class="job-dept">{{ $job_view_detail[0]->department }}</span>
+                        <h3 class="job-title">{{ $job_view_detail[0]->position->position_name }}</h3>
+                        <span class="job-dept">{{ $job_view_detail[0]->department->department }}</span>
                         <ul class="job-post-det">
                             <li><i class="fa fa-calendar"></i> Post Date: <span class="text-blue">{{ date('d F, Y',strtotime($job_view_detail[0]->start_date)) }}</span></li>
                             <li><i class="fa fa-calendar"></i> Last Date: <span class="text-blue">{{ date('d F, Y',strtotime($job_view_detail[0]->expired_date)) }}</span></li>
@@ -62,14 +62,8 @@
                         </div>
                         <div class="info-list">
                             <span><i class="fa fa-map-signs"></i></span>
-                            <h5>Location</h5>
-                            <p>{!!nl2br ($job_view_detail[0]->job_location) !!}</p>
-                        </div>
-                        <div class="info-list">
-                            <p class="text-truncate"> 096-566-666
-                            <br> <a href="https://www.souysoeng.com" title="soengsouy@example.com">soengsouy@example.com</a>
-                            <br> <a href="https://www.souysoeng.com" target="_blank" title="https://www.souysoeng.com">https://www.souysoeng.com</a>
-                            </p>
+                            <h5>Designation</h5>
+                            <p>{!!nl2br ($job_view_detail[0]->designation->designation_name) !!}</p>
                         </div>
                         <div class="info-list text-center">
                             <a class="app-ends" href="#">Application ends in 2d 7h 6m</a>

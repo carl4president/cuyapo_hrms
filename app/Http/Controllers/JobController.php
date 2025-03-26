@@ -92,7 +92,7 @@ class JobController extends Controller
     {
         $department = DB::table('departments')->get();
         $type_job   = DB::table('type_jobs')->get();
-        $job_list   = DB::table('add_jobs')->get();
+        $job_list   = AddJob::with('position', 'department', 'designation')->get();
         return view('job.jobs',compact('department','type_job','job_list'));
     }
 
@@ -100,9 +100,9 @@ class JobController extends Controller
     public function JobsSaveRecord(Request $request)
     {
         $request->validate([
-            'job_title'       => 'required|string|max:255',
-            'department'      => 'required|string|max:255',
-            'job_location'    => 'required|string|max:255',
+            'department_id'   => 'required|integer',
+            'designation_id'  => 'required|integer',
+            'position_id'     => 'required|integer',
             'no_of_vacancies' => 'required|string|max:255',
             'experience'      => 'required|string|max:255',
             'age'             => 'required|integer',
@@ -157,7 +157,7 @@ class JobController extends Controller
     /** Job Details */
     public function jobDetails($id)
     {
-        $job_view_detail = DB::table('add_jobs')->where('id',$id)->get();
+        $job_view_detail = AddJob::with('position', 'department', 'designation')->where('id',$id)->get();
         return view('job.jobdetails',compact('job_view_detail'));
     }
 

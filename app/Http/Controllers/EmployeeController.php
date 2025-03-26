@@ -1287,8 +1287,13 @@ class EmployeeController extends Controller
 
         // Filtering by position
         if ($request->position) {
-            $query->where('users.position', 'LIKE', '%' . $request->position . '%');
+            $query->whereHas('employee.employment', function ($query) use ($request) {
+                $query->whereHas('position', function ($query) use ($request) {
+                    $query->where('position_name', 'LIKE', '%' . $request->position . '%');
+                });
+            });
         }
+        
 
         $users = $query->get();
         $userList = User::all();
@@ -1329,8 +1334,13 @@ class EmployeeController extends Controller
 
         // Filtering by position
         if ($request->position) {
-            $query->where('users.position', 'LIKE', '%' . $request->position . '%');
+            $query->whereHas('employee.employment', function ($query) use ($request) {
+                $query->whereHas('position', function ($query) use ($request) {
+                    $query->where('position_name', 'LIKE', '%' . $request->position . '%');
+                });
+            });
         }
+        
 
         $users = $query->get();
         $userList = User::all();

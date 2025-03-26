@@ -31,6 +31,11 @@ class Position extends Model
 
     public function employee_employments()
     {
-        return $this->hasMany(EmployeeEmployment::class, 'department_id');
+        return $this->hasMany(EmployeeEmployment::class, 'position_id');
+    }
+
+    public function add_job()
+    {
+        return $this->hasMany(AddJob::class, 'position_id');
     }
 }

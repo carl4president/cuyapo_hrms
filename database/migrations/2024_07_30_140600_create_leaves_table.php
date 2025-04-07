@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('staff_id')->nullable();
             $table->string('employee_name')->nullable();
-            $table->string('leave_type')->nullable();
-            $table->string('remaining_leave')->nullable();
+            $table->string('leave_type')->nullable();;
             $table->string('date_from')->nullable();
             $table->string('date_to')->nullable();
             $table->string('leave_date')->nullable();

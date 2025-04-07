@@ -1,9 +1,11 @@
+@props(['modal_title' => '', 'route' => '', 'routeUrl' => '', 'departments', 'userList', 'employee'])
+
 <!-- Add Employee Modal -->
 <div id="add_employee" class="modal custom-modal fade" role="dialog">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add Employee</h5>
+                <h5 class="modal-title">{{ $modal_title }}</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -12,7 +14,7 @@
                 <div class="alert alert-info">
                     <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong>.
                 </div>
-                <form id="employeeForm" action="{{ route('all/employee/save') }}" method="POST">
+                <form id="employeeForm" action="{{ $route }}" method="POST">
                     @csrf
                     <div class="row">
                         <!-- Personal Information -->
@@ -1258,63 +1260,8 @@
                             <hr>
                         </div>
 
-                        <!-- Employment Details -->
-                        <div class="col-12">
-                            <h4 class="text-primary">Employment Details</h4>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Department</label>
-                                <select class="form-control" id="department" name="department_id">
-                                    <option value="" disabled selected>-- Select Department --</option>
-                                    @foreach ($departments as $department)
-                                    <option value="{{ $department->id }}">{{ $department->department }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Designation</label>
-                                <select class="form-control" id="designation" name="designation_id">
-                                    <option value="" disabled selected>-- Select Designation --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Position</label>
-                                <select class="form-control" id="position" name="position_id">
-                                    <option value="" disabled selected>-- Select Position --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Line Manager</label>
-                                <select class="form-control" name="line_manager">
-                                    <option selected disabled>-- Select --</option>
-                                    @foreach ($userList as $user)
-                                    <option value="{{ $user->name }}">{{ $user->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Employment Status</label>
-                                <input type="text" class="form-control" name="employment_status">
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Date Hired</label>
-                                <div class="cal-icon">
-                                    <input type="text" class="form-control datetimepicker" name="date_hired">
-                                </div>
-                            </div>
-                        </div>
+                        {{ $slot }}
+                        
                     </div>
                     <div class="submit-section">
                         <button class="btn btn-primary submit-btn">Submit</button>
@@ -1335,7 +1282,7 @@
 
         <script>
             $(document).ready(function() {
-                var url = "{{ route('hr/get/information/emppos') }}";
+                var url = "{{ $routeUrl }}";
 
                 $('#department').change(function() {
                     const departmentId = $(this).val();
@@ -1352,6 +1299,7 @@
                             }
                             , dataType: "json"
                             , success: function(response) {
+                                console.log("AJAX Response:", response);
                                 if (response.designations) {
                                     response.designations.forEach(designation => {
                                         $('#designation').append(
@@ -1382,6 +1330,7 @@
                             }
                             , dataType: "json"
                             , success: function(response) {
+                                console.log("AJAX Response:", response);
                                 if (response.positions) {
                                     response.positions.forEach(position => {
                                         $('#position').append(
@@ -1708,5 +1657,5 @@
             });
 
         </script>
-@endsection
+
 

@@ -214,7 +214,7 @@
                                             <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $items->id }}" data-employee_name="{{ $items->employee_name }}" data-employee_id="{{ $items->staff_id }}" data-leave_type="{{ $items->leave_type }}" data-remaining_leave="{{ $items->remaining_leave }}" data-date_from="{{ $items->date_from }}" data-date_to="{{ $items->date_to }}" data-number_of_day="{{ $items->number_of_day }}" data-leave_day="{{ $items->leave_day }}" data-reason="{{ $items->reason }}" data-target="#edit_leave">
                                                 <i class="fa fa-pencil m-r-5"></i> Edit
                                             </a>
-                                            <a class="dropdown-item leaveDelete" href="#" data-toggle="modal" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                                            <a class="dropdown-item leaveDelete" href="#" data-toggle="modal" data-id="{{ $items->id }}" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                                         </div>
                                     </div>
                                 </td>
@@ -267,8 +267,14 @@
                                     <label>Leave Type <span class="text-danger">*</span></label>
                                     <select class="select" id="leave_type" name="leave_type">
                                         <option selected disabled>Select Leave Type</option>
+                                        @php
+                                        $currentYear = date('Y');
+                                        @endphp
                                         @foreach($leaveInformation as $key => $leaves)
-                                        @if($leaves->leave_type != 'Total Leave Balance' && $leaves->leave_type != 'Use Leave' && $leaves->leave_type != 'Remaining Leave')
+                                        @if($leaves->leave_type != 'Total Leave Balance' &&
+                                        $leaves->leave_type != 'Use Leave' &&
+                                        $leaves->leave_type != 'Remaining Leave' &&
+                                        isset($leaves->year_leave) && $leaves->year_leave == $currentYear)
                                         <option value="{{ $leaves->leave_type }}">{{ $leaves->leave_type }}</option>
                                         @endif
                                         @endforeach
@@ -371,10 +377,16 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Leave Type <span class="text-danger">*</span></label>
-                                    <select class="select" id="edit_leave_type" name="leave_type">
+                                    <select class="select" id="edit_leave_type" name="leave_type" disabled>
                                         <option selected disabled>Select Leave Type</option>
+                                        @php
+                                        $currentYear = date('Y');
+                                        @endphp
                                         @foreach($leaveInformation as $key => $leaves)
-                                        @if($leaves->leave_type != 'Total Leave Balance' && $leaves->leave_type != 'Use Leave' && $leaves->leave_type != 'Remaining Leave')
+                                        @if($leaves->leave_type != 'Total Leave Balance' &&
+                                        $leaves->leave_type != 'Use Leave' &&
+                                        $leaves->leave_type != 'Remaining Leave' &&
+                                        isset($leaves->year_leave) && $leaves->year_leave == $currentYear)
                                         <option value="{{ $leaves->leave_type }}">{{ $leaves->leave_type }}</option>
                                         @endif
                                         @endforeach
@@ -521,6 +533,7 @@
 
 
     <!-- Delete Leave Modal -->
+    <!-- Delete Modal -->
     <div class="modal custom-modal fade" id="delete_approve" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -532,7 +545,8 @@
                     <div class="modal-btn delete-action">
                         <form action="{{ route('form/leaves/edit/delete') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="id" class="e_id" value="">
+                            <!-- ID will be filled dynamically -->
+                            <input type="text" name="id" class="e_id">
                             <div class="row">
                                 <div class="col-6">
                                     <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
@@ -547,6 +561,7 @@
             </div>
         </div>
     </div>
+
     <!-- /Delete Leave Modal -->
 </div>
 <!-- /Page Wrapper -->
@@ -554,12 +569,44 @@
 
 <script>
     $(document).ready(function() {
+        // Initialize select2 plugin for employee selection
         $('.select2s-hidden-accessible').select2({
             closeOnSelect: false
         });
-    });
-    $('#employee_name').on('change', function() {
-        $('#employee_id').val($(this).find(':selected').data('employee_id'));
+
+        function fetchLeaveTypes(employee_id, targetSelect) {
+
+            if (employee_id) {
+                $.ajax({
+                    url: "{{ route('hr/get/leaveStaffOptions') }}", // Ensure this route is correct
+                    type: "GET"
+                    , data: {
+                        employee_id: employee_id
+                    }
+                    , success: function(response) {
+                        $(targetSelect).html('<option selected disabled>Select Leave Type</option>');
+                        $.each(response, function(key, value) {
+                            $(targetSelect).append('<option value="' + value.leave_type + '">' + value.leave_type + '</option>');
+                        });
+                    }
+                    , error: function(xhr, status, error) {
+                        console.error("AJAX Error:", error); // Debugging
+                        alert('Error fetching leave types.');
+                    }
+                });
+            } else {
+                console.log("No Employee ID found."); // Debugging
+            }
+        }
+
+        // Handle employee selection in the Add Modal
+        $('#employee_name').on('change', function() {
+            var employee_id = $(this).find(':selected').data('employee_id');
+            $('#employee_id').val(employee_id);
+            fetchLeaveTypes(employee_id, '#leave_type');
+        });
+
+        // Populate leave types when Edit Modal opens
     });
 
 </script>
@@ -573,14 +620,12 @@
     // When clicking the edit leave button
     $(document).on("click", ".leaveUpdate", function() {
         var leave_id = $(this).data('id');
-        console.log("Fetching leave options for leave ID:", leave_id);
 
         $.post("{{ route('hr/get/information/leaveOptions') }}", {
                 leave_id: leave_id
                 , _token: $('meta[name="csrf-token"]').attr('content')
             })
             .done(function(response) {
-                console.log("Server Response:", response);
 
                 if (response.response_code === 200) {
                     var leave = response.leave_options;
@@ -610,8 +655,7 @@
                         console.error("Error parsing leave data:", error);
                     }
 
-                    console.log("Parsed Leave Dates:", leaveDates);
-                    console.log("Parsed Leave Days:", leaveDays);
+
 
                     if (leaveDates.length > 0) {
                         leaveDates.forEach((date, index) => {
@@ -660,7 +704,6 @@
             })
             .fail(function(jqXHR, textStatus, errorThrown) {
                 console.error("AJAX Error:", textStatus, errorThrown);
-                console.log("Server Response:", jqXHR.responseText);
                 toastr.error("Error loading leave data.");
             });
     });
@@ -705,7 +748,6 @@
                 return $(this).val();
             }).get();
 
-            console.log("Previous Selections:", previousSelections);
             $('#number_of_day').val(numDays);
 
             $('#edit_leave_dates_display').empty();
@@ -754,7 +796,6 @@
                 updatedLeaveCount = 0; // Reset before calculation
                 $('.leave-day-select').each(function() {
                     let leaveType = $(this).val();
-                    console.log("Leave Type Selected:", leaveType);
 
                     if (leaveType === "Full-Day Leave") {
                         updatedLeaveCount += 1;
@@ -765,7 +806,6 @@
 
                 $('#edit_number_of_day').val(updatedLeaveCount);
 
-                console.log("📞 Calling updateRemainingLeave() with numDays:", updatedLeaveCount);
                 updateeditRemainingLeave(updatedLeaveCount);
             }
 
@@ -813,7 +853,7 @@
             , _token: $('meta[name="csrf-token"]').attr('content')
         }, function(data) {
             if (data.response_code == 200) {
-                console.log('REMAINING LEAVE:', data.remaining_leave);
+                console.log('leave_id:', data.leave_id);
                 $('#edit_remaining_leave').val(data.remaining_leave);
                 $('#editleave').prop('disabled', data.remaining_leave < 0);
 
@@ -858,17 +898,6 @@
             return $(this).val();
         }).get();
 
-        console.log("Sending Data:", {
-            leave_id
-            , leave_type
-            , date_from
-            , date_to
-            , remaining_leave
-            , number_of_day
-            , reason
-            , leave_dates
-            , leave_days
-        });
 
         $.post("{{ route('form/leaves/edit') }}", {
                 leave_id: leave_id
@@ -884,13 +913,11 @@
             })
 
             .done(function(response) {
-                console.log("Response from Server:", response);
                 // ✅ Force a full-page reload to display flash messages
                 window.location.reload();
             })
             .fail(function(jqXHR, textStatus, errorThrown) {
                 console.error("AJAX Error:", textStatus, errorThrown);
-                console.log("Server Response:", jqXHR.responseText);
                 toastr.error("Error updating leave data.");
             });
     });
@@ -1085,6 +1112,15 @@
     });
 
 </script>
+
+
+<script>
+    $(document).on('click', '.leaveDelete', function () {
+        var leaveId = $(this).data('id'); // get the data-id
+        $('.e_id').val(leaveId); // set it in the hidden input
+    });
+</script>
+
 
 <!-- Validate Form  -->
 <script>

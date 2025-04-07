@@ -5,6 +5,8 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Models\Employee;
+use App\Models\User;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -21,14 +23,23 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition(): array
+    protected $model = User::class;
+
+    public function definition()
     {
+        // Fetch a random employee
+        $employee = Employee::inRandomOrder()->first();
+
+        // Ensure there's a fallback if no employees exist
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'user_id' => $employee ? $employee->emp_id : 'KH-0002', // Using emp_id from the Employee table
+            'name' => $employee ? $employee->name : $this->faker->name, // Using the employee's name or generating a fake one
+            'email' => $employee ? $employee->email : $this->faker->unique()->safeEmail, // Using the employee's email or generating a fake one
+            'avatar' => $this->faker->imageUrl(640, 480, 'people', true), // Random avatar
+            'role_name' => 'Employee', // Default role
+            'join_date' => now()->toDateString(), // Current date
+            'status' => 'Active', // Default status
+            'password' => bcrypt('password'), // Default password
         ];
     }
 

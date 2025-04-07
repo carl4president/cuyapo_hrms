@@ -96,7 +96,7 @@
                                         $date = Carbon\Carbon::parse($date);
                                         $elapsed =  $date->diffForHumans();
                                     @endphp
-                                    <li class="list-group-item list-group-item-action">{{ $items->job_title }} <span class="float-right text-sm text-muted">{{ $elapsed }}</span></li>
+                                    <li class="list-group-item list-group-item-action">{{ $items->position->position_name }} <span class="float-right text-sm text-muted">{{ $elapsed }}</span></li>
                                     @endforeach
                                 </ul>
                             </div>
@@ -128,8 +128,8 @@
                                     @foreach ($job_list as $key => $items)
                                     <tr>
                                         <td>{{ ++$key }}</td>
-                                        <td><a href="job-details.html">{{ $items->job_title }}</a></td>
-                                        <td>{{ $items->department }}</td>
+                                        <td><a href="job-details.html">{{ $items->position->position_name }}</a></td>
+                                        <td>{{ $items->department->department }}</td>
                                         <td class="text-center">
                                             <div class="action-label">
                                                 <a class="btn btn-white btn-sm btn-rounded" href="#" data-toggle="dropdown" aria-expanded="false">
@@ -175,8 +175,8 @@
                                     @foreach ($job_list as $key => $items)
                                     <tr>
                                         <td>{{ ++$key }}</td>
-                                        <td><a href="job-details.html">{{ $items->job_title }}</a></td>
-                                        <td>{{ $items->department }}</td>
+                                        <td><a href="job-details.html">{{ $items->position->position_name }}</a></td>
+                                        <td>{{ $items->department->department }}</td>
                                         <td>{{ date('d F, Y',strtotime($items->start_date)) }}</td>
                                         <td>{{ date('d F, Y',strtotime($items->expired_date)) }}</td>
                                         <td class="text-center">

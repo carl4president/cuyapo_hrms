@@ -1,264 +1,241 @@
 @extends('layouts.master')
 @section('content')
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">	
-        <!-- Page Content -->
-        <div class="content container-fluid">
-            <!-- Page Header -->
-            <div class="page-header">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h3 class="page-title">Candidates List</h3>
-                        <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                            <li class="breadcrumb-item">Jobs</li>
-                            <li class="breadcrumb-item active">Candidates List</li>
-                        </ul>
-                    </div>
-                    <div class="col-auto float-right ml-auto">
-                        <a href="#" data-toggle="modal" data-target="#add_employee" class="btn add-btn"> Add Candidates</a>
-                    </div>
+<!-- Page Wrapper -->
+<div class="page-wrapper">
+    <!-- Page Content -->
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Candidates List</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item">Jobs</li>
+                        <li class="breadcrumb-item active">Candidates List</li>
+                    </ul>
                 </div>
-            </div>
-            <!-- /Page Header -->
-            
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="table-responsive">
-                        <table class="table table-striped custom-table mb-0 datatable">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Name</th>
-                                    <th>Mobile Number</th>
-                                    <th>Email</th>
-                                    <th>Created Date</th>
-                                    <th class="text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>
-                                        <h2 class="table-avatar">
-                                            <a href="profile.html" class="avatar"><img alt="" src="assets/img/profiles/avatar-02.jpg"></a>
-                                            <a href="profile.html">John Doe </a>
-                                        </h2>
-                                    </td>
-                                    <td>9876543210</td>
-                                    <td>johndoe@example.com</td>
-                                    <td>1 Jan 2013</td>
-                                    <td class="text-center">
-                                        <div class="dropdown dropdown-action">
-                                            <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
-                                            <div class="dropdown-menu dropdown-menu-right">
-                                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edit_job"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#delete_job"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>
-                                        <h2 class="table-avatar">
-                                            <a href="profile.html" class="avatar"><img alt="" src="assets/img/profiles/avatar-09.jpg"></a>
-                                            <a href="profile.html">Richard Miles </a>
-                                        </h2>
-                                    </td>
-                                    <td>9876543210</td>
-                                    <td>richardmiles@example.com</td>
-                                    <td>18 Mar 2014</td>
-                                    <td class="text-center">
-                                        <div class="dropdown dropdown-action">
-                                            <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
-                                            <div class="dropdown-menu dropdown-menu-right">
-                                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edit_job"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#delete_job"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>
-                                        <h2 class="table-avatar">
-                                            <a href="profile.html" class="avatar"><img alt="" src="assets/img/profiles/avatar-10.jpg"></a>
-                                            <a href="profile.html">John Smith </a>
-                                        </h2>
-                                    </td>
-                                    <td>9876543210</td>
-                                    <td>johnsmith@example.com</td>
-                                    <td>1 Apr 2014</td>
-                                    <td class="text-center">
-                                        <div class="dropdown dropdown-action">
-                                            <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
-                                            <div class="dropdown-menu dropdown-menu-right">
-                                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edit_job"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#delete_job"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="col-auto float-right ml-auto">
+                    <a href="#" data-toggle="modal" data-target="#add_employee" class="btn add-btn"> Add Candidates</a>
                 </div>
             </div>
         </div>
-        <!-- /Page Content -->
-        
-        <!-- Add Employee Modal -->
-        <div id="add_employee" class="modal custom-modal fade" role="dialog">
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Candidates</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">First Name <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="text">
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">Last Name</label>
-                                        <input class="form-control" type="text">
-                                    </div>
-                                </div>
-                                
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">Email <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="email">
-                                    </div>
-                                </div>
-                                
-                                <div class="col-sm-6">  
-                                    <div class="form-group">
-                                        <label class="col-form-label">Employee ID <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">  
-                                    <div class="form-group">
-                                        <label class="col-form-label">Created Date <span class="text-danger">*</span></label>
-                                        <div class="cal-icon"><input class="form-control datetimepicker" type="text"></div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">Phone </label>
-                                        <input class="form-control" type="text">
-                                    </div>
-                                </div>
-                                
-                            </div>
-                            
-                            <div class="submit-section">
-                                <button class="btn btn-primary submit-btn">Submit</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        <div class="card">
+            <div class="card-body">
+                @include('sidebar.sidebarcandidates')
             </div>
         </div>
-        <!-- /Add Employee Modal -->
+        <!-- /Page Header -->
 
-        <!-- Edit Job Modal -->
-        <div id="edit_job" class="modal custom-modal fade" role="dialog">
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Candidates</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">First Name <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="text">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-striped custom-table mb-0 datatable">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Name</th>
+                                <th hidden></th>
+                                <th>Email</th>
+                                <th>Mobile Number</th>
+                                <th>Position</th>
+                                <th class="text-center">Status</th>
+                                <th>Apply Date</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($applicant as $key => $app)
+                            @php
+                            $status = $app->employment->status ?? 'Qualified';
+                            if (!in_array($status, ['Qualified', 'Screened'])) continue;
+                            @endphp
+                            <tr>
+                                <td>{{ ++$key }}</td>
+                                <td>
+                                    <h2 class="table-avatar">
+                                        <a href="{{ url('applicant/view/edit/'.$app->app_id) }}" class="avatar"><img alt="" src="assets/img/profiles/avatar-02.jpg"></a>
+                                        <a href="{{ url('applicant/view/edit/'.$app->app_id) }}">{{ $app->name }} </a>
+                                    </h2>
+                                </td>
+                                <td hidden class="id">{{ $app->id }}</td>
+                                <td>{{ $app->email }}</td>
+                                <td>{{ $app->contact ? $app->contact->mobile_number : 'N/A' }}</td>
+                                <td>{{ optional(optional($app->employment)->position)->position_name ?? 'N/A' }}</td>
+                                <td class="text-center">
+                                    <div class="dropdown action-label">
+                                        <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false" id="status_label{{ $app->app_id }}">
+                                            @php
+                                            $status = $app->employment->status ?? 'Qualified'; // Default to 'Screened'
+                                            $statusColors = [
+                                            'Qualified' => 'text-success',
+                                            'Screened' => 'text-info',
+                                            'Eligible for Interview' => 'text-primary',
+                                            'Rejected' => 'text-danger'
+                                            ];
+                                            $colorClass = $statusColors[$status] ?? 'text-secondary'; // Default color if status not found
+                                            @endphp
+                                            <i class="fa fa-dot-circle-o {{ $colorClass }}"></i> {{ $status }}
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right job_status">
+                                            <a class="dropdown-item text-muted disabled" aria-disabled="true">
+                                                <i class="fa fa-dot-circle-o text-success"></i> Qualified
+                                            </a>
+                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="Screened">
+                                                <i class="fa fa-dot-circle-o text-info"></i> Screened
+                                            </a>
+                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="Eligible for Interview">
+                                                <i class="fa fa-dot-circle-o text-secondary"></i> Eligible for Interview
+                                            </a>
+                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="Rejected">
+                                                <i class="fa fa-dot-circle-o text-primary"></i> Rejected
+                                            </a>
+                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="New">
+                                                <i class="fa fa-dot-circle-o text-danger"></i> Move Back to Applicant
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">Last Name</label>
-                                        <input class="form-control" type="text">
+                                </td>
+                                <td>{{ $app->created_at }}</td>
+                                <td class="text-center">
+                                    <div class="dropdown dropdown-action">
+                                        <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <a class="dropdown-item" href="{{ url('applicant/view/edit/'.$app->app_id) }}"><i class="fa fa-pencil m-r-5"></i> Edit</a>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">Email <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="email">
-                                    </div>
-                                </div>
-                                
-                                <div class="col-sm-6">  
-                                    <div class="form-group">
-                                        <label class="col-form-label">Employee ID <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">  
-                                    <div class="form-group">
-                                        <label class="col-form-label">Created Date <span class="text-danger">*</span></label>
-                                        <div class="cal-icon"><input class="form-control datetimepicker" type="text"></div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label class="col-form-label">Phone </label>
-                                        <input class="form-control" type="text">
-                                    </div>
-                                </div>
-                                
-                            </div>
-                            <div class="submit-section">
-                                <button class="btn btn-primary submit-btn">Save</button>
-                            </div>
-                        </form>
-                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <!-- /Edit Job Modal -->
-
-        <!-- Delete Job Modal -->
-        <div class="modal custom-modal fade" id="delete_job" role="dialog">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <div class="form-header">
-                            <h3>Delete</h3>
-                            <p>Are you sure want to delete?</p>
-                        </div>
-                        <div class="modal-btn delete-action">
-                            <div class="row">
-                                <div class="col-6">
-                                    <a href="javascript:void(0);" class="btn btn-primary continue-btn">Delete</a>
-                                </div>
-                                <div class="col-6">
-                                    <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- /Delete Job Modal -->
     </div>
-    <!-- /Page Wrapper -->
+    <!-- /Page Content -->
+
+    <!-- Add Employee Modal -->
+    <x-layouts.add-emp-modal modal_title='Add Candidate' :route="route('all/applicant/save')" :routeUrl="route('hr/get/information/apppos')" :$departments :$userList :$applicant>
+        <div class="col-12">
+            <h4 class="text-primary">Employment Details</h4>
+            <div class="alert alert-secondary py-2 px-3 mb-4 rounded-2">
+                <small class="text-muted">Please assign the candidate to the appropriate department, designation, position, line manager, and employment status.</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Department</label>
+                <select class="form-control" id="department" name="department_id">
+                    <option value="" disabled selected>-- Select Department --</option>
+                    @foreach ($departments as $department)
+                    <option value="{{ $department->id }}">{{ $department->department }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Designation</label>
+                <select class="form-control" id="designation" name="designation_id">
+                    <option value="" disabled selected>-- Select Designation --</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Position</label>
+                <select class="form-control" id="position" name="position_id">
+                    <option value="" disabled selected>-- Select Position --</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Line Manager</label>
+                <select class="form-control" name="line_manager">
+                    <option selected disabled>-- Select --</option>
+                    @foreach ($userList as $user)
+                    <option value="{{ $user->name }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Employment Status</label>
+                <input type="text" class="form-control" name="employment_status">
+            </div>
+        </div>
+    </x-layouts.add-emp-modal>
+    <!-- /Edit Job Modal -->
+
+    <!-- Delete Job Modal -->
+    <!-- /Delete Job Modal -->
+</div>
+
+
+<script>
+    $(document).ready(function() {
+        var table = $("table").DataTable(); // Initialize DataTables
+
+        $(".status-option").click(function() {
+            var app_id = $(this).data("id"); // Get the application ID
+            var new_status = $(this).data("status"); // Get the selected status
+            var statusLabel = $("#status_label" + app_id); // Get the status label element
+            var row = statusLabel.closest("tr"); // Get the table row
+            var tableBody = $("table tbody"); // Get the table body
+
+            console.log("Status option clicked. App ID:", app_id, "New Status:", new_status);
+
+            $.ajax({
+                url: "{{ route('appstatus/update') }}", // Your backend update route
+                type: "POST"
+                , data: {
+                    app_id: app_id
+                    , status: new_status
+                    , _token: "{{ csrf_token() }}"
+                }
+                , success: function(response) {
+                    console.log("Status updated successfully:", response);
+
+                    if (new_status === "Eligible for Interview" || new_status === "New" || new_status === "Rejected") {
+                        table.row(row).remove().draw();
+
+                    } else {
+
+                        var statusColor = getStatusColor(new_status);
+                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + new_status);
+                    }
+                }
+                , error: function(xhr) {
+                    console.error("AJAX error:", xhr.responseText);
+                }
+            });
+        });
+
+        // Function to get status color class
+        function getStatusColor(status) {
+            switch (status) {
+                case "Qualified":
+                    return "text-success";
+                case "Screened":
+                    return "text-info";
+                case "Eligible for Interview":
+                    return "text-secondary";
+                case "Rejected":
+                    return "text-primary";
+                case "New":
+                    return "text-danger";
+                default:
+                    return "text-secondary";
+            }
+        }
+    });
+
+</script>
+
+{{-- delete --}}
+
+@endsection
 @endsection

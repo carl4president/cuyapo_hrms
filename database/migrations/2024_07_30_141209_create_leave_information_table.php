@@ -13,21 +13,81 @@ return new class extends Migration
     {
         Schema::create('leave_information', function (Blueprint $table) {
             $table->id();
-            $table->string('leave_type')->nullable();
-            $table->string('leave_days')->nullable();
-            $table->string('year_leave')->nullable();
+            $table->string('staff_id'); 
+            $table->string('leave_type'); 
+            $table->integer('leave_days');
+            $table->integer('carried_forward');
+            $table->year('year_leave'); 
             $table->timestamps();
         });
-
+        
         DB::table('leave_information')->insert([
-            ['leave_type' => 'Medical Leave'  ,'leave_days'     => '04','year_leave' => date('Y')],
-            ['leave_type' => 'Casual Leave'   ,'leave_days'     => '08','year_leave' => date('Y')],
-            ['leave_type' => 'Sick Leave'     ,'leave_days'     => '05','year_leave' => date('Y')],
-            ['leave_type' => 'Annual Leave'   ,'leave_days'     => '12','year_leave' => date('Y')],
-            ['leave_type' => 'Use Leave'      ,'leave_days'     => '09','year_leave' => date('Y')],
-            ['leave_type' => 'Remaining Leave','leave_days'     => '18','year_leave' => date('Y')],
-            ['leave_type' => 'Total Leave Balance','leave_days' => '00','year_leave' => date('Y')]
-        ]);
+            [
+                'staff_id'            => 'KH-0002',
+                'leave_type'          => 'Medical Leave',
+                'leave_days'          => 4,
+                'carried_forward'     => 0,
+                'year_leave'          => date('Y'),
+                'created_at'          => now(),
+                'updated_at'          => now()
+            ],
+            [
+                'staff_id'            => 'KH-0002',
+                'leave_type'          => 'Casual Leave',
+                'leave_days'          => 8,
+                'carried_forward'     => 0,
+                'year_leave'          => date('Y'),
+                'created_at'          => now(),
+                'updated_at'          => now()
+            ],
+            [
+                'staff_id'            => 'KH-0002',
+                'leave_type'          => 'Sick Leave',
+                'leave_days'          => 5,
+                'carried_forward'     => 0,
+                'year_leave'          => date('Y'),
+                'created_at'          => now(),
+                'updated_at'          => now()
+            ],
+            [
+                'staff_id'            => 'KH-0002',
+                'leave_type'          => 'Annual Leave',
+                'leave_days'          => 12,
+                'carried_forward'     => 0,
+
+                'year_leave'          => date('Y'),
+                'created_at'          => now(),
+                'updated_at'          => now()
+            ],
+            [
+                'staff_id'            => 'KH-0002',
+                'leave_type'          => 'Use Leave',
+                'leave_days'          => 9,
+                'carried_forward'     => 0,
+                'year_leave'          => date('Y'),
+                'created_at'          => now(),
+                'updated_at'          => now()
+            ],
+            [
+                'staff_id'            => 'KH-0002',
+                'leave_type'          => 'Remaining Leave',
+                'leave_days'          => 18,
+                'carried_forward'     => 0,
+
+                'year_leave'          => date('Y'),
+                'created_at'          => now(),
+                'updated_at'          => now()
+            ],
+            [
+                'staff_id'            => 'KH-0002',
+                'leave_type'          => 'Total Leave Balance',
+                'leave_days'          => 0,
+                'carried_forward'     => 0,
+                'year_leave'          => date('Y'),
+                'created_at'          => now(),
+                'updated_at'          => now()
+            ]
+        ]);        
     }
 
     /**

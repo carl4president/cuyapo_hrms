@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
 class AddJob extends Model
 {
@@ -38,5 +39,23 @@ class AddJob extends Model
     public function position()
     {
         return $this->belongsTo(Position::class, 'position_id');
+    }
+
+    public function applicants() {
+        return $this->hasMany(ApplicantEmployment::class, 'position_id', 'position_id');
+    }
+    
+
+    public function deleteRecord(Request $request)
+    {
+        try {
+            AddJob::destroy($request->id);
+            flash()->success('Job deleted successfully :)');
+            return redirect()->back();
+        } catch (\Exception $e) {
+            DB::rollback();
+            flash()->error('Job delete fail :)');
+            return redirect()->back();
+        }
     }
 }

@@ -13,12 +13,15 @@ use App\Models\EmployeeGovernmentId;
 use App\Models\EmployeeFamilyInfo;
 use App\Models\EmployeeEducation;
 use App\Models\EmployeeEmployment;
+use App\Models\GraphData;
 use App\Models\Position;
+use App\Models\TypeJob;
 use App\Models\User;
 use DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 
 
@@ -27,32 +30,41 @@ class EmployeeController extends Controller
     /** All Employee Card View */
     public function cardAllEmployee(Request $request)
     {
-        $users = DB::table('users')
-            ->join('employees', 'users.user_id', '=', 'employees.emp_id')
-            ->leftJoin('employee_employment', 'employees.emp_id', '=', 'employee_employment.emp_id')
-            ->select('users.*', 'employees.birth_date', 'employees.gender', 'employee_employment.line_manager')
-            ->get();
+        $employee = Employee::with(
+            'contact',
+            'governmentIds',
+            'familyInfo',
+            'education',
+            'employment',
+            'children',
+            'user'
+        )->get();
 
-        $userList = DB::table('users')->get();
-        $departments = DB::table('departments')->get();
+        $userList = User::all();
+        $departments = department::all();
+        $typeJobs = TypeJob::all();
 
-        return view('employees.allemployeecard', compact('users', 'userList', 'departments'));
+        return view('employees.allemployeecard', compact('employee', 'userList', 'departments', 'typeJobs'));
     }
 
     /** All Employee List */
     public function listAllEmployee()
     {
-        $users = DB::table('users')
-            ->join('employees', 'users.user_id', '=', 'employees.emp_id')
-            ->leftJoin('employee_employment', 'employees.emp_id', '=', 'employee_employment.emp_id')
-            ->leftJoin('employee_contacts', 'employees.emp_id', '=', 'employee_contacts.emp_id')
-            ->select('users.*', 'employees.birth_date', 'employees.gender', 'employee_contacts.mobile_number', 'employee_employment.line_manager')
-            ->get();
+        $employee = Employee::with(
+            'contact',
+            'governmentIds',
+            'familyInfo',
+            'education',
+            'employment',
+            'children',
+            'user'
+        )->get();
 
-        $userList = DB::table('users')->get();
-        $departments = DB::table('departments')->get();
+        $userList = User::all();
+        $departments = department::all();
+        $typeJobs = TypeJob::all();
 
-        return view('employees.employeelist', compact('users', 'userList', 'departments'));
+        return view('employees.employeelist', compact('employee', 'userList', 'departments', 'typeJobs'));
     }
 
     /** Get Data Employee Position */
@@ -75,6 +87,7 @@ class EmployeeController extends Controller
 
         return response()->json(['error' => 'Invalid request'], 400);
     }
+    
 
 
     /** Save Data Employee */
@@ -277,6 +290,15 @@ class EmployeeController extends Controller
                 'employment_status'       => $validatedData['employment_status'],
                 'date_hired'              => $validatedData['date_hired'],
             ]);
+            
+            $startDate = Carbon::parse($validatedData['date_hired'])->format('Y-m-d');
+
+            $employee->positionHistory()->create([
+                'emp_id'              => $employee->emp_id,
+                'position_id'         => $validatedData['position_id'],
+                'start_date'          => $startDate,
+                'end_date'            => null, // End date will be set on next change
+            ]);
 
 
             User::create([
@@ -466,6 +488,7 @@ class EmployeeController extends Controller
             // Find Employee
             $employee = Employee::where('emp_id', $request->emp_id)->firstOrFail();
 
+            $oldPositionId = $employee->employment->position_id;
             // Update Employee Personal Info
             $employee->update([
                 'name'       => $validatedData['name'],
@@ -497,6 +520,30 @@ class EmployeeController extends Controller
                     'line_manager'        => $validatedData['line_manager'],
                 ]
             );
+
+            // Check if position has changed and record it in the position_histories table
+            if ($oldPositionId != $validatedData['position_id']) {
+                $latestHistory = $employee->positionHistory()->latest('start_date')->first();
+            
+                // If no history yet, use date_hired as the start_date
+                $startDate = $latestHistory ? now()->toDateString() : Carbon::parse($validatedData['date_hired'])->format('Y-m-d');
+            
+                // If there *is* a history, update the latest one's end_date
+                if ($latestHistory) {
+                    $latestHistory->update([
+                        'end_date' => now()->toDateString(),
+                    ]);
+                }
+            
+                // Insert new position history
+                $employee->positionHistory()->create([
+                    'emp_id'              => $employee->emp_id,
+                    'position_id'         => $validatedData['position_id'],
+                    'start_date'          => $startDate,
+                    'end_date'            => null, // End date will be set on next change
+                ]);
+            }
+            
 
             // Handle Avatar Upload
             if ($request->hasFile('images')) {
@@ -1260,95 +1307,91 @@ class EmployeeController extends Controller
     /** Employee Search */
     public function employeeSearch(Request $request)
     {
-        $query = User::with([
-            'employee',
-            'employee.contact',
-            'employee.governmentIds',
-            'employee.familyInfo',
-            'employee.education',
-            'employee.employment',
-            'employee.children',
-            'employee.civilServiceEligibility',
-            'employee.workExperiences',
-            'employee.voluntaryWorks',
-            'employee.trainings',
-            'employee.otherInformations'
+        $query = Employee::with([
+            'contact',
+            'governmentIds',
+            'familyInfo',
+            'education',
+            'employment',
+            'children',
+            'civilServiceEligibility',
+            'workExperiences',
+            'voluntaryWorks',
+            'trainings',
+            'otherInformations'
         ]);
 
         // Filtering by emp_id
         if ($request->emp_id) {
-            $query->where('users.user_id', 'LIKE', '%' . $request->emp_id . '%');
+            $query->where('emp_id', 'LIKE', '%' . $request->emp_id . '%');
         }
 
-        // Filtering by name
+        // Filtering by name (Assuming name is in 'contact' relationship)
         if ($request->name) {
-            $query->where('users.name', 'LIKE', '%' . $request->name . '%');
+            $query->whereHas('contact', function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->name . '%');
+            });
         }
 
         // Filtering by position
         if ($request->position) {
-            $query->whereHas('employee.employment', function ($query) use ($request) {
-                $query->whereHas('position', function ($query) use ($request) {
-                    $query->where('position_name', 'LIKE', '%' . $request->position . '%');
-                });
+            $query->whereHas('employment.position', function ($query) use ($request) {
+                $query->where('position_name', 'LIKE', '%' . $request->position . '%');
             });
         }
-        
 
-        $users = $query->get();
-        $userList = User::all();
-
+        $employee = $query->get();
         $departments = Department::all();
+        $userList = User::all();
+        $typeJobs = TypeJob::all();
 
-        return view('employees.allemployeecard', compact('users', 'userList', 'departments'));
+        return view('employees.allemployeecard', compact('employee', 'departments', 'userList', 'typeJobs'));
     }
-
 
     /** List Search */
     public function employeeListSearch(Request $request)
     {
-        $query = User::with([
-            'employee',
-            'employee.contact',
-            'employee.governmentIds',
-            'employee.familyInfo',
-            'employee.education',
-            'employee.employment',
-            'employee.children',
-            'employee.civilServiceEligibility',
-            'employee.workExperiences',
-            'employee.voluntaryWorks',
-            'employee.trainings',
-            'employee.otherInformations'
+        $query = Employee::with([
+            'contact',
+            'governmentIds',
+            'familyInfo',
+            'education',
+            'employment',
+            'children',
+            'civilServiceEligibility',
+            'workExperiences',
+            'voluntaryWorks',
+            'trainings',
+            'otherInformations'
         ]);
 
         // Filtering by emp_id
         if ($request->emp_id) {
-            $query->where('users.user_id', 'LIKE', '%' . $request->emp_id . '%');
+            $query->where('emp_id', 'LIKE', '%' . $request->emp_id . '%');
         }
 
-        // Filtering by name
+        // Filtering by name (Assuming name is in 'contact' relationship)
         if ($request->name) {
-            $query->where('users.name', 'LIKE', '%' . $request->name . '%');
+            $query->whereHas('contact', function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->name . '%');
+            });
         }
 
         // Filtering by position
         if ($request->position) {
-            $query->whereHas('employee.employment', function ($query) use ($request) {
-                $query->whereHas('position', function ($query) use ($request) {
-                    $query->where('position_name', 'LIKE', '%' . $request->position . '%');
-                });
+            $query->whereHas('employment.position', function ($query) use ($request) {
+                $query->where('position_name', 'LIKE', '%' . $request->position . '%');
             });
         }
-        
 
-        $users = $query->get();
-        $userList = User::all();
-
+        $employee = $query->get();
         $departments = Department::all();
+        $userList = User::all();
+        $typeJobs = TypeJob::all();
 
-        return view('employees.employeelist', compact('users', 'userList', 'departments'));
+        return view('employees.employeelist', compact('employee', 'departments', 'userList', 'typeJobs'));
     }
+
 
 
     /** Employee profile */
@@ -1708,6 +1751,78 @@ class EmployeeController extends Controller
             return redirect()->back();
         }
     }
+
+    public function getGraphData(Request $request)
+    {
+        $inputColumn = strtolower(str_replace(' ', '_', $request->input('column')));
+        $dbColumns = Schema::getColumnListing('employees');
+        $validColumns = array_map(fn($col) => strtolower($col), $dbColumns);
+
+        $bestMatch = null;
+        $highestSimilarity = 0;
+
+        foreach ($validColumns as $column) {
+            similar_text($inputColumn, $column, $percent);
+            if ($percent > $highestSimilarity) {
+                $highestSimilarity = $percent;
+                $bestMatch = $column;
+            }
+        }
+
+        if ($highestSimilarity < 60) {
+            return response()->json(['error' => 'Column not found'], 400);
+        }
+
+        $realColumnName = $dbColumns[array_search($bestMatch, $validColumns)];
+
+        $data = Employee::select($realColumnName, DB::raw('count(*) as count'))
+            ->groupBy($realColumnName)
+            ->get();
+
+        $graphData = [
+            'labels' => $data->pluck($realColumnName)->toArray(),
+            'values' => $data->pluck('count')->toArray()
+        ];
+
+        $graph = GraphData::create([
+            'graph_type' => $request->input('graph_type'),
+            'filter_column' => $realColumnName,
+            'data' => json_encode($graphData),
+        ]);
+
+        return response()->json([
+            'message' => 'Graph saved successfully!',
+            'graph_id' => $graph->id,
+            'labels' => $graphData['labels'],
+            'values' => $graphData['values']
+        ]);
+    }
+
+    public function deleteGraph($graphId)
+    {
+        $graph = GraphData::findOrFail($graphId);
+        $graph->delete();
+
+        return response()->json(['message' => 'Graph deleted successfully']);
+    }
+
+    public function getAllStoredGraphs()
+    {
+        $graphs = GraphData::all(); // Fetch all graphs
+
+        return response()->json($graphs->map(function ($graph) {
+            $formattedColumn = ucwords(str_replace('_', ' ', $graph->filter_column));
+
+            return [
+                'id' => $graph->id,
+                'graph_type' => $graph->graph_type,
+                'labels' => json_decode($graph->data, true)['labels'] ?? [],
+                'values' => json_decode($graph->data, true)['values'] ?? [],
+                'filter_column' => $formattedColumn
+            ];
+        }));
+    }
+
 
 
 

@@ -85,6 +85,12 @@ class Employee extends Model
         return $this->belongsTo(User::class, 'emp_id', 'user_id');
     }
 
+    public function positionHistory()
+    {
+        return $this->hasMany(PositionHistory::class, 'emp_id', 'emp_id');
+    }
+
+
 
 
 

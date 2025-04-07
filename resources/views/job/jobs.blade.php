@@ -19,6 +19,11 @@
                 </div>
             </div>
         </div>
+        <div class="card">
+            <div class="card-body">
+                @include('sidebar.sidebarmanagejobs')
+            </div>
+        </div>
         <!-- /Page Header -->
 
         <div class="row">
@@ -28,6 +33,7 @@
                         <thead>
                             <tr>
                                 <th>No</th>
+                                <th hidden></th>
                                 <th hidden></th>
                                 <th hidden></th>
                                 <th hidden></th>
@@ -52,12 +58,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($job_list as $key=>$items )
+                            @foreach ($job_list as $key=>$items)
                             <tr>
                                 <td>{{ ++$key }}</td>
                                 <td hidden class="id">{{ $items->id }}</td>
-                                <td hidden class="job_title">{{ $items->position->position_name }}</td>
-                                <td hidden class="job_location">{{ $items->designation->designation_name }}</td>
+                                <td hidden class="position">{{ $items->position->id }}</td>
+                                <td hidden class="designation">{{ $items->designation->id }}</td>
+                                <td hidden class="department_id">{{ $items->department->id }}</td>
                                 <td hidden class="no_of_vacancies">{{ $items->no_of_vacancies }}</td>
                                 <td hidden class="experience">{{ $items->experience }}</td>
                                 <td hidden class="salary_from">{{ $items->salary_from }}</td>
@@ -68,65 +75,58 @@
                                 <td hidden class="expired_date">{{ $items->expired_date }}</td>
                                 <td hidden class="description">{{ $items->description }}</td>
                                 <td hidden class="age">{{ $items->age }}</td>
-                                <td><a href="{{ url('job/details/'.$items->position->id) }}">{{ $items->position->position_name }}</a></td>
+                                <td><a href="{{ url('job/details/'.$items->id) }}">{{ $items->position->position_name }}</a></td>
                                 <td class="department">{{ $items->department->department }}</td>
                                 <td>{{ date('d F, Y',strtotime($items->start_date)) }}</td>
                                 <td>{{ date('d F, Y',strtotime($items->expired_date)) }}</td>
                                 <td class="text-center">
                                     <div class="dropdown action-label">
-                                        <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false">
-                                            @if($items->job_type == 'Full Time')
-                                            <i class="fa fa-dot-circle-o text-info"></i> {{ $items->job_type }}
-                                            @elseif($items->job_type == 'Part Time')
-                                            <i class="fa fa-dot-circle-o text-success"></i> {{ $items->job_type }}
-                                            @elseif($items->job_type == '')
-                                            <i class="fa fa-dot-circle-o text-danger"></i> {{ $items->job_type }}
-                                            @elseif($items->job_type == 'Internship')
-                                            <i class="fa fa-dot-circle-o text-danger"></i> {{ $items->job_type }}
-                                            @elseif($items->job_type == 'Temporary')
-                                            <i class="fa fa-dot-circle-o text-warning"></i> {{ $items->job_type }}
-                                            @elseif($items->job_type == 'Remote')
-                                            <i class="fa fa-dot-circle-o text-dark"></i> {{ $items->job_type }}
-                                            @elseif($items->job_type == 'Others')
-                                            <i class="fa fa-dot-circle-o text-dark"></i> {{ $items->job_type }}
-                                            @endif
+                                        <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false" id="job_type_label{{ $items->id }}">
+                                            @php
+                                            // Default to 'Not Set' if no job type is provided
+                                            $jobType = $items->job_type ?? 'Not Set';
+                                            
+                                            $jobTypeRecord = $type_job->where('name_type_job', $jobType)->first();
+
+                                            $color = $jobTypeRecord ? $jobTypeRecord->color : 'info';
+                                            @endphp
+                                            <i class="fa fa-dot-circle-o text-{{ $color }}" id="job_type_icon{{ $items->id }}"></i> {{ $jobType }}
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-right jobtype_status">
-                                            <a hidden id="id_update{{ $items->id }}" onclick="setTime({{ $items->id }})">{{ $items->id }}</a>
-                                            <a class="dropdown-item full_time{{ $items->id }}" id="status{{ $items->id }}" onclick="setTime({{ $items->id }})"><i class="fa fa-dot-circle-o text-info"></i> Full Time</a>
-                                            <a class="dropdown-item part_time{{ $items->id }}" id="status{{ $items->id }}" onclick="setTime({{ $items->id }})"><i class="fa fa-dot-circle-o text-success"></i> Part Time</a>
-                                            <a class="dropdown-item internship{{ $items->id }}" id="status{{ $items->id }}" onclick="setTime({{ $items->id }})"><i class="fa fa-dot-circle-o text-danger"></i> Internship<a>
-                                                    <a class="dropdown-item temporary{{ $items->id }}" id="status{{ $items->id }}" onclick="setTime({{ $items->id }})"><i class="fa fa-dot-circle-o text-warning"></i> Temporary<a>
-                                                            <a class="dropdown-item remote{{ $items->id }}" id="status{{ $items->id }}" onclick="setTime({{ $items->id }})"><i class="fa fa-dot-circle-o text-dark"></i> Remote</a>
-                                                            <a class="dropdown-item others{{ $items->id }}" id="status{{ $items->id }}" onclick="setTime({{ $items->id }})"><i class="fa fa-dot-circle-o text-dark"></i> Others</a>
+                                            <a hidden id="id_update{{ $items->id }}">{{ $items->id }}</a>
+                                            @foreach($type_job as $jobType)
+                                            <a class="dropdown-item jobtypestatus-option" data-id="{{ $items->id }}" data-status="{{ $jobType->name_type_job }}" data-color="{{ $jobType->color }}">
+                                                <i class="fa fa-dot-circle-o text-{{ $jobType->color }}"></i> {{ $jobType->name_type_job }}
+                                            </a>
+                                            @endforeach
                                         </div>
                                     </div>
                                 </td>
                                 <td class="text-center">
                                     <div class="dropdown action-label">
-                                        <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false">
-                                            @if($items->status == 'Open')
-                                            <i class="fa fa-dot-circle-o text-info"></i> {{ $items->status }}
-                                            @elseif($items->status == 'Closed')
-                                            <i class="fa fa-dot-circle-o text-success"></i> {{ $items->status }}
-                                            @elseif($items->status == 'Cancelled')
-                                            <i class="fa fa-dot-circle-o text-danger"></i> {{ $items->status }}
-                                            @endif
+                                        <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false" id="status_label{{ $items->id }}">
+                                            @php
+                                            $statusColors = [
+                                            'Open' => 'text-info',
+                                            'Closed' => 'text-success',
+                                            'Cancelled' => 'text-danger'
+                                            ];
+                                            $colorClass = $statusColors[$items->status] ?? 'text-secondary';
+                                            @endphp
+                                            <i class="fa fa-dot-circle-o {{ $colorClass }}"></i> {{ $items->status }}
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="#"><i class="fa fa-dot-circle-o text-info"></i> Open</a>
-                                            <a class="dropdown-item" href="#"><i class="fa fa-dot-circle-o text-success"></i> Closed</a>
-                                            <a class="dropdown-item" href="#"><i class="fa fa-dot-circle-o text-danger"></i> Cancelled</a>
+                                            @foreach(['Open' => 'info', 'Closed' => 'success', 'Cancelled' => 'danger'] as $status => $color)
+                                            <a class="dropdown-item status-option" data-id="{{ $items->id }}" data-status="{{ $status }}">
+                                                <i class="fa fa-dot-circle-o text-{{ $color }}"></i> {{ $status }}
+                                            </a>
+                                            @endforeach
                                         </div>
                                     </div>
                                 </td>
-                                @php
-                                $apply = DB::table('apply_for_jobs')->where('job_title',$items->job_title)->count();
-                                @endphp
                                 <td>
-                                    <a href="{{ url('job/applicants/'.$items->job_title) }}" class="btn btn-sm btn-primary">
-                                        {{ $apply }}
-                                        Candidates
+                                    <a href="{{ url('job/applicants/'.$items->position->position_name) }}" class="btn btn-sm btn-primary">
+                                        {{ $items->applicants->whereIn('status', ['New', 'Reviewed'])->count() }} Applicants
                                     </a>
                                 </td>
 
@@ -135,7 +135,7 @@
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
                                             <a href="#" class="dropdown-item edit_job" data-toggle="modal" data-target="#edit_job"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                                            <a href="#" class="dropdown-item" data-toggle="modal" data-target="#delete_job"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                                            <a href="#" class="dropdown-item delete_job" data-toggle="modal" data-target="#delete_job"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                                         </div>
                                     </div>
                                 </td>
@@ -178,8 +178,8 @@
                                 <div class="form-group">
                                     <label>Designation</label>
                                     <select class="form-control" id="designation" name="designation_id">
-                                    <option value="" disabled selected>-- Select Designation --</option>
-                                </select>
+                                        <option value="" disabled selected>-- Select Designation --</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -188,8 +188,8 @@
                                 <div class="form-group">
                                     <label>Position Title</label>
                                     <select class="form-control" id="position" name="position_id">
-                                    <option value="" disabled selected>-- Select Position Title --</option>
-                                </select>
+                                        <option value="" disabled selected>-- Select Position Title --</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -232,7 +232,7 @@
                                 <div class="form-group">
                                     <label>Job Type</label>
                                     <select class="select @error('tob_type') is-invalid @enderror" name="job_type">
-                                        <option selected disabled>--select--</option>
+                                        <option selected disabled>--Select Job Type--</option>
                                         @foreach ($type_job as $job )
                                         <option value="{{ $job->name_type_job }}" {{ old('job_type') == $job->name_type_job ? "selected" :""}}>{{ $job->name_type_job }}</option>
                                         @endforeach
@@ -283,131 +283,7 @@
     <!-- /Add Job Modal -->
 
     <!-- Edit Job Modal -->
-    <div id="edit_job" class="modal custom-modal fade" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Job</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ route('form/apply/job/update') }}" method="POST">
-                        @csrf
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Job Title</label>
-                                    <input class="form-control" type="text" id="e_job_title" name="job_title">
-                                </div>
-                            </div>
-                            <input class="form-control" type="hidden" id="e_id" name="id" value="">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Department</label>
-                                    <select class="select" id="e_department" name="department">
-                                        @foreach ($department as $value)
-                                        <option value="{{ $value->department }}">{{ $value->department }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Job Location</label>
-                                    <input class="form-control" type="text" id="e_job_location" name="job_location" value="">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>No of Vacancies</label>
-                                    <input class="form-control" type="text" id="e_no_of_vacancies" name="no_of_vacancies" value="">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Experience</label>
-                                    <input class="form-control" type="text" id="e_experience" name="experience" value="">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Age</label>
-                                    <input class="form-control" type="text" id="e_age" name="age" value="">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Salary From</label>
-                                    <input type="text" class="form-control" id="e_salary_from" name="salary_from" value="">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Salary To</label>
-                                    <input type="text" class="form-control" id="e_salary_to" name="salary_to" value="">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Job Type</label>
-                                    <select class="select" id="e_job_type" name="job_type">
-                                        @foreach ($type_job as $job )
-                                        <option value="{{ $job->name_type_job }}">{{ $job->name_type_job }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Status</label>
-                                    <select class="select" id="e_status" name="status">
-                                        <option value="Open">Open</option>
-                                        <option value="Closed">Closed</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Start Date</label>
-                                    <input type="text" class="form-control datetimepicker" id="e_start_date" name="start_date" value="">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Expired Date</label>
-                                    <input type="text" class="form-control datetimepicker" id="e_expired_date" name="expired_date" value="">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea class="form-control" rows="5" id="e_description" name="description"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="submit-section">
-                            <button type="submit" class="btn btn-primary submit-btn">Update</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <x-layouts.edit-job-modal :$department :$type_job :$job_list />
     <!-- /Edit Job Modal -->
 
     <!-- Delete Job Modal -->
@@ -415,20 +291,24 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
-                    <div class="form-header">
-                        <h3>Delete Job</h3>
-                        <p>Are you sure want to delete?</p>
-                    </div>
-                    <div class="modal-btn delete-action">
-                        <div class="row">
-                            <div class="col-6">
-                                <a href="javascript:void(0);" class="btn btn-primary continue-btn">Delete</a>
-                            </div>
-                            <div class="col-6">
-                                <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
+                    <form action="{{ route('form/apply/job/delete') }}" method="POST">
+                        @csrf
+                        <div class="form-header">
+                            <input class="form-control" type="hidden" id="d_id" name="id" value="">
+                            <h3>Delete Job</h3>
+                            <p>Are you sure want to delete?</p>
+                        </div>
+                        <div class="modal-btn delete-action">
+                            <div class="row">
+                                <div class="col-6">
+                                    <button href="javascript:void(0);" type="submit" class="btn btn-primary submit-btn continue-btn">Delete</button>
+                                </div>
+                                <div class="col-6">
+                                    <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -438,140 +318,163 @@
 <!-- /Page Wrapper -->
 
 @section('script')
+
+
+<x-layouts.edit-job-js />
+
 {{--add--}}
 <script>
-            $(document).ready(function() {
-                var url = "{{ route('hr/get/information/emppos') }}";
+    $(document).ready(function() {
+        var url = "{{ route('hr/get/information/emppos') }}";
 
-                $('#department').change(function() {
-                    const departmentId = $(this).val();
-                    $('#designation').html('<option value="" disabled selected>-- Select Designation --</option>'); // Clear designation dropdown
-                    $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
+        $('#department').change(function() {
+            const departmentId = $(this).val();
+            $('#designation').html('<option value="" disabled selected>-- Select Designation --</option>'); // Clear designation dropdown
+            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
 
-                    if (departmentId) {
-                        $.ajax({
-                            url: url
-                            , type: "POST"
-                            , data: {
-                                id: departmentId
-                                , _token: $('meta[name="csrf-token"]').attr('content')
-                            }
-                            , dataType: "json"
-                            , success: function(response) {
-                                if (response.designations) {
-                                    response.designations.forEach(designation => {
-                                        $('#designation').append(
-                                            `<option value="${designation.id}">${designation.designation_name}</option>`
-                                        );
-                                    });
-                                }
-                            }
-                            , error: function(xhr, status, error) {
-                                console.error("Error fetching designations:", error);
-                            }
-                        });
+            if (departmentId) {
+                $.ajax({
+                    url: url
+                    , type: "POST"
+                    , data: {
+                        id: departmentId
+                        , _token: $('meta[name="csrf-token"]').attr('content')
+                    }
+                    , dataType: "json"
+                    , success: function(response) {
+                        if (response.designations) {
+                            response.designations.forEach(designation => {
+                                $('#designation').append(
+                                    `<option value="${designation.id}">${designation.designation_name}</option>`
+                                );
+                            });
+                        }
+                    }
+                    , error: function(xhr, status, error) {
+                        console.error("Error fetching designations:", error);
                     }
                 });
+            }
+        });
 
-                // On designation change
-                $('#designation').change(function() {
-                    const designationId = $(this).val();
-                    $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
+        // On designation change
+        $('#designation').change(function() {
+            const designationId = $(this).val();
+            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
 
-                    if (designationId) {
-                        $.ajax({
-                            url: url
-                            , type: "POST"
-                            , data: {
-                                id: designationId
-                                , _token: $('meta[name="csrf-token"]').attr('content')
-                            }
-                            , dataType: "json"
-                            , success: function(response) {
-                                if (response.positions) {
-                                    response.positions.forEach(position => {
-                                        $('#position').append(
-                                            `<option value="${position.id}">${position.position_name}</option>`
-                                        );
-                                    });
-                                }
-                            }
-                            , error: function(xhr, status, error) {
-                                console.error("Error fetching positions:", error);
-                            }
-                        });
+            if (designationId) {
+                $.ajax({
+                    url: url
+                    , type: "POST"
+                    , data: {
+                        id: designationId
+                        , _token: $('meta[name="csrf-token"]').attr('content')
+                    }
+                    , dataType: "json"
+                    , success: function(response) {
+                        if (response.positions) {
+                            response.positions.forEach(position => {
+                                $('#position').append(
+                                    `<option value="${position.id}">${position.position_name}</option>`
+                                );
+                            });
+                        }
+                    }
+                    , error: function(xhr, status, error) {
+                        console.error("Error fetching positions:", error);
                     }
                 });
-            });
-
-        </script>
-
-{{-- update --}}
-<script>
-    $(document).on('click', '.edit_job', function() {
-        var _this = $(this).parents('tr');
-        $('#e_id').val(_this.find('.id').text());
-        $('#e_job_title').val(_this.find('.job_title').text());
-        $('#e_job_location').val(_this.find('.job_location').text());
-        $('#e_no_of_vacancies').val(_this.find('.no_of_vacancies').text());
-        $('#e_experience').val(_this.find('.experience').text());
-        $('#e_salary_from').val(_this.find('.salary_from').text());
-        $('#e_salary_to').val(_this.find('.salary_to').text());
-        $('#e_start_date').val(_this.find('.start_date').text());
-        $('#e_expired_date').val(_this.find('.expired_date').text());
-        $('#e_age').val(_this.find('.age').text());
-        $('#e_description').val(_this.find('.description').text());
-
-        // department
-        var department = (_this.find(".department").text());
-        var _option = '<option selected value="' + department + '">' + _this.find('.department').text() + '</option>'
-        $(_option).appendTo("#e_department");
-
-        // job type
-        var job_type = (_this.find(".job_type").text());
-        var _option = '<option selected value="' + job_type + '">' + _this.find('.job_type').text() + '</option>'
-        $(_option).appendTo("#e_job_type");
-
-        // status
-        var status = (_this.find(".status").text());
-        var _option = '<option selected value="' + status + '">' + _this.find('.status').text() + '</option>'
-        $(_option).appendTo("#e_status");
+            }
+        });
     });
 
 </script>
 
+
+{{-- delete --}}
 <script>
-    function setTime(index) {
-        $('.jobtype_status').click(function() {
-            var full_time = $(".full_time" + index).text();
-            var part_time = $(".part_time" + index).text();
-            var internship = $(".internship" + index).text();
-            var temporary = $(".temporary" + index).text();
-            var remote = $(".remote" + index).text();
-            var others = $(".others" + index).text();
-            var id_update = $("#id_update" + index).text();
+    $(document).on('click', '.delete_job', function() {
+        var _this = $(this).parents('tr');
+        $('#d_id').val(_this.find('.id').text());
+    });
+
+</script>
+
+
+<script>
+    $(document).ready(function() {
+        // Apply the color assigned in the database to the job type label icon
+        $("a[id^='job_type_label']").each(function() {
+            var jobId = $(this).attr("id").split('job_type_label')[1]; // Extract the ID from the label
+            var color = $(this).find("i").attr("class").split(' ')[1].replace('text-', ''); // Get the current color class from the icon
+            $(this).find("i").addClass("text-" + color); // Set the color to the icon based on the database color
+        });
+
+        // Apply the selected color when dropdown items are clicked
+        $(document).on("click", ".jobtypestatus-option", function() {
+            var jobType = $(this).data("status");
+            var jobId = $(this).data("id");
+            var color = $(this).data("color"); // Get the color assigned to this job type
 
             $.ajax({
-                url: '{{route("jobtypestatus/update")}}'
+                url: '{{ route("jobtypestatus/update") }}'
                 , type: "POST"
                 , data: {
-                    full_time: full_time
-                    , part_time: part_time
-                    , internship: internship
-                    , temporary: temporary
-                    , remote: remote
-                    , others: others
-                    , id_update: id_update
+                    job_type: jobType
+                    , id_update: jobId
                     , _token: "{{ csrf_token() }}"
                 }
-                , success: function(success) {
-                    console.log(success);
+                , success: function(response) {
+                    $("#job_type_label" + jobId).html(
+                        '<i class="fa fa-dot-circle-o text-' + color + '"></i> ' + jobType
+                    );
                 }
-            , });
-            // location.reload();
+                , error: function(error) {
+                    console.error(error);
+                }
+            });
         });
+    });
+
+</script>
+
+
+
+{{-- status --}}
+<script>
+    $(document).on("click", ".status-option", function() {
+        var status = $(this).data("status");
+        var jobId = $(this).data("id");
+
+        $.ajax({
+            url: '{{ route("jobstatus/update") }}'
+            , type: "POST"
+            , data: {
+                status: status
+                , id_update: jobId
+                , _token: "{{ csrf_token() }}"
+            }
+            , success: function(response) {
+                $("#status_label" + jobId).html(
+                    '<i class="fa fa-dot-circle-o text-' + getStatusColor(status) + '"></i> ' + status
+                );
+            }
+            , error: function(error) {
+                console.error(error);
+            }
+        });
+    });
+
+    function getStatusColor(status) {
+        var colors = {
+            "Open": "info"
+            , "Closed": "success"
+            , "Cancelled": "danger"
+        };
+        return colors[status] || "secondary";
     }
 
 </script>
+
 @endsection
 @endsection

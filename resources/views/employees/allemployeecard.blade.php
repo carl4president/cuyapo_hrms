@@ -55,23 +55,24 @@
         <!-- Search Filter -->
 
         <div class="row staff-grid-row">
-            @foreach ($users as $lists )
+            @foreach ($employee as $lists )
             <div class="col-md-4 col-sm-6 col-12 col-lg-4 col-xl-3">
                 <div class="profile-widget">
                     <div class="profile-img">
-                        <a href="{{ url('all/employee/view/edit/'.$lists->user_id) }}" class="avatar">
-                            <img class="user-profile" src="{{ URL::to('/assets/images/'. $lists->avatar) }}" alt="{{ $lists->avatar }}" alt="{{ $lists->avatar }}" width="80" height="80">
+                        <a href="{{ url('all/employee/view/edit/'.$lists->emp_id) }}" class="avatar">
+                            <img class="user-profile" src="{{ $lists->user ? URL::to('/assets/images/'.$lists->user->avatar) : '/assets/images/default-avatar.png' }}" alt="{{ $lists->user ? $lists->user->avatar : 'default-avatar.png' }}" width="80" height="80">
                         </a>
                     </div>
                     <div class="dropdown profile-action">
                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="{{ url('all/employee/view/edit/'.$lists->user_id) }}"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                            <a class="dropdown-item" href="{{url('all/employee/delete/'.$lists->user_id)}}" onclick="return confirm('Are you sure to want to delete it?')"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                            <a class="dropdown-item" href="{{ url('all/employee/view/edit/'.$lists->emp_id) }}"><i class="fa fa-pencil m-r-5"></i> Edit</a>
+                            <a class="dropdown-item" href="{{url('all/employee/delete/'.$lists->emp_id)}}" onclick="return confirm('Are you sure to want to delete it?')"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                         </div>
                     </div>
-                    <h4 class="user-name m-t-10 mb-0 text-ellipsis"><a href="profile.html">{{ $lists->name }}</a></h4>
-                    <div class="small text-muted">{{ $lists->position }}</div>
+                    <h4 class="user-name m-t-10 mb-0 text-ellipsis"><a href="{{ url('all/employee/view/edit/'.$lists->emp_id) }}">{{ $lists->name }}</a></h4>
+                    <h6 class="m-t-10 mb-0 text-ellipsis">{{ $lists->employment->department->department }}</h6>
+                    <div class="small text-muted">{{ $lists->employment->position->position_name }}</div>
                 </div>
             </div>
             @endforeach
@@ -79,6 +80,70 @@
     </div>
     <!-- /Page Content -->
 
-   <x-layouts.add-emp-modal :$departments :$userList :$users/>
+    <x-layouts.add-emp-modal modal_title='Add Employee' :route="route('all/employee/save')" :routeUrl="route('hr/get/information/emppos')" :$departments :$userList :$employee>
+        <!-- Employment Details -->
+        <div class="col-12">
+            <h4 class="text-primary">Employment Details</h4>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Department</label>
+                <select class="form-control" id="department" name="department_id">
+                    <option value="" disabled selected>-- Select Department --</option>
+                    @foreach ($departments as $department)
+                    <option value="{{ $department->id }}">{{ $department->department }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Designation</label>
+                <select class="form-control" id="designation" name="designation_id">
+                    <option value="" disabled selected>-- Select Designation --</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Position</label>
+                <select class="form-control" id="position" name="position_id">
+                    <option value="" disabled selected>-- Select Position --</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Line Manager</label>
+                <select class="form-control" name="line_manager">
+                    <option selected disabled>-- Select --</option>
+                    @foreach ($userList as $user)
+                    <option value="{{ $user->name }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Employment Status</label>
+                <select class="form-control" id="employment_status" name="employment_status">
+                    <option value="" disabled selected>-- Select Employment Status --</option>
+                    @foreach($typeJobs as $jobType)
+                    <option value="{{ $jobType->name_type_job }}">{{ $jobType->name_type_job }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
 
-   @endsection
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Date Hired</label>
+                <div class="cal-icon">
+                    <input type="text" class="form-control datetimepicker" name="date_hired">
+                </div>
+            </div>
+        </div>
+    </x-layouts.add-emp-modal>
+
+    @endsection
+    @endsection

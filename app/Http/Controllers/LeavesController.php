@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\department;
 use App\Models\Employee;
+use App\Models\Holiday;
 use Illuminate\Http\Request;
 use App\Models\LeaveInformation;
 use App\Models\LeavesAdmin;
@@ -13,6 +14,7 @@ use DateTime;
 use Session;
 use DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class LeavesController extends Controller
 {
@@ -78,7 +80,9 @@ class LeavesController extends Controller
             $numberOfDay = (int) $request->number_of_day; // Ensure numeric input
 
             // Fetch existing leave ranges
-            $existingLeaves = Leave::where('staff_id', $staffId)->get(['date_from', 'date_to']);
+            $existingLeaves = Leave::where('staff_id', $staffId)
+                ->where('status', '!=', 'Declined')
+                ->get(['date_from', 'date_to']);
             $existingLeaveDates = [];
             foreach ($existingLeaves as $leave) {
                 if ($leave->date_from && $leave->date_to) {
@@ -204,6 +208,8 @@ class LeavesController extends Controller
 
             // Retrieve all existing leaves for the staff
             $existingLeaves = Leave::where('staff_id', $staffId)
+                ->where('status', '!=', 'Declined')
+                ->where('id', '!=', $leaveId)
                 ->get(['date_from', 'date_to', 'created_at']);  // Include created_at for comparison
 
             $existingLeaveDates = [];
@@ -334,30 +340,97 @@ class LeavesController extends Controller
     /** Approve Leave */
     public function approveRecordLeave(Request $request)
     {
-        $leave = Leave::find($request->leave_id);
-        if (!$leave) {
-            return back()->with('error', 'Leave request not found');
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            $leave = Leave::find($request->leave_id);
+
+            if (!$leave) {
+                return back()->with('error', 'Leave request not found');
+            }
+
+            // Update the leave's approved_by column with the authenticated user's ID
+            $leave->status = 'Approved';
+            $leave->approved_by = Auth::user()->user_id;
+            $leave->save();
+
+            return back()->with('success', 'Leave status approved successfully.');
         }
 
-        $leave->status = 'Approved';
-        $leave->save();
-
-        return back()->with('success', 'Leave status approved successfully.');
+        return back()->with('error', 'You must be logged in to approve leave.');
     }
+
 
     /** Decline Leave */
     public function declineRecordLeave(Request $request)
     {
-        $leave = Leave::find($request->leave_id);
-        if (!$leave) {
-            return back()->with('error', 'Leave request not found');
+        try {
+            $leave = Leave::find($request->leave_id);
+            if (!$leave) {
+                return back()->with('error', 'Leave request not found');
+            }
+
+            // Find the corresponding LeaveBalance
+            $leaveBalance = LeaveBalance::where('staff_id', $leave->staff_id)
+                ->where('leave_type', $leave->leave_type)
+                ->latest('created_at')
+                ->first();
+
+            if ($leaveBalance) {
+                $remainingLeaveDays = json_decode($leaveBalance->remaining_leave_days, true);
+
+                if (count($remainingLeaveDays) > 0) {
+                    $declinedTimestamp = $leave->created_at->format('Y-m-d H:i:s');
+
+                    if (isset($remainingLeaveDays[$declinedTimestamp])) {
+                        $declinedIndex = array_search($declinedTimestamp, array_keys($remainingLeaveDays));
+                        $nextTimestamp = array_keys($remainingLeaveDays)[$declinedIndex + 1] ?? null;
+
+                        if ($nextTimestamp) {
+                            // Calculate the used leave difference
+                            $usedLeaveDiff = $remainingLeaveDays[$nextTimestamp][0] - $remainingLeaveDays[$nextTimestamp][1];
+
+                            // Adjust the next timestamp range to "fill the gap"
+                            $remainingLeaveDays[$nextTimestamp][0] = $remainingLeaveDays[$declinedTimestamp][1];
+                            $remainingLeaveDays[$nextTimestamp][1] = $remainingLeaveDays[$nextTimestamp][0] - $usedLeaveDiff;
+
+                            \Log::info('Adjusted next timestamp after decline:', [
+                                'next_timestamp' => $nextTimestamp,
+                                'new_values' => $remainingLeaveDays[$nextTimestamp]
+                            ]);
+                        }
+
+                        // Remove the declined timestamp
+                        unset($remainingLeaveDays[$declinedTimestamp]);
+
+                        // Save updated leave balance
+                        $leaveBalance->remaining_leave_days = json_encode($remainingLeaveDays);
+                        $leaveBalance->save();
+
+                        \Log::info('Declined leave timestamp removed from balance:', $remainingLeaveDays);
+                    } else {
+                        \Log::warning('Decline: Timestamp not found in remaining_leave_days');
+                    }
+                }
+            } else {
+                \Log::warning('Decline: Leave balance not found for staff ID ' . $leave->staff_id);
+            }
+
+            // Finally, set status to Declined
+            $leave->status = 'Declined';
+            $leave->save();
+
+            return back()->with('success', 'Leave status declined and balance updated.');
+        } catch (\Exception $e) {
+            \Log::error('Error during declineRecordLeave:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'leave_id' => $request->leave_id,
+            ]);
+
+            return back()->with('error', 'Something went wrong while declining the leave.');
         }
-
-        $leave->status = 'Declined';
-        $leave->save();
-
-        return back()->with('success', 'Leave status declined successfully.');
     }
+
 
     /** Pending Leave */
     public function pendingRecordLeave(Request $request)
@@ -439,6 +512,10 @@ class LeavesController extends Controller
         // Ensure remaining_leave_days are in sequence
         $this->checkAndFixLeaveSequences();
 
+        $this->updateUsedLeaveDays();
+
+        $this->updateTotalLeaveDays();
+
         // Return the view with the necessary data
         return view('employees.leaves_manage.leavesettings', [
             'vacationLeave'   => $this->getLeaveDays('Vacation Leave', $currentYear),
@@ -455,7 +532,7 @@ class LeavesController extends Controller
     {
         // Loop through all leave balances to check and adjust sequences
         $leaveBalances = LeaveBalance::all();
-    
+
         foreach ($leaveBalances as $leaveBalance) {
             $remainingLeaveDays = json_decode($leaveBalance->remaining_leave_days, true);
 
@@ -463,24 +540,24 @@ class LeavesController extends Controller
                 $leaveBalance->delete();
                 continue;
             }
-    
+
             if (count($remainingLeaveDays) > 0) {
                 // Get the total leave days for the current record
                 $totalLeaveDays = (int)$leaveBalance->total_leave_days;
-    
+
                 // Check if the first timestamp is deleted
                 $firstTimestamp = key($remainingLeaveDays);
-    
+
                 if ($this->isFirstTimestampDeleted($remainingLeaveDays)) {
                     // Get the next timestamp after the deleted first timestamp
                     $nextTimestamp = array_keys($remainingLeaveDays)[0];
-    
+
                     // Reassign the first value to the total leave days
                     $remainingLeaveDays[$nextTimestamp][0] = $totalLeaveDays;
-    
+
                     // Recalculate the second value for the next timestamp
                     $remainingLeaveDays[$nextTimestamp][1] = $remainingLeaveDays[$nextTimestamp][0] - ($remainingLeaveDays[$nextTimestamp][0] - $remainingLeaveDays[$nextTimestamp][1]);
-    
+
                     // Adjust subsequent timestamps
                     $prevValue = $remainingLeaveDays[$nextTimestamp][1];
                     foreach ($remainingLeaveDays as $timestamp => $values) {
@@ -488,7 +565,7 @@ class LeavesController extends Controller
                             // Adjust the first and second values
                             $remainingLeaveDays[$timestamp][0] = $prevValue;
                             $remainingLeaveDays[$timestamp][1] = $prevValue - ($values[0] - $values[1]);
-    
+
                             // Update the previous value
                             $prevValue = $remainingLeaveDays[$timestamp][1];
                         }
@@ -499,18 +576,18 @@ class LeavesController extends Controller
                     foreach ($remainingLeaveDays as $timestamp => $values) {
                         $remainingLeaveDays[$timestamp][0] = $prevValue;
                         $remainingLeaveDays[$timestamp][1] = $prevValue - ($values[0] - $values[1]);
-    
+
                         $prevValue = $remainingLeaveDays[$timestamp][1];
                     }
                 }
-    
+
                 // Save the adjusted remaining_leave_days
                 $leaveBalance->remaining_leave_days = json_encode($remainingLeaveDays);
                 $leaveBalance->save();
             }
         }
     }
-    
+
     // Helper function to check if the first timestamp is deleted
     private function isFirstTimestampDeleted($remainingLeaveDays)
     {
@@ -519,6 +596,57 @@ class LeavesController extends Controller
 
         // If the first timestamp is deleted, the array will have a new first timestamp
         return !isset($remainingLeaveDays[$firstTimestamp]);
+    }
+
+    private function updateUsedLeaveDays()
+    {
+        // Loop through all leave balances to update the used leave days
+        $leaveBalances = LeaveBalance::all();
+
+        foreach ($leaveBalances as $leaveBalance) {
+            $remainingLeaveDays = json_decode($leaveBalance->remaining_leave_days, true);
+
+            if (!empty($remainingLeaveDays)) {
+                // Get the first timestamp and its first value
+                $firstTimestamp = key($remainingLeaveDays);
+                $firstValue = $remainingLeaveDays[$firstTimestamp][0];
+
+                // Get the last timestamp and its second value
+                $lastTimestamp = array_key_last($remainingLeaveDays);
+                $lastValue = $remainingLeaveDays[$lastTimestamp][1];
+
+                // Calculate the difference between the first timestamp's first value and the last timestamp's second value
+                $leaveDifference = $firstValue - $lastValue;
+
+                // Update the used_leave_days in the leave balance table
+                $leaveBalance->used_leave_days = $leaveDifference;
+                $leaveBalance->save();
+            }
+        }
+    }
+
+    public function updateTotalLeaveDays()
+    {
+        // Get all leave information records
+        $leaveInformationRecords = LeaveInformation::all();
+
+        foreach ($leaveInformationRecords as $leaveInfo) {
+            // Get the staff_id and leave_type from leave_information
+            $staffId = $leaveInfo->staff_id;
+            $leaveType = $leaveInfo->leave_type;
+            $newLeaveDays = $leaveInfo->leave_days;  // The updated leave_days
+
+            // Find the corresponding leave balance record for the same staff_id and leave_type
+            $leaveBalance = LeaveBalance::where('staff_id', $staffId)
+                ->where('leave_type', $leaveType)
+                ->first();
+
+            if ($leaveBalance) {
+                // Update the total_leave_days in leave_balance to match leave_information
+                $leaveBalance->total_leave_days = $newLeaveDays;
+                $leaveBalance->save();
+            }
+        }
     }
 
     /**
@@ -729,9 +857,8 @@ class LeavesController extends Controller
         $staffId = $validated['staff_id'];
         $currentYear = date('Y');
 
-        // Check if a global record exists for the current year
+        // Check if a record exists for the given leave_type and year_leave (ignoring staff_id)
         $existingLeave = DB::table('leave_information')
-            ->where('staff_id', $staffId)
             ->where('leave_type', 'Vacation Leave')
             ->where('year_leave', $currentYear)
             ->first();
@@ -767,8 +894,7 @@ class LeavesController extends Controller
             if (!empty($updateData)) {
                 $updateData['updated_at'] = now();
                 DB::table('leave_information')
-                    ->where('staff_id', $staffId)
-                    ->where('leave_type', 'Vacation Leave')
+                    ->where('leave_type', 'Vacation Leave') // Only check for leave_type and year_leave
                     ->where('year_leave', $currentYear)
                     ->update($updateData);
             }
@@ -776,6 +902,7 @@ class LeavesController extends Controller
 
         return redirect()->back()->with('success', 'Vacation Leave settings updated successfully.');
     }
+
 
 
     public function updateSickLeaveSettings(Request $request)
@@ -788,15 +915,14 @@ class LeavesController extends Controller
         $staffId = $validated['staff_id'];
         $currentYear = date('Y');
 
-        // Check if a sick leave record exists for the current year
+        // Check if a sick leave record exists for the given leave_type and current year (ignoring staff_id)
         $existingLeave = DB::table('leave_information')
-            ->where('staff_id', $staffId)
             ->where('leave_type', 'Sick Leave')
             ->where('year_leave', $currentYear)
             ->first();
 
         if (!$existingLeave) {
-            // Insert a new sick leave record
+            // Insert a new sick leave record if it doesn't exist
             DB::table('leave_information')->insert([
                 'staff_id'   => $staffId,
                 'leave_type' => 'Sick Leave',
@@ -807,19 +933,22 @@ class LeavesController extends Controller
                 'updated_at' => now(),
             ]);
         } else {
-            // Update the existing sick leave record
+            // Prepare update data
+            $updateData = [
+                'leave_days' => $validated['sick_leave'],
+                'updated_at' => now(),
+            ];
+
+            // Update the sick leave record
             DB::table('leave_information')
-                ->where('staff_id', $staffId)
-                ->where('leave_type', 'Sick Leave')
+                ->where('leave_type', 'Sick Leave')  // Only check for leave_type and year_leave
                 ->where('year_leave', $currentYear)
-                ->update([
-                    'leave_days' => $validated['sick_leave'],
-                    'updated_at' => now(),
-                ]);
+                ->update($updateData);
         }
 
         return redirect()->back()->with('success', 'Sick Leave settings updated successfully.');
     }
+
 
 
     public function updateMaPaternityLeaveSettings(Request $request)
@@ -1004,6 +1133,21 @@ class LeavesController extends Controller
         return back()->with('success', 'Custom leave policy updated successfully!');
     }
 
+    public function deleteCustomLeavePolicy(Request $request)
+    {
+        $policyId = $request->id;
+
+        // Delete the policy based on the policy ID
+        $policy = LeaveInformation::find($policyId);
+        if ($policy) {
+            $policy->delete();
+            return redirect()->back()->with('success', 'Policy deleted successfully!');
+        } else {
+            return redirect()->back()->with('error', 'Policy not found.');
+        }
+    }
+
+
     public function getCustomLeavePolicy()
     {
         try {
@@ -1074,14 +1218,50 @@ class LeavesController extends Controller
         $userId = Session::get('user_id');
 
         // Retrieve all leave information for the current year
-        $leaveInformation = LeaveInformation::where('year_leave', $currentYear)->get();
+        $leaveInformation = LeaveInformation::whereJsonContains('staff_id', $userId)
+            ->where('year_leave', $currentYear)
+            ->get();
+
 
         // Get the oldest leave record for each leave type of the logged-in user
-        $getLeave = Leave::where('staff_id', Session::get('user_id'))
+        $getLeave = Leave::where('staff_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get(); // Remove groupBy()
 
-        return view('employees.leaves_manage.leavesemployee', compact('leaveInformation', 'getLeave'));
+        $holidays = Holiday::all()->filter(function ($holiday) use ($currentYear) {
+            return \Carbon\Carbon::parse($holiday->date_holiday)->year == $currentYear;
+        });
+
+        // Format holidays for FullCalendar (only need the 'title' and 'start' fields)
+        $formattedHolidays = $holidays->map(function ($holiday) {
+            return [
+                'title' => $holiday->name_holiday,
+                'start' => \Carbon\Carbon::parse($holiday->date_holiday)->toDateString(), // Force YYYY-MM-DD
+            ];
+        });
+
+        return view('employees.leaves_manage.leavesemployee', compact('leaveInformation', 'getLeave', 'formattedHolidays'));
+    }
+
+    public function calendar()
+    {
+
+        $holidays = Holiday::all();
+
+        // Format holidays for FullCalendar (only need the 'title' and 'start' fields)
+        $formattedHolidays = $holidays->map(function ($holiday) {
+            // Generate a random color for each event
+            $randomColor = '#' . dechex(rand(0x000000, 0xFFFFFF)); // Random hex color
+
+            return [
+                'title' => $holiday->name_holiday,
+                'start' => \Carbon\Carbon::parse($holiday->date_holiday)->toDateString(), // Force 'YYYY-MM-DD'
+                'backgroundColor' => $randomColor, // Pass random color as backgroundColor
+            ];
+        });
+
+
+        return view('employees.leaves_manage.leavescalendar', compact('formattedHolidays'));
     }
 
 

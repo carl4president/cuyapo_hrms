@@ -25,6 +25,17 @@
     <!-- Datetimepicker CSS -->
     <link rel="stylesheet" href="{{ URL::to('assets/css/bootstrap-datetimepicker.min.css') }}">
 
+    <!--Calendar CSS -->
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
+    
+    <!-- jQuery (necessary for FullCalendar and some interactions) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+
+
 
     <!-- Main CSS -->
     <link rel="stylesheet" href="{{ URL::to('assets/css/style.css') }}">
@@ -91,7 +102,7 @@
                         <span class="user-img">
                             <img src="{{ URL::to('/assets/images/'. Auth::user()->avatar) }}" alt="">
                             <span class="status online"></span></span>
-                        <span>{{ Session::get('name') }}</span>
+                        <span>{{ Auth::user()->name }}</span>
                     </a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{ route('profile_user') }}">My Profile</a>

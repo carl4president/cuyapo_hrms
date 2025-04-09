@@ -55,7 +55,7 @@
                         </select>
                     </div>
                 </div>
-                </x-slot:employment_status_modal>
+                </x-slot:department_modal>
 
                 <x-slot:employment_status_modal>
                     <div class="col-md-6">
@@ -63,18 +63,15 @@
                             <label>Employment Status</label>
                             <select class="form-control" id="employment_status" name="employment_status">
                                 <option value="" disabled {{ is_null($employee->employment->employment_status) ? 'selected' : '' }}>-- Select Employment Status --</option>
-                                <option value="Permanent" {{ $employee->employment->employment_status == 'Permanent' ? 'selected' : '' }}>Permanent</option>
-                                <option value="Coterminous" {{ $employee->employment->employment_status == 'Coterminous' ? 'selected' : '' }}>Coterminous</option>
-                                <option value="Casual" {{ $employee->employment->employment_status == 'Casual' ? 'selected' : '' }}>Casual</option>
-                                <option value="Job Order" {{ $employee->employment->employment_status == 'Job Order' ? 'selected' : '' }}>Job Order</option>
-                                <option value="Contract of Service" {{ $employee->employment->employment_status == 'Contract of Service' ? 'selected' : '' }}>Contract of Service</option>
-                                <option value="Temporary" {{ $employee->employment->employment_status == 'Temporary' ? 'selected' : '' }}>Temporary</option>
-                                <option value="Internship" {{ $employee->employment->employment_status == 'Internship' ? 'selected' : '' }}>Internship</option>
-                                <option value="Others" {{ $employee->employment->employment_status == 'Others' ? 'selected' : '' }}>Others</option>
+                                @foreach($typeJobs as $typeJob)
+                                <option value="{{ $typeJob->name_type_job }}" {{ $employee->employment->employment_status == $typeJob->name_type_job ? 'selected' : '' }}>
+                                    {{ $typeJob->name_type_job }}
+                                </option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
-            </x-slot:department_modal>
+            </x-slot:employment_status_modal>
 
         </x-layouts.edit-app-emp-page>
 

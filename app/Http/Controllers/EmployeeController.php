@@ -454,9 +454,11 @@ class EmployeeController extends Controller
         $departments = DB::table('departments')->get();
         $designations = DB::table('designations')->get();
         $positions = DB::table('positions')->get();
+        $typeJobs = DB::table('type_jobs')->get();
+        
 
 
-        return view('employees.edit.editemployee', compact('employee', 'departments', 'designations', 'positions'));
+        return view('employees.edit.editemployee', compact('employee', 'departments', 'designations', 'positions', 'typeJobs'));
     }
 
 
@@ -578,6 +580,8 @@ class EmployeeController extends Controller
             return redirect()->back()->withInput();
         }
     }
+    
+    
 
     /** /Update Record For Profile Info */
 

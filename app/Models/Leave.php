@@ -24,6 +24,8 @@ class Leave extends Model
         'reason',
         'approved_by',
     ];
+    
+
 
     /** Save Record Leave or Update */
     public function applyLeave(Request $request)
@@ -248,7 +250,7 @@ class Leave extends Model
                     'approved_by'     => Session::get('line_manager', null),
                 ]);
 
-                flash()->success('Leave updated and adjusted successfully!');
+                flash()->success('Leave updated successfully!');
                 return redirect()->back()->withInput();
             } else {
                 flash()->error('Leave record not found.');
@@ -334,7 +336,7 @@ class Leave extends Model
                     \Log::info('Deleted timestamp and updated remaining leave days:', $remainingLeaveDays);
 
                     // Flash success message
-                    flash()->success('Leave record and timestamp deleted successfully!');
+                    flash()->success('Leave record deleted successfully!');
                 } else {
                     flash()->error('Timestamp not found in the leave data.');
                 }

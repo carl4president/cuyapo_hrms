@@ -1,5 +1,126 @@
 @extends('layouts.master')
 @section('content')
+<style>
+    /* Container for each employee info */
+    .employee-info-row {
+        display: inline-flex;
+        /* Align items in a row */
+        align-items: center;
+        /* Vertically center content */
+        padding: 10px 15px;
+        /* Padding around the profile */
+        margin-right: 15px;
+        /* Space between items */
+        border-radius: 12px;
+        /* Rounded corners for profile */
+        background-color: #fff;
+        /* White background for profile */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        /* Subtle shadow */
+        transition: all 0.3s ease;
+        /* Smooth transition for hover effect */
+        width: auto;
+        min-width: 120px;
+        max-width: 170px;
+        height: auto;
+        min-height: 30px;
+        max-height: 55px;
+        /* Minimum width for better layout */
+        text-align: center;
+        cursor: pointer;
+        /* Align text to the center */
+    }
+
+    /* Avatar image styles */
+    .employee-info-row .avatar img {
+        width: 40px;
+        /* Avatar size */
+        max-width: 40px;
+        min-width: 40px;
+        height: ;
+        min-height: 15px;
+        max-height: 40px;
+        /* Avatar size */
+        border-radius: 50%;
+        /* Circular avatar */
+        object-fit: cover;
+        /* Ensure image fills the circle */
+        margin-bottom: 10px;
+        /* Space between avatar and initials */
+    }
+
+    /* Initials style */
+    .employee-info-row .employee-initials {
+        font-weight: bold;
+        /* Bold initials */
+        font-size: 16px;
+        /* Slightly larger font size */
+        color: #333;
+        /* Dark text color */
+        display: block;
+        /* Display initials as a block for better positioning */
+        margin-top: 5px;
+        /* Space between initials and avatar */
+    }
+
+    /* Hover effect for each employee profile */
+    .employee-info-row:hover {
+        background-color: #f8f8f8;
+        /* Light grey background on hover */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        /* Stronger shadow on hover */
+        transform: translateY(-5px);
+        /* Slightly lift the profile on hover */
+    }
+
+    /* Optional: Add a border to separate profiles */
+    .employee-info-container {
+        display: flex;
+        flex-wrap: wrap;
+        /* Allow wrapping for larger screens */
+        justify-content: flex-start;
+        /* Align profiles to the left */
+        gap: 15px;
+        /* Space between profile cards */
+    }
+
+    @media (max-width: 992px) {
+    .employee-info-row {
+        min-width: 100px;
+        max-width: 140px;
+        padding: 8px 12px;
+    }
+
+    .employee-info-row .employee-initials {
+        font-size: 14px;
+    }
+}
+
+/* Small devices (phones, 600px and below) */
+@media (max-width: 600px) {
+    .employee-info-container {
+        justify-content: center;
+    }
+
+    .employee-info-row {
+        min-width: 70px;
+        max-width: 100px;
+        margin-right: 0;
+        flex: 1 1 100%;
+        justify-content: center;
+    }
+
+    .employee-info-row .avatar img {
+        width: 35px;
+        height: 35px;
+    }
+
+    .employee-info-row .employee-initials {
+        font-size: 13px;
+    }
+}
+
+</style>
 <!-- Page Wrapper -->
 <div class="page-wrapper">
     <!-- Page Content -->
@@ -16,6 +137,11 @@
                 </div>
             </div>
         </div>
+        <div class="card">
+            <div class="card-body">
+                @include('sidebar.sidebarleave')
+            </div>
+        </div>
         <!-- /Page Header -->
 
         <div class="row">
@@ -26,7 +152,7 @@
                         <div class="h3 card-title with-switch">
                             Vacation Leave
                             <div class="onoffswitch">
-                                <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_annual" checked>
+                                <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_annual">
                                 <label class="onoffswitch-label" for="switch_annual">
                                     <span class="onoffswitch-inner"></span>
                                     <span class="onoffswitch-switch"></span>
@@ -120,7 +246,7 @@
                             <div class="h3 card-title with-switch">
                                 Sick
                                 <div class="onoffswitch">
-                                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_sick" checked>
+                                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_sick">
                                     <label class="onoffswitch-label" for="switch_sick">
                                         <span class="onoffswitch-inner"></span>
                                         <span class="onoffswitch-switch"></span>
@@ -162,7 +288,7 @@
                             <div class="h3 card-title with-switch">
                                 Maternity <span class="subtitle">Assigned to female only</span>
                                 <div class="onoffswitch">
-                                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_maternity" checked>
+                                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_maternity">
                                     <label class="onoffswitch-label" for="switch_maternity">
                                         <span class="onoffswitch-inner"></span>
                                         <span class="onoffswitch-switch"></span>
@@ -201,7 +327,7 @@
                             <div class="h3 card-title with-switch">
                                 Paternity <span class="subtitle">Assigned to male only</span>
                                 <div class="onoffswitch">
-                                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_paternity" checked>
+                                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_paternity">
                                     <label class="onoffswitch-label" for="switch_paternity">
                                         <span class="onoffswitch-inner"></span>
                                         <span class="onoffswitch-switch"></span>
@@ -319,7 +445,7 @@
                 <div class="modal-body">
                     <form action="{{ route('leave/updateCustomLeavePolicy') }}" method="POST" id="editCustomPolicyForm">
                         @csrf
-                        <input type="text" name="policy_id" id="policy_id" value="">
+                        <input style="display:none;" type="text" name="policy_id" id="policy_id" value="">
                         <div class="form-group">
                             <label>Policy Name <span class="text-danger">*</span></label>
                             <input type="text" name="policy_name" class="form-control" value="">
@@ -382,16 +508,20 @@
                         <h3>Delete Custom Policy</h3>
                         <p>Are you sure want to delete?</p>
                     </div>
-                    <div class="modal-btn delete-action">
-                        <div class="row">
-                            <div class="col-6">
-                                <a href="javascript:void(0);" class="btn btn-primary continue-btn">Delete</a>
-                            </div>
-                            <div class="col-6">
-                                <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
+                    <form method="POST" action="{{ route('leave/deleteCustomLeavePolicy') }}">
+                        @csrf
+                        <div class="modal-btn delete-action">
+                            <div class="row">
+                                <input type="hidden" name="id" id="d_id">
+                                <div class="col-6">
+                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                </div>
+                                <div class="col-6">
+                                    <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -502,10 +632,32 @@
 
                             // Loop through each employee and display their details
                             policy.employees.forEach(function(employee) {
-                                row += '<a href="#" class="avatar"><img alt="" src="' + employee.employee_avatar + '"></a>';
-                                row += '<a href="#">' + employee.employee_name + '</a>';
-                                row += ' ';
+                                // Get the employee's full name and split it into words
+                                var nameParts = employee.employee_name.split(' ');
+
+                                // Create an array to store the initials
+                                var initials = nameParts.map(function(part) {
+                                    return part.charAt(0).toUpperCase() + '.'; // Get the first letter and add a dot
+                                }).join(' '); // Join the initials with a space in between
+
+                                // Dynamically set the avatar URL from PHP
+                                var avatarUrl = "{{ URL::to('/assets/images/') }}/" + employee.employee_avatar;
+
+                                var emp_id = employee.employee_id;
+
+
+                                // Create the row with improved styles (use flex for a horizontal layout)
+                                row += `
+                                        <a href="/all/employee/view/edit/${emp_id}" class="employee-info-row">
+                                            <span class="avatar">
+                                                <img alt="" src="${avatarUrl}" class="avatar-img">
+                                            </span>
+                                            <span class="employee-initials">${initials}</span>
+                                        </a>
+                                    `;
+
                             });
+
 
                             row += '</td>';
                             row += '<td class="text-right">';
@@ -520,7 +672,10 @@
                                 'data-toggle="modal" data-target="#edit_custom_policy">' +
                                 '<i class="fa fa-pencil m-r-5"></i> Edit</a>';
 
-                            row += '<a href="#" class="dropdown-item" data-toggle="modal" data-target="#delete_custom_policy"><i class="fa fa-trash-o m-r-5"></i> Delete</a>';
+                            row += '<a href="#" class="dropdown-item deleteRecord" ' +
+                                'data-id="' + policy.policy_id + '" ' +
+                                'data-toggle="modal" data-target="#delete_custom_policy">' +
+                                '<i class="fa fa-trash-o m-r-5"></i> Delete</a>';
                             row += '</div>';
                             row += '</div>';
                             row += '</td>';
@@ -708,6 +863,18 @@
 
 </script>
 
+<!-- Delete -->
+<script>
+    $(document).on('click', '.deleteRecord', function() {
+        var policyId = $(this).data('id'); // Get the policy ID from the data-id attribute of the clicked element
 
+        // Set the value of the hidden input field
+        $('#d_id').val(policyId);
+
+        // Optionally, log the policy ID to check
+        console.log('Policy ID:', policyId);
+    });
+
+</script>
 @endsection
 @endsection

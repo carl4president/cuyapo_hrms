@@ -43,6 +43,11 @@
                 </div>
             </div>
         </div>
+        <div class="card">
+            <div class="card-body">
+                @include('sidebar.sidebarleave')
+            </div>
+        </div>
 
         <!-- Leave Statistics -->
         <div class="row">
@@ -54,25 +59,31 @@
             @php
             // Find the matching leave in the `leaves` table for this leave type
             $existingLeave = $getLeave->firstWhere('leave_type', $leaves->leave_type);
+
+            // Get the leave balance for the staff member from the leave_balances table
+            $leaveBalance = DB::table('leave_balances')
+            ->where('staff_id', session('user_id'))
+            ->where('leave_type', $leaves->leave_type)
+            ->first();
             @endphp
 
-            @if(($leaves->staff_id == 'all' || $leaves->staff_id == session('user_id'))
-            && $leaves->leave_type != 'Total Leave Balance'
-            && $leaves->year_leave == $currentYear)
-
-            <div class="col-md-2">
-                <div class="stats-info">
-                    <h6>{{ $leaves->leave_type }}</h6>
-                    <h4>
-                        @if($existingLeave)
-                        {{ $existingLeave->remaining_leave }} <!-- Use `remaining_leave` from the `leaves` table -->
-                        @else
-                        {{ $leaves->leave_days }} <!-- Default leave days from `leave_information` -->
-                        @endif
-                    </h4>
+            <div class="col-md-2 col-sm-4 col-6">
+                <div class="card text-center border-0 shadow-sm rounded-3 py-2 px-2" style="background-color: #ffffff;">
+                    <div class="card-body p-2">
+                        <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">
+                            {{ $leaves->leave_type }}
+                        </h6>
+                        <h3 class="mb-2" style="font-size: 1.8rem; font-weight: 700; color: #0d2d59;">
+                            @if($leaveBalance)
+                            {{ $leaveBalance->total_leave_days - $leaveBalance->used_leave_days }}
+                            @else
+                            {{ $leaves->leave_days }}
+                            @endif
+                        </h3>
+                        <small class="text-muted" style="font-size: 0.75rem;">Remaining Leave</small>
+                    </div>
                 </div>
             </div>
-            @endif
             @endforeach
         </div>
 
@@ -101,9 +112,52 @@
                             </tr>
                         </thead>
                         <tbody>
+
                             @foreach($getLeave as $key => $leave)
+                            @if($leave->status === 'Declined')
+                            @php
+                            // get photo from the table users
+                            $profiles = DB::table('users')->where('user_id', $leave->approved_by)->get();
+                            @endphp
+                            <tr class="holiday-completed">
+                                <td>{{ ++$key }}</td>
+                                <td hidden class="id_record">{{ $leave->id }}</td>
+                                <td class="leave_type">{{ $leave->leave_type }}</td>
+                                <td hidden class="remaining_leave">{{ $leave->remaining_leave }}</td>
+                                <td class="date_from">{{ $leave->date_from }}</td>
+                                <td class="date_to">{{ $leave->date_to }}</td>
+                                <td>{{ $leave->number_of_day }} days</td>
+                                <td hidden class="number_of_day">{{ $leave->number_of_day }}</td>
+                                <td hidden class="leave_date">{{ $leave->leave_date }}</td>
+                                <td hidden class="leave_day">{{ $leave->leave_day }}</td>
+                                <td class="reason">{{ $leave->reason }}</td>
+                                <td class="text-center">
+                                    <div class="action-label">
+                                        <a class="btn btn-white btn-sm btn-rounded" href="javascript:void(0);" style="pointer-events: none; opacity: 0.5;">
+                                            <i class="fa fa-dot-circle-o text-danger"></i> Declined
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>
+                                    @foreach($profiles as $profile)
+                                    <h2 class="table-avatar">
+                                        <a href="profile.html" class="avatar avatar-xs">
+                                            <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
+                                        </a>
+                                        <a href="#">{{ $leave->approved_by }}</a>
+                                    </h2>
+                                    @endforeach
+                                </td>
+
+                            </tr>
+                            @endif
+                            @endforeach
+
+                            <!-- Leaves with other statuses -->
+                            @foreach($getLeave as $key => $leave)
+                            @if($leave->status !== 'Declined')
                             @php // get photo from the table users
-                            $profiles = DB::table('users')->where('name', $leave->approved_by)->get();
+                            $profiles = DB::table('users')->where('user_id', $leave->approved_by)->get();
                             @endphp
                             <tr>
                                 <td>{{ ++$key}}</td>
@@ -119,8 +173,17 @@
                                 <td class="reason">{{ $leave->reason }}</td>
                                 <td class="text-center">
                                     <div class="action-label">
+                                        @php
+                                        $statusClass = match($leave->status) {
+                                        'New' => 'text-purple',
+                                        'Pending' => 'text-info',
+                                        'Approved' => 'text-success',
+                                        'Declined' => 'text-danger',
+                                        default => 'text-secondary',
+                                        };
+                                        @endphp
                                         <a class="btn btn-white btn-sm btn-rounded" href="javascript:void(0);">
-                                            <i class="fa fa-dot-circle-o text-warning"></i> Pending
+                                            <i class="fa fa-dot-circle-o {{ $statusClass }}"></i> {{ $leave->status }}
                                         </a>
                                     </div>
                                 </td>
@@ -135,17 +198,20 @@
                                     @endforeach
                                 </td>
                                 <td class="text-right">
+                                    @if($leave->status != 'Approved')
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $leave->id }}" data-employee_name="{{ $leave->employee_name }}" data-employee_id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-remaining_leave="{{ $leave->remaining_leave }}" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}" data-number_of_day="{{ $leave->number_of_day }}" data-leave_day="{{ $leave->leave_day }}" data-reason="{{ $leave->reason }}" data-target="#edit_leave">
+                                            <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $leave->id }}" data-employee_name="{{ $leave->employee_name }}" data-employee_id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-remaining_leave="" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}" data-number_of_day="{{ $leave->number_of_day }}" data-leave_day="{{ $leave->leave_day }}" data-reason="{{ $leave->reason }}" data-target="#edit_leave">
                                                 <i class="fa fa-pencil m-r-5"></i> Edit
                                             </a>
                                             <a class="dropdown-item delete_leave" href="#" data-toggle="modal" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                                         </div>
                                     </div>
+                                    @endif
                                 </td>
                             </tr>
+                            @endif
                             @endforeach
                         </tbody>
                     </table>
@@ -272,14 +338,7 @@
                                     <input type="hidden" class="form-control" id="edit_employee_name" name="employee_name" readonly>
                                     <input type="hidden" class="form-control" id="edit_employee_id" name="employee_id" readonly>
                                     <label>Leave Type <span class="text-danger">*</span></label>
-                                    <select class="select" id="edit_leave_type" name="leave_type">
-                                        <option selected disabled>Select Leave Type</option>
-                                        @foreach($leaveInformation as $key => $leaves)
-                                        @if($leaves->leave_type != 'Total Leave Balance' && $leaves->leave_type != 'Use Leave' && $leaves->leave_type != 'Remaining Leave')
-                                        <option value="{{ $leaves->leave_type }}">{{ $leaves->leave_type }}</option>
-                                        @endif
-                                        @endforeach
-                                    </select>
+                                    <input type="text" class="form-control" id="edit_leave_type" name="leave_type" disabled>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -344,7 +403,7 @@
                     <div class="modal-btn delete-action">
                         <form action="{{ route('form/leaves/edit/delete') }}" method="POST">
                             @csrf
-                            <input type="hidden" class="form-control" id="d_id_record" name="id_record" readonly>
+                            <input type="hidden" class="form-control" id="d_id_record" name="id" readonly>
                             <div class="row">
                                 <div class="col-6">
                                     <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
@@ -365,87 +424,69 @@
 <!-- /Page Wrapper -->
 @section('script')
 <script>
-$(document).ready(function() {
-    $('.select2s-hidden-accessible').select2({
-        closeOnSelect: false
-    });
+    $(document).ready(function() {
+        $('.select2s-hidden-accessible').select2({
+            closeOnSelect: false
+        });
 
-    function fetchLeaveTypes(employee_id, targetSelect, selectedLeaveType = null) {
-        if (employee_id) {
-            $.ajax({
-                url: "{{ route('hr/get/leaveStaffOptions') }}", // Ensure this route is correct
-                type: "GET",
-                data: { employee_id: employee_id },
-                success: function(response) {
-                    // Clear previous options and add a default "Select Leave Type"
-                    $(targetSelect).html('<option selected disabled>Select Leave Type</option>');
-                    
-                    // Add each leave type option
-                    $.each(response, function(key, value) {
-                        var option = $('<option>', {
-                            value: value.leave_type,
-                            text: value.leave_type
+        function fetchLeaveTypes(employee_id, targetSelect, selectedLeaveType = null) {
+            if (employee_id) {
+                $.ajax({
+                    url: "{{ route('hr/get/leaveStaffOptions') }}", // Ensure this route is correct
+                    type: "GET"
+                    , data: {
+                        employee_id: employee_id
+                    }
+                    , success: function(response) {
+                        // Clear previous options and add a default "Select Leave Type"
+                        $(targetSelect).html('<option selected disabled>Select Leave Type</option>');
+
+                        // Add each leave type option
+                        $.each(response, function(key, value) {
+                            var option = $('<option>', {
+                                value: value.leave_type
+                                , text: value.leave_type
+                            });
+
+                            // If the current leave type matches the selectedLeaveType, set it as selected
+                            if (selectedLeaveType && value.leave_type === selectedLeaveType) {
+                                option.prop('selected', true);
+                            }
+
+                            $(targetSelect).append(option);
                         });
 
-                        // If the current leave type matches the selectedLeaveType, set it as selected
-                        if (selectedLeaveType && value.leave_type === selectedLeaveType) {
-                            option.prop('selected', true);
-                        }
+                        // Reinitialize Select2 (if using select2)
+                        $(targetSelect).trigger('change');
+                    }
+                    , error: function(xhr, status, error) {
+                        console.error("AJAX Error:", error); // Debugging
+                        alert('Error fetching leave types.');
+                    }
+                });
+            } else {
+                console.log("No Employee ID found."); // Debugging
+            }
+        }
 
-                        $(targetSelect).append(option);
-                    });
-
-                    // Reinitialize Select2 (if using select2)
-                    $(targetSelect).trigger('change');
-                },
-                error: function(xhr, status, error) {
-                    console.error("AJAX Error:", error); // Debugging
-                    alert('Error fetching leave types.');
+        // Handle employee selection in the Add Modal
+        $('#add_leave').on('shown.bs.modal', function() {
+            $.ajax({
+                url: "{{ route('hr/get/userId') }}"
+                , type: "GET"
+                , success: function(response) {
+                    var employee_id = response.user_id;
+                    $('#employee_id').val(employee_id); // Set hidden input value
+                    fetchLeaveTypes(employee_id, '#leave_type'); // Fetch and populate leave types
+                }
+                , error: function(xhr, status, error) {
+                    console.error("Error fetching session user ID:", error); // Debugging
                 }
             });
-        } else {
-            console.log("No Employee ID found."); // Debugging
-        }
-    }
-
-    // Handle employee selection in the Add Modal
-    $('#add_leave').on('shown.bs.modal', function() {
-        $.ajax({
-            url: "{{ route('hr/get/userId') }}", 
-            type: "GET",
-            success: function(response) {
-                var employee_id = response.user_id;
-                $('#employee_id').val(employee_id); // Set hidden input value
-                fetchLeaveTypes(employee_id, '#leave_type');  // Fetch and populate leave types
-            },
-            error: function(xhr, status, error) {
-                console.error("Error fetching session user ID:", error); // Debugging
-            }
         });
-    });
 
-    // Populate leave types when Edit Modal opens
-    $('#edit_leave').on('shown.bs.modal', function() {
-        $.ajax({
-            url: "{{ route('hr/get/userId') }}",
-            type: "GET",
-            success: function(response) {
-                var employee_id = response.user_id;
-                $('#edit_employee_id').val(employee_id); // Set hidden input value
-                
-                var selectedLeaveType = $('#edit_leave_type').val(); 
-                
-                // Fetch leave types and set the selected leave type
-                fetchLeaveTypes(employee_id, '#edit_leave_type', selectedLeaveType);
-                
-                $('#edit_leave_type').val(selectedLeaveType).trigger('change');
-            },
-            error: function(xhr, status, error) {
-                console.error("Error fetching session user ID:", error); // Debugging
-            }
-        });
+        // Populate leave types when Edit Modal opens
     });
-});
 
 </script>
 <!-- Calculate Leave  -->
@@ -766,7 +807,7 @@ $(document).ready(function() {
                             });
                             editcountLeaveDays();
                             e_handleLeaveExistingDates();
-                        }, 200);
+                        }, 300);
                     }
 
                     $("#edit_leave").modal("show");
@@ -791,8 +832,9 @@ $(document).ready(function() {
             , _token: $('meta[name="csrf-token"]').attr('content')
         }, function(data) {
             if (data.response_code == 200) {
-                e_existingLeaveDates = data.e_existing_leave_dates || [];
+                e_existingLeaveDates = data.existing_leave_dates || [];
                 e_disableExistingLeaveDates();
+                console.log(data.existing_leave_dates);
             }
         }, 'json');
     }
@@ -1004,6 +1046,7 @@ $(document).ready(function() {
     });
 
 </script>
+
 
 @endsection
 @endsection

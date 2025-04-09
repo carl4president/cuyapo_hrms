@@ -614,8 +614,9 @@ class JobController extends Controller
 
         $userList = User::all();
         $jobs = AddJob::all();
+        $typeJobs = TypeJob::all();
 
-        return view('job.candidates', compact('applicant', 'departments', 'userList', 'jobs'));
+        return view('job.candidates', compact('applicant', 'departments', 'userList', 'jobs', 'typeJobs'));
     }
 
     public function getInformationApppos(Request $request)
@@ -994,9 +995,10 @@ class JobController extends Controller
 
         $designations = DB::table('designations')->get();
         $positions = DB::table('positions')->get();
+        $typeJobs = TypeJob::all();
 
 
-        return view('job.editapplicant', compact('employee', 'departments', 'designations', 'positions'));
+        return view('job.editapplicant', compact('employee', 'departments', 'designations', 'positions', 'typeJobs'));
     }
 
     /** Update Record For Profile Info */

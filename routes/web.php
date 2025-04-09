@@ -264,13 +264,16 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                 Route::post('/pending', 'pendingRecordLeave')->name('form/leaves/pending');
                 Route::get('/employee/new', 'leavesEmployee')->name('form/leaves/employee/new');
                 Route::post('/edit/delete', 'deleteLeave')->name('form/leaves/edit/delete');
-                Route::post('/leaves/admin/search', 'leaveSearch')->name('form/leaves/list/search');
+                Route::get('/leaves/admin/search', 'leaveSearch')->name('form/leaves/list/search');
                 Route::post('/leavesettings/update', 'updateAnnualLeaveSettings')->name('form/leaveSettings/update');
                 Route::post('/sickleavesettings/update', 'updateSickLeaveSettings')->name('form/sickleaveSettings/update');
                 Route::post('/mapaternityleavesettings/update', 'updateMaPaternityLeaveSettings')->name('form/mapaternityLeaveSettings/update');
                 Route::get('/custom-leave-policy/get', 'getCustomLeavePolicy')->name('leave/getCustomLeavePolicy');
                 Route::post('/custom-leave-policy/save', 'saveCustomLeavePolicy')->name('leave/saveCustomLeavePolicy');
                 Route::post('/custom-leave-policy/update', 'updateCustomLeavePolicy')->name('leave/updateCustomLeavePolicy');
+                Route::post('/custom-leave-policy/delete', 'deleteCustomLeavePolicy')->name('leave/deleteCustomLeavePolicy');
+
+                Route::get('/calendar', 'calendar')->name('form/leaves/calendar');
             });
             // --------------------- Form Attendance  -------------------------//
             Route::post('get/information/leave', 'getInformationLeave')->name('hr/get/information/leave');

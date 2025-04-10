@@ -106,7 +106,7 @@
                     </a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{ route('profile_user') }}">My Profile</a>
-                        <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a>
+                      <!--   <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a> -->
                         <a class="dropdown-item" href="{{ route('logout') }}">Logout</a>
                     </div>
                 </li>
@@ -120,7 +120,7 @@
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
                     <a class="dropdown-item" href="{{ route('profile_user') }}">My Profile</a>
-                    <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a>
+                 <!--  <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a> -->
                     <a class="dropdown-item" href="{{ route('logout') }}">Logout</a>
                 </div>
             </div>

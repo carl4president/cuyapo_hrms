@@ -89,7 +89,7 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="profile-img-wrap edit-img">
-                                    <img class="inline-block" src="{{ URL::to('/assets/images/'. Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}">
+                                    <img class="inline-block profile-image" src="{{ URL::to('/assets/images/'. Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}">
                                     <div class="fileupload btn">
                                         <span class="btn-text">edit</span>
                                         <input class="upload" type="file" id="image" name="images">

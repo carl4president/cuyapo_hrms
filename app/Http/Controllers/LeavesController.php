@@ -77,7 +77,7 @@ class LeavesController extends Controller
         try {
             $staffId = $request->staff_id ?? Session::get('user_id');
             $leaveType = $request->leave_type;
-            $numberOfDay = (int) $request->number_of_day; // Ensure numeric input
+            $numberOfDay = $request->number_of_day; // Ensure numeric input
 
             // Fetch existing leave ranges
             $existingLeaves = Leave::where('staff_id', $staffId)

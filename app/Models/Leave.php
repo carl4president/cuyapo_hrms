@@ -48,9 +48,7 @@ class Leave extends Model
             }
 
             // Calculate the number of days for the leave
-            $date_from = Carbon::parse($request->date_from);
-            $date_to = Carbon::parse($request->date_to);
-            $number_of_days = $date_from->diffInDays($date_to) + 1;  // Add 1 to include the start day
+            $number_of_days = $request->number_of_day;  // Add 1 to include the start day
 
             // Retrieve the current leave balance for the employee and leave type
             $leave_balance = LeaveBalance::where('staff_id', $employee_id)
@@ -194,9 +192,7 @@ class Leave extends Model
 
                         $editTimestamp = $leave->created_at->format('Y-m-d H:i:s');
 
-                        $from = \Carbon\Carbon::parse($request->date_from);
-                        $to = \Carbon\Carbon::parse($request->date_to);
-                        $newUsedDays = $from->diffInDays($to) + 1;
+                        $newUsedDays = $request->number_of_day;
 
                         $previousValue = null;
                         $adjustment = 0;

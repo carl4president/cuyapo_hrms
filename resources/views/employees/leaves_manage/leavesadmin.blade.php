@@ -883,6 +883,8 @@
                         updatedLeaveCount += 1;
                     } else if (leaveType === "Half-Day Morning Leave" || leaveType === "Half-Day Afternoon Leave") {
                         updatedLeaveCount += 0.5;
+                    } else {
+                        updatedLeaveCount += 0;
                     }
                 });
 
@@ -935,7 +937,7 @@
             , _token: $('meta[name="csrf-token"]').attr('content')
         }, function(data) {
             if (data.response_code == 200) {
-                console.log('leave_id:', data.leave_id);
+                console.log('leave_id:', data.number_of_day);
                 $('#edit_remaining_leave').val(data.remaining_leave);
                 $('#editleave').prop('disabled', data.remaining_leave < 0);
 
@@ -1122,11 +1124,24 @@
                         // Function to update total leave days and remaining leave
                         function updateLeaveDaysAndRemaining() {
                             let totalDays = numDays; // Start with the total number of days
+
                             for (let d = 0; d < numDays; d++) {
                                 let leaveType = $(`#leave_day_${d}`).val(); // Get the selected leave type
-                                if (leaveType && leaveType.includes('Half-Day')) totalDays -= 0.5;
+
+                                // If the leave type is a Half-Day, reduce the total days by 0.5
+                                if (leaveType && leaveType.includes('Half-Day')) {
+                                    totalDays -= 0.5;
+                                }
+
+                                // If the leave type is Public Holiday or Off Schedule, don't add to the total days
+                                else if (leaveType && (leaveType.includes('Public Holiday') || leaveType.includes('Off Schedule'))) {
+                                    totalDays -= 1; // No change to total days
+                                }
                             }
+
+                            // Set the calculated total days in the input field
                             $('#number_of_day').val(totalDays);
+
                             // Update remaining leave
                             updateRemainingLeave(totalDays);
                         }
@@ -1162,6 +1177,7 @@
             if (data.response_code == 200) {
                 $('#remaining_leave').val(data.leave_type);
                 $('#apply_leave').prop('disabled', data.leave_type < 0);
+                console.log(data.number_of_day);
                 // Show the alert only once if leave type is less than 0
                 if (data.leave_type < 0 && !$('#apply_leave').data('alerted')) {
                     toastr.info('You cannot apply for leave at this time.');

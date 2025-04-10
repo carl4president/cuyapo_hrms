@@ -31,7 +31,7 @@
                                         <label>Password</label>
                                     </div>
                                 </div>
-                                <input type="password" class="form-control @error('password') is-invalid @enderror" name="password" placeholder="Enter Password">
+                                <input type="text" class="form-control @error('password') is-invalid @enderror" name="password" placeholder="Enter Password">
                                 @error('password')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>

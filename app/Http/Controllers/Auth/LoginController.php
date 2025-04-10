@@ -43,12 +43,18 @@ class LoginController extends Controller
             if (Auth::attempt($credentials)) {
                 $user = Auth::user();
                 Session::put($this->getUserSessionData($user));
-             
+
                 // Update last login
                 $user->update(['last_login' => Carbon::now()]);
-                
+
                 flash()->success('Login successfully :)');
-                return redirect()->intended('home');
+                if ($user->role_name == 'Employee') {
+                    return redirect()->route('em/dashboard'); // Redirect to employee dashboard
+                } elseif ($user->role_name == 'Admin') {
+                    return redirect()->route('home'); // Redirect to admin home
+                } else {
+                    return redirect()->intended('home'); // Default fallback
+                };
             }
 
             flash()->error('Wrong Username or Password');

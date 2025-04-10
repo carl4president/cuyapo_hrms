@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\LeaveBalance;
+use App\Models\LeaveInformation;
 use App\Models\PositionHistory;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -319,9 +320,15 @@ class HomeController extends Controller
             ->count();
 
 
+        $leaveInformation = LeaveInformation::whereJsonContains('staff_id', $userId)->get();
+
+        // Calculate total leave days by summing all leave types
+        $totalLeaveDays = $leaveInformation->sum('leave_days');
+
+
         // Calculate the total leave taken (used_leave_days) and remaining leave
         $leaveTaken = $leaveBalance ? $leaveBalance->used_leave_days : 0;
-        $remainingLeave = $leaveBalance ? $leaveBalance->total_leave_days - $leaveBalance->used_leave_days : 0;
+        $remainingLeave = $totalLeaveDays -  $leaveTaken;
 
 
         $employeeId = auth()->user()->user_id;

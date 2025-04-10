@@ -210,7 +210,7 @@
                         <!-- Custom Policy -->
                         <div class="custom-policy">
                             <div class="leave-header">
-                                <div class="title">Custom policy</div>
+                                <div class="title">Custom policy ({{ date('Y') }})</div>
                                 <div class="leave-action">
                                     <button class="btn btn-sm btn-primary" type="button" data-toggle="modal" data-target="#add_custom_policy"><i class="fa fa-plus"></i> Add custom policy</button>
                                 </div>

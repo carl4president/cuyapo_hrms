@@ -516,6 +516,8 @@ class LeavesController extends Controller
 
         $this->updateTotalLeaveDays();
 
+        $this->updateEmployeeNamesInLeaves();
+
         // Return the view with the necessary data
         return view('employees.leaves_manage.leavesettings', [
             'vacationLeave'   => $this->getLeaveDays('Vacation Leave', $currentYear),
@@ -627,28 +629,39 @@ class LeavesController extends Controller
 
     public function updateTotalLeaveDays()
     {
-        // Get all leave information records
-        $leaveInformationRecords = LeaveInformation::all();
+        $currentYear = date('Y');
 
-        foreach ($leaveInformationRecords as $leaveInfo) {
-            // Get the staff_id and leave_type from leave_information
-            $staffId = $leaveInfo->staff_id;
-            $leaveType = $leaveInfo->leave_type;
-            $newLeaveDays = $leaveInfo->leave_days;  // The updated leave_days
+        // Get all leave balances (since they contain all staff_id and leave_type combinations)
+        $leaveBalances = LeaveBalance::all();
 
-            // Find the corresponding leave balance record for the same staff_id and leave_type
-            $leaveBalance = LeaveBalance::where('staff_id', $staffId)
-                ->where('leave_type', $leaveType)
+        foreach ($leaveBalances as $leaveBalance) {
+            $staffId = $leaveBalance->staff_id;
+            $leaveType = $leaveBalance->leave_type;
+
+            // Search leave_information where staff_id is inside JSON and year_leave is the current year
+            $leaveInfo = LeaveInformation::where('leave_type', $leaveType)
+                ->where('year_leave', $currentYear)
+                ->whereJsonContains('staff_id', $staffId)
                 ->first();
 
-            if ($leaveBalance) {
-                // Update the total_leave_days in leave_balance to match leave_information
-                $leaveBalance->total_leave_days = $newLeaveDays;
-                $leaveBalance->save();
-            }
+            // Update total_leave_days (set to leave_days if found, otherwise 0)
+            $leaveBalance->total_leave_days = $leaveInfo ? $leaveInfo->leave_days : 0;
+            $leaveBalance->save();
         }
     }
 
+    private function updateEmployeeNamesInLeaves()
+    {
+        // Get all employees from DB
+        $employees = DB::table('employees')->select('emp_id', 'name')->get();
+
+        foreach ($employees as $employee) {
+            // Update the 'employee_name' in the 'leaves' table where staff_id matches emp_id
+            DB::table('leaves')
+                ->where('staff_id', $employee->emp_id)
+                ->update(['employee_name' => $employee->name]);
+        }
+    }
     /**
      * Handles leave management for a specific leave type.
      */
@@ -1159,6 +1172,7 @@ class LeavesController extends Controller
                 ->join('employees', \DB::raw('JSON_CONTAINS(leave_information.staff_id, JSON_QUOTE(employees.emp_id))'), '=', \DB::raw('TRUE'))
                 ->join('users', 'employees.emp_id', '=', 'users.user_id')
                 ->whereNotIn('leave_information.leave_type', $excludedLeaves)
+                ->whereYear('leave_information.year_leave', date('Y'))
                 ->select(
                     'leave_information.leave_type',
                     'leave_information.leave_days',

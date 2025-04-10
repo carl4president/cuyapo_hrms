@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\Mailer;
 use App\Models\ProfileInformation;
 use App\Models\module_permission;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ use DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 
 
@@ -87,7 +89,7 @@ class EmployeeController extends Controller
 
         return response()->json(['error' => 'Invalid request'], 400);
     }
-    
+
 
 
     /** Save Data Employee */
@@ -156,6 +158,7 @@ class EmployeeController extends Controller
                 'line_manager'          => 'required|string|max:255',
                 'employment_status'     => 'required|string|max:255',
                 'date_hired'            => 'required|string|max:255',
+                'image'                 => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
 
                 //children
                 'child_name'         => 'nullable|array',
@@ -290,7 +293,7 @@ class EmployeeController extends Controller
                 'employment_status'       => $validatedData['employment_status'],
                 'date_hired'              => $validatedData['date_hired'],
             ]);
-            
+
             $startDate = Carbon::parse($validatedData['date_hired'])->format('Y-m-d');
 
             $employee->positionHistory()->create([
@@ -300,13 +303,23 @@ class EmployeeController extends Controller
                 'end_date'            => null, // End date will be set on next change
             ]);
 
+            $image = $request->file('image');
+            if ($image) {
+                // Generate a unique name for the image
+                $imageName = time() . '.' . $image->extension(); // Get the file extension dynamically
+                // Move the uploaded image to the 'assets/images' folder
+                $image->move(public_path('assets/images'), $imageName);
+            }
+
 
             User::create([
                 'name'     => $validatedData['name'],
                 'email'    => $validatedData['email'],
                 'password' => $hashedPassword,
+                'avatar' => isset($imageName) ? $imageName : null,
                 'join_date' => Carbon::now(),
                 'role_name' => 'Employee',
+                'status'    => 'Active',
             ]);
 
             if (!empty($validatedData['child_name'])) {
@@ -415,6 +428,8 @@ class EmployeeController extends Controller
                 }
             }
 
+            Mail::to($employee->email)->send(new Mailer($employee->name, $employee->email, $randomPassword));
+
             DB::commit();
 
             \Log::info('Employee and related data added successfully', ['emp_id' => $employee->id]);
@@ -455,7 +470,7 @@ class EmployeeController extends Controller
         $designations = DB::table('designations')->get();
         $positions = DB::table('positions')->get();
         $typeJobs = DB::table('type_jobs')->get();
-        
+
 
 
         return view('employees.edit.editemployee', compact('employee', 'departments', 'designations', 'positions', 'typeJobs'));
@@ -526,17 +541,17 @@ class EmployeeController extends Controller
             // Check if position has changed and record it in the position_histories table
             if ($oldPositionId != $validatedData['position_id']) {
                 $latestHistory = $employee->positionHistory()->latest('start_date')->first();
-            
+
                 // If no history yet, use date_hired as the start_date
                 $startDate = $latestHistory ? now()->toDateString() : Carbon::parse($validatedData['date_hired'])->format('Y-m-d');
-            
+
                 // If there *is* a history, update the latest one's end_date
                 if ($latestHistory) {
                     $latestHistory->update([
                         'end_date' => now()->toDateString(),
                     ]);
                 }
-            
+
                 // Insert new position history
                 $employee->positionHistory()->create([
                     'emp_id'              => $employee->emp_id,
@@ -545,7 +560,7 @@ class EmployeeController extends Controller
                     'end_date'            => null, // End date will be set on next change
                 ]);
             }
-            
+
 
             // Handle Avatar Upload
             if ($request->hasFile('images')) {
@@ -580,8 +595,8 @@ class EmployeeController extends Controller
             return redirect()->back()->withInput();
         }
     }
-    
-    
+
+
 
     /** /Update Record For Profile Info */
 

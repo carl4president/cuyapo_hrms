@@ -183,7 +183,7 @@
                                         <a href="#" class="avatar">
                                             <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
                                         </a>
-                                        <a href="#">{{ $profile->name }}<span>{{ $profile->position }}</span></a>
+                                        <a href="#">{{ $items->employee_name }}<span>{{ $profile->position }}</span></a>
                                     </h2>
                                     @endforeach
                                 </td>

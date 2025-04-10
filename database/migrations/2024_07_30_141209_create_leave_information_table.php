@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('leave_information', function (Blueprint $table) {
             $table->id();
-            $table->string('staff_id'); 
+            $table->longText('staff_id');
             $table->string('leave_type'); 
             $table->integer('leave_days');
             $table->integer('carried_forward');

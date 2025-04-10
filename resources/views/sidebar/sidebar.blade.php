@@ -7,9 +7,9 @@
                     <span>Main</span>
                 </li>
                 @if (Auth::user()->role_name == 'Admin')
-                <li class="{{set_active(['home'])}}"><a class="{{set_active(['home'])}}" href="{{ route('home') }}"><i class="la la-dashboard"></i><span>Admin Dashboard</span></a></li>
+                <li class="{{set_active(['home'])}}"><a class="{{set_active(['home'])}}" href="{{ route('home') }}"><i class="la la-dashboard"></i><span>Dashboard</span></a></li>
                 @elseif (Auth::user()->role_name == 'Employee')
-                <li class="{{set_active(['em/dashboard'])}}"><a class="{{set_active(['em/dashboard'])}}" href="{{ route('em/dashboard') }}"><i class="la la-dashboard"></i><span>Employee Dashboard</span></a></li>
+                <li class="{{set_active(['em/dashboard'])}}"><a class="{{set_active(['em/dashboard'])}}" href="{{ route('em/dashboard') }}"><i class="la la-dashboard"></i><span>Dashboard</span></a></li>
                 @endif
 
                 @if (Auth::user()->role_name == 'Admin')

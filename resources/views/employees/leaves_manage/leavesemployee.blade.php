@@ -640,9 +640,10 @@
         }, function(data) {
             if (data.response_code == 200) {
                 $('#remaining_leave').val(data.leave_type);
-                $('#apply_leave').prop('disabled', data.leave_type < 0);
+                $('#apply_leave').prop('disabled', data.leave_type <= 0);
+                console.log(data.leave_type);
                 // Show the alert only once if leave type is less than 0
-                if (data.leave_type < 0 && !$('#apply_leave').data('alerted')) {
+                if (data.leave_type <= 0 && !$('#apply_leave').data('alerted')) {
                     toastr.info('You cannot apply for leave at this time.');
                     $('#apply_leave').data('alerted', true);
                 } else if (numDays < 0.5) {
@@ -970,9 +971,9 @@
         }, function(data) {
             if (data.response_code == 200) {
                 $('#edit_remaining_leave').val(data.remaining_leave);
-                $('#editleave').prop('disabled', data.remaining_leave < 0);
+                $('#editleave').prop('disabled', data.remaining_leave <= 0);
 
-                if (data.remaining_leave < 0 && !$('#editleave').data('alerted')) {
+                if (data.remaining_leave <= 0 && !$('#editleave').data('alerted')) {
                     toastr.info('You cannot apply for leave at this time.');
                     $('#editleave').data('alerted', true);
                 } else if (data.remaining_leave < 0) {

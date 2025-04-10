@@ -29,55 +29,69 @@
 
         @php
         use Carbon\Carbon;
-        $today_date = Carbon::today()->format('d-m-Y');
+        $today_date = Carbon::today()->format('d M, Y');
         @endphp
         <div class="row">
             <div class="col-md-12">
                 <div class="table-responsive">
-                    <table class="table table-striped custom-table datatable">
+                    <table class="table table-striped custom-table datatable w-100">
                         <thead>
                             <tr>
                                 <th>No</th>
                                 <th hidden>id</th>
-                                <th>Title </th>
-                                <th>Holiday Date</th>
+                                <th style="width: 250px;">Title </th>
                                 <th hidden></th>
-                                <th>Day</th>
+                                <th style="width: 200px;">Holiday Date</th>
+                                <th style="width: 150px;">Day</th>
                                 <th class="text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($holidays as $key=>$items )
-                            @if(($today_date > $items->date_holiday))
+                            @foreach ($holidays as $key => $items)
+                            @php
+                            $holiday_date = Carbon::parse($items->date_holiday);
+                            $today_date = Carbon::today(); 
+                            @endphp
+
+                            @if($today_date->greaterThan($holiday_date))
                             <tr class="holiday-completed">
                                 <td>{{ ++$key }}</td>
+                                <td hidden></td>
                                 <td>{{ $items->name_holiday }}</td>
-                                <td>{{date('d F, Y',strtotime($items->date_holiday)) }}</td>
-                                <td>{{date('l',strtotime($items->date_holiday)) }}</td>
+                                <td>{{ date('d F, Y', strtotime($items->date_holiday)) }}</td>
+                                <td>{{ date('l', strtotime($items->date_holiday)) }}</td>
+                                <td hidden></td>
+                                <td hidden></td>
                             </tr>
                             @endif
                             @endforeach
-                            @foreach ($holidays as $key=>$items )
-                            @if(($today_date <= $items->date_holiday))
-                                <tr class="holiday-upcoming">
-                                    <td hidden class="id">{{ $items->id }}</td>
-                                    <td>{{ ++$key }}</td>
-                                    <td class="holidayName">{{ $items->name_holiday }}</td>
-                                    <td hidden class="holidayDate">{{$items->date_holiday }}</td>
-                                    <td>{{date('d F, Y',strtotime($items->date_holiday)) }}</td>
-                                    <td>{{date('l',strtotime($items->date_holiday)) }}</td>
-                                    <td class="text-right">
-                                        <div class="dropdown dropdown-action">
-                                            <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
-                                            <div class="dropdown-menu dropdown-menu-right">
-                                                <a class="dropdown-item userUpdate" data-toggle="modal" data-id="'.$items->id.'" data-target="#edit_holiday"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                                                <a class="dropdown-item deleteRecord" href="#" data-toggle="modal" data-target="#deleteRecord"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
-                                            </div>
+
+                            @foreach ($holidays as $key => $items)
+                            @php
+                            $holiday_date = Carbon::parse($items->date_holiday);
+                            $today_date = Carbon::today(); 
+                            @endphp
+
+                            @if($today_date->lessThanOrEqualTo($holiday_date))
+                            <tr class="holiday-upcoming">
+                                <td hidden class="id">{{ $items->id }}</td>
+                                <td>{{ ++$key }}</td>
+                                <td class="holidayName">{{ $items->name_holiday }}</td>
+                                <td hidden class="holidayDate">{{ $items->date_holiday }}</td>
+                                <td>{{ date('d F, Y', strtotime($items->date_holiday)) }}</td>
+                                <td>{{ date('l', strtotime($items->date_holiday)) }}</td>
+                                <td class="text-right">
+                                    <div class="dropdown dropdown-action">
+                                        <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <a class="dropdown-item userUpdate" data-toggle="modal" data-id="{{ $items->id }}" data-target="#edit_holiday"><i class="fa fa-pencil m-r-5"></i> Edit</a>
+                                            <a class="dropdown-item deleteRecord" href="#" data-toggle="modal" data-target="#deleteRecord"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                                         </div>
-                                    </td>
-                                </tr>
-                                @endif
-                                @endforeach
+                                    </div>
+                                </td>
+                            </tr>
+                            @endif
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

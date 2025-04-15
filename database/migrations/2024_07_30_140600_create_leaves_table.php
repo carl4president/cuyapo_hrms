@@ -18,12 +18,20 @@ return new class extends Migration
             $table->string('leave_type')->nullable();;
             $table->string('date_from')->nullable();
             $table->string('date_to')->nullable();
-            $table->string('leave_date')->nullable();
-            $table->string('leave_day')->nullable();
+            $table->longText('leave_date')->nullable();
+            $table->longText('leave_day')->nullable();
             $table->string('number_of_day')->nullable();
             $table->string('reason')->nullable();
             $table->string('approved_by')->nullable();
             $table->string('status')->nullable();
+
+            $table->string('vacation_location')->nullable();  // For vacation location (Philippines/Abroad)
+            $table->string('abroad_specify')->nullable();    // For specifying country if "Abroad"
+            $table->string('sick_location')->nullable();     // For sick leave location (In Hospital/Out Patient)
+            $table->string('illness_specify')->nullable();   // For specifying illness
+            $table->string('women_illness')->nullable();     // For special leave women illness
+            $table->text('study_reason')->nullable();        // For study leave reasons
+            
             $table->timestamps();
         });
     }

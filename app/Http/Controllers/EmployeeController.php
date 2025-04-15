@@ -14,6 +14,7 @@ use App\Models\EmployeeGovernmentId;
 use App\Models\EmployeeFamilyInfo;
 use App\Models\EmployeeEducation;
 use App\Models\EmployeeEmployment;
+use App\Models\EmployeeJobDetail;
 use App\Models\GraphData;
 use App\Models\Position;
 use App\Models\TypeJob;
@@ -39,7 +40,9 @@ class EmployeeController extends Controller
             'education',
             'employment',
             'children',
-            'user'
+            'user',
+            'jobDetails.department',
+            'jobDetails.position' // Load both department and position through jobDetails
         )->get();
 
         $userList = User::all();
@@ -59,7 +62,8 @@ class EmployeeController extends Controller
             'education',
             'employment',
             'children',
-            'user'
+            'user',
+            'jobDetails.position' // Load both department and position through jobDetails
         )->get();
 
         $userList = User::all();
@@ -72,17 +76,11 @@ class EmployeeController extends Controller
     /** Get Data Employee Position */
     public function getInformationEmppos(Request $request)
     {
-        if ($request->has('id')) {
-            $id = $request->id;
+        if ($request->has('id') && is_numeric($request->id)) {
+            $positions = Position::where('department_id', $request->id)->get();
 
-            // Fetch designations if department ID is provided
-            $designations = Designation::where('department_id', $id)->get();
-
-            // Fetch positions if designation ID is provided
-            $positions = Position::where('designation_id', $id)->get();
 
             return response()->json([
-                'designations' => $designations,
                 'positions' => $positions,
             ]);
         }
@@ -97,7 +95,9 @@ class EmployeeController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'name'               => 'required|string|max:255',
+                'fname'               => 'required|string|max:255',
+                'mname'               => 'required|string|max:255',
+                'lname'               => 'required|string|max:255',
                 'email'              => 'required|string|email|unique:employees,email',
                 'birth_date'         => 'required|string|max:255',
                 'place_of_birth'     => 'required|string|max:255',
@@ -153,9 +153,7 @@ class EmployeeController extends Controller
 
                 // Employment
                 'department_id'         => 'required|integer',
-                'designation_id'        => 'required|integer',
                 'position_id'           => 'required|integer',
-                'line_manager'          => 'required|string|max:255',
                 'employment_status'     => 'required|string|max:255',
                 'date_hired'            => 'required|string|max:255',
                 'image'                 => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -242,9 +240,14 @@ class EmployeeController extends Controller
             $randomPassword = Str::random(8);
             $hashedPassword = Hash::make($randomPassword);
 
+            $fullName = $validatedData['fname'] . ' ' . $validatedData['mname'] . ' ' . $validatedData['lname'];
+
             // Create employee record
             $employee = Employee::create([
-                'name'         => $validatedData['name'],
+                'name'          => $fullName,
+                'first_name'    => $validatedData['fname'],
+                'middle_name'   => $validatedData['mname'],
+                'last_name'     => $validatedData['lname'],
                 'email'        => $validatedData['email'],
                 'birth_date'   => $validatedData['birth_date'],
                 'place_of_birth' => $validatedData['place_of_birth'],
@@ -286,21 +289,15 @@ class EmployeeController extends Controller
             ]);
 
             $employee->employment()->create([
-                'department_id'           => $validatedData['department_id'],
-                'designation_id'          => $validatedData['designation_id'],
-                'position_id'             => $validatedData['position_id'],
-                'line_manager'            => $validatedData['line_manager'],
                 'employment_status'       => $validatedData['employment_status'],
                 'date_hired'              => $validatedData['date_hired'],
             ]);
 
-            $startDate = Carbon::parse($validatedData['date_hired'])->format('Y-m-d');
-
-            $employee->positionHistory()->create([
-                'emp_id'              => $employee->emp_id,
-                'position_id'         => $validatedData['position_id'],
-                'start_date'          => $startDate,
-                'end_date'            => null, // End date will be set on next change
+            $employee->jobDetails()->create([
+                'department_id'           => $validatedData['department_id'],
+                'position_id'             => $validatedData['position_id'],
+                'is_head'                 => 0,
+                'is_designation'          => 0,
             ]);
 
             $image = $request->file('image');
@@ -313,7 +310,7 @@ class EmployeeController extends Controller
 
 
             User::create([
-                'name'     => $validatedData['name'],
+                'name'     => $fullName,
                 'email'    => $validatedData['email'],
                 'password' => $hashedPassword,
                 'avatar' => isset($imageName) ? $imageName : null,
@@ -461,19 +458,19 @@ class EmployeeController extends Controller
             'education',
             'employment',
             'children',
-            'user'
+            'user',
+            'jobDetails.department',
+            'jobDetails.position'
         ])
             ->where('emp_id', $emp_id)
             ->firstOrFail();
 
         $departments = DB::table('departments')->get();
-        $designations = DB::table('designations')->get();
-        $positions = DB::table('positions')->get();
+        $positions = Position::all();
         $typeJobs = DB::table('type_jobs')->get();
 
 
-
-        return view('employees.edit.editemployee', compact('employee', 'departments', 'designations', 'positions', 'typeJobs'));
+        return view('employees.edit.editemployee', compact('employee', 'departments', 'positions', 'typeJobs'));
     }
 
 
@@ -482,7 +479,9 @@ class EmployeeController extends Controller
     public function updateProfileInfo(Request $request)
     {
         $validatedData = $request->validate([
-            'name'                => 'required|string|max:255',
+            'fname'                => 'required|string|max:255',
+            'mname'                => 'required|string|max:255',
+            'lname'                => 'required|string|max:255',
             'birth_date'          => 'required|string|max:255',
             'residential_address' => 'nullable|string|max:255',
             'residential_zip'     => 'nullable|string|max:10',
@@ -492,10 +491,6 @@ class EmployeeController extends Controller
             'mobile_number'       => 'nullable|string|max:15',
             'email'               => 'required|email|max:255',
             'date_hired'          => 'required|string|max:255',
-            'department_id'       => 'required|integer',
-            'designation_id'      => 'required|integer',
-            'position_id'         => 'required|integer',
-            'line_manager'        => 'required|string|max:255',
             'employment_status'   => 'required|string|max:255',
             'images'              => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // File validation
         ]);
@@ -505,10 +500,14 @@ class EmployeeController extends Controller
             // Find Employee
             $employee = Employee::where('emp_id', $request->emp_id)->firstOrFail();
 
-            $oldPositionId = $employee->employment->position_id;
+
+            $fullName = $validatedData['fname'] . ' ' . $validatedData['mname'] . ' ' . $validatedData['lname'];
             // Update Employee Personal Info
             $employee->update([
-                'name'       => $validatedData['name'],
+                'name'          => $fullName,
+                'first_name'    => $validatedData['fname'],
+                'middle_name'   => $validatedData['mname'],
+                'last_name'     => $validatedData['lname'],
                 'birth_date' => $validatedData['birth_date'],
                 'email'      => $validatedData['email'],
             ]);
@@ -531,35 +530,8 @@ class EmployeeController extends Controller
                 [
                     'employment_status'   => $validatedData['employment_status'],
                     'date_hired'          => $validatedData['date_hired'],
-                    'department_id'       => $validatedData['department_id'],
-                    'designation_id'      => $validatedData['designation_id'],
-                    'position_id'         => $validatedData['position_id'],
-                    'line_manager'        => $validatedData['line_manager'],
                 ]
             );
-
-            // Check if position has changed and record it in the position_histories table
-            if ($oldPositionId != $validatedData['position_id']) {
-                $latestHistory = $employee->positionHistory()->latest('start_date')->first();
-
-                // If no history yet, use date_hired as the start_date
-                $startDate = $latestHistory ? now()->toDateString() : Carbon::parse($validatedData['date_hired'])->format('Y-m-d');
-
-                // If there *is* a history, update the latest one's end_date
-                if ($latestHistory) {
-                    $latestHistory->update([
-                        'end_date' => now()->toDateString(),
-                    ]);
-                }
-
-                // Insert new position history
-                $employee->positionHistory()->create([
-                    'emp_id'              => $employee->emp_id,
-                    'position_id'         => $validatedData['position_id'],
-                    'start_date'          => $startDate,
-                    'end_date'            => null, // End date will be set on next change
-                ]);
-            }
 
 
             // Handle Avatar Upload
@@ -573,7 +545,7 @@ class EmployeeController extends Controller
             }
 
             $employee->user()->update([
-                'name'       => $validatedData['name'],
+                'name'          => $fullName,
                 'email'      => $validatedData['email'],
             ]);
 
@@ -1354,7 +1326,7 @@ class EmployeeController extends Controller
 
         // Filtering by position
         if ($request->position) {
-            $query->whereHas('employment.position', function ($query) use ($request) {
+            $query->whereHas('jobDetails.position', function ($query) use ($request) {
                 $query->where('position_name', 'LIKE', '%' . $request->position . '%');
             });
         }
@@ -1398,7 +1370,7 @@ class EmployeeController extends Controller
 
         // Filtering by position
         if ($request->position) {
-            $query->whereHas('employment.position', function ($query) use ($request) {
+            $query->whereHas('jobDetails.position', function ($query) use ($request) {
                 $query->where('position_name', 'LIKE', '%' . $request->position . '%');
             });
         }
@@ -1413,60 +1385,226 @@ class EmployeeController extends Controller
 
 
 
-    /** Employee profile */
-    public function profileEmployee($user_id)
-    {
-        function getUserDetails($user_id)
-        {
-            return DB::table('users')
-                ->leftJoin('personal_information as pi', 'pi.user_id', 'users.user_id')
-                ->leftJoin('profile_information as pr', 'pr.user_id', 'users.user_id')
-                ->leftJoin('user_emergency_contacts as ue', 'ue.user_id', 'users.user_id')
-                ->select(
-                    'users.*',
-                    'pi.passport_no',
-                    'pi.passport_expiry_date',
-                    'pi.tel',
-                    'pi.nationality',
-                    'pi.religion',
-                    'pi.marital_status',
-                    'pi.employment_of_spouse',
-                    'pi.children',
-                    'pr.birth_date',
-                    'pr.gender',
-                    'pr.address',
-                    'pr.country',
-                    'pr.state',
-                    'pr.pin_code',
-                    'pr.phone_number',
-                    'pr.department',
-                    'pr.designation',
-                    'pr.reports_to',
-                    'ue.name_primary',
-                    'ue.relationship_primary',
-                    'ue.phone_primary',
-                    'ue.phone_2_primary',
-                    'ue.name_secondary',
-                    'ue.relationship_secondary',
-                    'ue.phone_secondary',
-                    'ue.phone_2_secondary'
-                )
-                ->where('users.user_id', $user_id);
-        }
-
-        // Usage:
-        $user = getUserDetails($user_id)->get();   // For multiple results
-        $users = getUserDetails($user_id)->first(); // For a single result
-
-        return view('employees.employeeprofile', compact('user', 'users'));
-    }
-
     /** Page Departments */
     public function index()
     {
-        $departments = DB::table('departments')->get();
-        return view('employees.departments', compact('departments'));
+        $departments = Department::with('employeeJobDetails.employee')->get(); // Eager load employee job details
+        return view('employees.departments', compact('departments')); // Pass it to the view
     }
+
+    public function employeeDepartments($department)
+    {
+        $dept = Department::where('department', $department)->first();
+
+        // Eager load relationships with job details and department
+        $employee = Employee::with([
+            'contact',
+            'governmentIds',
+            'familyInfo',
+            'education',
+            'employment',
+            'children',
+            'jobDetails.department', // Eager load jobDetails and related department
+            'jobDetails.position',   // Eager load position related to jobDetails
+        ])
+            ->whereHas('jobDetails.department', function ($query) use ($department) {
+                // Check if the department name matches
+                $query->where('department', $department);
+            })
+            ->get();
+
+
+        // Filter heads and staff based on the department and is_head flag
+        $heads = $employee->filter(function ($emp) use ($dept) {
+            // Make sure jobDetails is correctly loaded and not empty
+            $jobDetails = $emp->jobDetails->where('department_id', $dept->id)->first();
+
+            // Ensure jobDetails and is_head are available
+            if (!$jobDetails) {
+                return false;  // If jobDetails are not found, skip the employee
+            }
+
+            // Debugging line to inspect jobDetails structure
+            // dd($jobDetails);
+
+            return $jobDetails && $jobDetails->is_head === 1; // Check if is_head flag is set
+        });
+
+        $staff = $employee->filter(function ($emp) use ($dept) {
+            // Make sure jobDetails is correctly loaded and not empty
+            $jobDetails = $emp->jobDetails->where('department_id', $dept->id)->first();
+
+            // Ensure jobDetails and is_head are available
+            if (!$jobDetails) {
+                return false;  // If jobDetails are not found, skip the employee
+            }
+
+            // Debugging line to inspect jobDetails structure
+            // dd($jobDetails);
+
+            return $jobDetails && $jobDetails->is_head !== 1; // Check if is_head flag is not set
+        });
+
+        // Get all users and employees for additional context
+        $userList = User::all();
+        $allemployees = Employee::all();
+
+        // Get department details
+
+        // Get positions for the department
+        $positions = $dept ? $dept->positions : collect();
+
+        // Return view with all necessary data
+        return view('employees.employeedepartments', compact('heads', 'staff', 'employee', 'userList', 'department', 'allemployees', 'dept', 'positions'));
+    }
+
+    public function assignHead($emp_id, Request $request)
+    {
+        $department_id = $request->input('department_id');
+
+        // Find the employee
+        $employee = Employee::where('emp_id', $emp_id)->first();
+
+        if (!$employee) {
+            return redirect()->back()->with('error', 'Employee not found.');
+        }
+
+        // Get the position_id of the employee (you can customize this if needed)
+        $employeeJobDetails = EmployeeJobDetail::where('emp_id', $emp_id)
+            ->where('department_id', $department_id)
+            ->first();
+
+        if (!$employeeJobDetails) {
+            return redirect()->back()->with('error', 'Employee does not have job details for this department.');
+        }
+
+        $positionId = $employeeJobDetails->position_id;
+
+        // Remove current head of the department
+        $existingHead = EmployeeJobDetail::where('department_id', $department_id)
+            ->where('is_head', true)
+            ->first();
+
+        if ($existingHead) {
+            $existingHead->is_head = false;
+            $existingHead->save();
+        }
+
+        // Promote the selected employee to head of department
+        $employeeJobDetails->is_head = true;
+        $employeeJobDetails->save();
+
+        return redirect()->back()->with('success', 'Employee has been successfully assigned as the head of the department.');
+    }
+
+
+
+    public function addEmployeeToDepartment(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'emp_id' => 'required|exists:employees,emp_id', // Ensure the employee exists
+            'position_id' => 'required|exists:positions,id', // Ensure the position exists
+            'department_id' => 'required|exists:departments,id', // Ensure the department exists
+            'is_designation' => 'required|boolean', // Validate if the position is a designation
+        ]);
+
+        // Get the employee's job details for the department
+        $employeeJobDetail = EmployeeJobDetail::where('emp_id', $request->emp_id)
+            ->where('department_id', $request->department_id)
+            ->first();
+
+        // Check if the employee already has a position in the department
+        if ($employeeJobDetail) {
+            // If it's a designation, update the position
+            $employeeJobDetail->position_id = $request->position_id;
+            $employeeJobDetail->is_designation = $request->is_designation; // Ensure this is set
+            $employeeJobDetail->save();
+        } else {
+            // If the employee doesn't have any job detail in the department, create a new record
+            EmployeeJobDetail::create([
+                'emp_id' => $request->emp_id,
+                'position_id' => $request->position_id,
+                'department_id' => $request->department_id,
+                'is_head' => false, // Set this to true if it’s the primary position
+                'is_designation' => $request->is_designation, // Ensure this is passed
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Employee assigned to department successfully!');
+    }
+
+
+
+
+    public function editPosition(Request $request)
+    {
+        // Validate the request input, including 'is_designation'
+        $request->validate([
+            'emp_id' => 'required|exists:employees,emp_id',
+            'department_id' => 'required|exists:departments,id',
+            'position_id' => 'required|exists:positions,id',
+            'is_designation' => 'required|boolean',
+        ]);
+
+        // Retrieve the employee's job details for the given department
+        $jobDetail = EmployeeJobDetail::where('emp_id', $request->emp_id)
+            ->where('department_id', $request->department_id)
+            ->first();
+
+        // If job details not found, return an error
+        if (!$jobDetail) {
+            return redirect()->back()->with('error', 'Employee not found in this department.');
+        }
+
+        // Check if the employee's last job entry has is_designation == 0
+        $lastJobDetail = EmployeeJobDetail::where('emp_id', $request->emp_id)->orderBy('created_at', 'desc')->first();
+
+        if ($lastJobDetail && $lastJobDetail->is_designation == 0) {
+            // Prevent update if the last job has is_designation == 0
+            return redirect()->back()->with('error', 'The employee must have a position, not just a designation. Update cannot be made.');
+        }
+
+        // Update the job details with the new position and designation status
+        $jobDetail->position_id = $request->position_id;
+        $jobDetail->is_designation = $request->is_designation;  // Update the 'is_designation' field
+        $jobDetail->save();  // Save the updated job details
+
+        // Return a success message after updating
+        return redirect()->back()->with('success', 'Position updated successfully.');
+    }
+
+
+
+
+    public function deleteFromDepartment($emp_id, $department_id)
+    {
+        // Get the record for the employee in the specific department
+        $record = EmployeeJobDetail::where('emp_id', $emp_id)
+            ->where('department_id', $department_id)
+            ->first();
+
+        if (!$record) {
+            return redirect()->back()->with('error', 'Employee not found in this department.');
+        }
+
+        // Count how many job detail records the employee has
+        $totalRecords = EmployeeJobDetail::where('emp_id', $emp_id)->count();
+
+        // Check if it's the last record and is_designation == 0
+        if ($totalRecords <= 1 && $record->is_designation == 0) {
+            return redirect()->back()->with('error', 'Cannot delete. This is the employee`s last department and not a designation. Assign to another department first.');
+        }
+
+        // Proceed with deletion
+        $record->delete();
+
+        return redirect()->back()->with('success', 'Employee removed from department successfully.');
+    }
+
+
+
+
 
     /** Save Record */
     public function saveRecordDepartment(Request $request)
@@ -1535,19 +1673,19 @@ class EmployeeController extends Controller
     }
 
     /** Page Designations */
-    public function designationsIndex()
+    public function positionsIndex()
     {
-        $designations = Designation::with('department')->get();
+        $positions = Position::with('department')->get();
         $departments = Department::all();
 
-        return view('employees.designations', ['designations' => $designations, 'departments' => $departments]);
+        return view('employees.positions', ['positions' => $positions, 'departments' => $departments]);
     }
 
     /** Save Record */
-    public function saveRecordDesignations(Request $request)
+    public function saveRecordPositions(Request $request)
     {
         $request->validate([
-            'designation_name' => 'required|string|max:255',
+            'position_name' => 'required|string|max:255',
             'department' => 'required|string|max:255',
         ]);
 
@@ -1561,29 +1699,27 @@ class EmployeeController extends Controller
                 return redirect()->back()->withInput();
             }
 
-            // Check if the designation already exists within the department
-            $existingDesignation = Designation::where('designation_name', $request->designation_name)
+            $existingPosition = Position::where('position_name', $request->position_name)
                 ->where('department_id', $department->id)
                 ->first();
 
-            if ($existingDesignation !== null) {
+            if ($existingPosition !== null) {
                 DB::rollback();
-                flash()->error('Designation already exists within the selected department.');
+                flash()->error('Position already exists within the selected department.');
                 return redirect()->back()->withInput();
             }
 
-            // Create new designation
-            $designation = new Designation();
-            $designation->designation_name = $request->designation_name;
-            $designation->department_id = $department->id;
-            $designation->save();
+            $position = new Position();
+            $position->position_name = $request->position_name;
+            $position->department_id = $department->id;
+            $position->save();
 
             DB::commit();
-            flash()->success('Designation added successfully.');
+            flash()->success('Position added successfully.');
             return redirect()->back();
         } catch (\Exception $e) {
             DB::rollback();
-            flash()->error('Failed to add designation. Please try again.');
+            flash()->error('Failed to add position. Please try again.');
             return redirect()->back()->withInput();
         }
     }
@@ -1591,165 +1727,31 @@ class EmployeeController extends Controller
 
 
     /** Update Record */
-    public function updateRecordDesignations(Request $request)
+    public function updateRecordPositions(Request $request)
     {
         $request->validate([
-            'id'              => 'required|integer|exists:designations,id',
-            'designation_name' => 'required|string|max:255',
+            'id'              => 'required|integer|exists:positions,id',
+            'position_name' => 'required|string|max:255',
             'department_id'    => 'required|integer|exists:departments,id',
         ]);
 
         DB::beginTransaction();
         try {
-            // Fetch the designation record by ID
-            $designation = Designation::findOrFail($request->id);
 
-            // Update designation record
-            $designation->update([
-                'designation_name' => $request->designation_name,
+            $position = Position::findOrFail($request->id);
+
+
+            $position->update([
+                'position_name' => $request->position_name,
                 'department_id'    => $request->department_id,
             ]);
 
             DB::commit();
-            flash()->success('Designation updated successfully!');
-            return redirect()->back();
-        } catch (\Exception $e) {
-            DB::rollback();
-            flash()->error('Failed to update designation. Please try again.');
-            return redirect()->back()->withInput();
-        }
-    }
-
-
-    public function deleteRecordDesignations(Request $request)
-    {
-        try {
-            // Delete the designation record
-            Designation::destroy($request->id);
-
-            // Success message
-            flash()->success('Designation deleted successfully.');
-            return redirect()->back();
-        } catch (\Exception $e) {
-            // Handle errors
-            flash()->error('Failed to delete designation.');
-            return redirect()->back();
-        }
-    }
-
-    /** Page Designations */
-    public function positionsIndex()
-    {
-        $positions = Position::with('department', 'designation')->get();
-        $departments = Department::all();
-        $designations = Designation::all();
-
-        return view('employees.positions', [
-            'designations' => $designations,
-            'departments' => $departments,
-            'positions' => $positions,
-        ]);
-    }
-
-    public function getInformationPosition(Request $request)
-    {
-        $designationId = $request->input('id');
-
-        $designation = Designation::find($designationId);
-
-        if ($designation) {;
-            if ($designation->department) {
-                return response()->json([
-                    'department' => $designation->department->department,
-                ]);
-            }
-        }
-        return response()->json(['department' => null]);
-    }
-
-
-    public function saveRecordPositions(Request $request)
-    {
-        $request->validate([
-            'position' => 'required|string|max:255',
-            'designation' => 'required|integer|exists:designations,id',
-            'department' => 'required|string|max:255',
-        ]);
-
-        DB::beginTransaction();
-        try {
-            // Check if the department exists
-            $department = Department::where('department', $request->department)->first();
-            if ($department === null) {
-                DB::rollback();
-                flash()->error('Selected department does not exist. Please add the department first.');
-                return redirect()->back()->withInput();
-            }
-
-            // Check if the position already exists under the same designation
-            $existingPosition = Position::where('position_name', $request->position)
-                ->where('designation_id', $request->designation)
-                ->first();
-
-            if ($existingPosition !== null) {
-                DB::rollback();
-                flash()->error('Position already exists under the selected designation.');
-                return redirect()->back()->withInput();
-            }
-
-            $designation = Designation::findOrFail($request->designation);
-
-            // Create new position
-            $position = new Position();
-            $position->position_name = $request->position;
-            $position->designation_id = $designation->id;
-            $position->department_id = $designation->department_id; // Set the department_id from the designation
-            $position->save();
-            DB::commit();
-            flash()->success('Position added successfully.');
-            return redirect()->back();
-        } catch (\Exception $e) {
-            DB::rollback();
-            flash()->error('Failed to add position. Error: ' . $e->getMessage());
-            return redirect()->back()->withInput();
-        }
-    }
-
-
-    public function updateRecordPositions(Request $request)
-    {
-        $request->validate([
-            'id'             => 'required|integer|exists:positions,id',
-            'position_name'  => 'required|string|max:255',
-            'designation_id' => 'required|integer|exists:designations,id',
-            'department'     => 'required|string|max:255', // department name from the form
-        ]);
-
-        DB::beginTransaction();
-        try {
-            // Find the department record by matching the department name
-            $department = Department::where('department', $request->department)->first();
-
-            if (!$department) {
-                throw new \Exception('Department not found.');
-            }
-
-            // Find the position record by ID
-            $position = Position::findOrFail($request->id);
-
-            // Update the position record, using the found department's id
-            $position->update([
-                'position_name'  => $request->position_name,
-                'designation_id' => $request->designation_id,
-                'department_id'  => $department->id,
-            ]);
-
-            DB::commit();
             flash()->success('Position updated successfully!');
-            return redirect()->back()->withInput();
+            return redirect()->back();
         } catch (\Exception $e) {
             DB::rollback();
-            flash()->error('Failed to update position. Please try again. Error: ' . $e->getMessage());
+            flash()->error('Failed to update position. Please try again.');
             return redirect()->back()->withInput();
         }
     }
@@ -1758,18 +1760,45 @@ class EmployeeController extends Controller
     public function deleteRecordPositions(Request $request)
     {
         try {
-            // Delete the designation record
-            Position::destroy($request->id);
+            // Find the position to delete
+            $position = Position::find($request->id);
+
+            // Check if the position is assigned to any employees
+            $employeeCount = $position->jobDetails()->count();
+
+            if ($employeeCount > 0) {
+                // If employees are assigned, prevent deletion and show a message
+                flash()->error('This position cannot be deleted because it is assigned to employees.');
+                return redirect()->back();
+            }
+
+            $position->delete();
 
             // Success message
             flash()->success('Position deleted successfully.');
             return redirect()->back();
         } catch (\Exception $e) {
-            // Handle errors
-            flash()->error('Failed to delete position.');
+            // Handle any errors that may occur during deletion
+            flash()->error('Failed to delete position. ' . $e->getMessage());
             return redirect()->back();
         }
     }
+
+    public function checkPositionEmployees($id)
+    {
+        $position = Position::find($id);
+
+        // Check if the position has employees
+        if ($position && $position->jobDetails()->count() > 0) {
+            return response()->json(['error' => 'This position cannot be deleted because it has employees assigned.']);
+        }
+
+        return response()->json(['success' => 'This position can be deleted.']);
+    }
+
+
+
+    /** Page Designations */
 
     public function getGraphData(Request $request)
     {

@@ -14,6 +14,9 @@ class Employee extends Model
     protected $fillable = [
         'emp_id',
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'email',
         'birth_date',
         'place_of_birth',
@@ -84,14 +87,26 @@ class Employee extends Model
     {
         return $this->belongsTo(User::class, 'emp_id', 'user_id');
     }
-    
+
 
     public function positionHistory()
     {
         return $this->hasMany(PositionHistory::class, 'emp_id', 'emp_id');
     }
 
+    public function jobDetails()
+    {
+        return $this->hasMany(EmployeeJobDetail::class, 'emp_id', 'emp_id');
+    }
+
+
+
+
+
     
+    
+
+
 
 
 

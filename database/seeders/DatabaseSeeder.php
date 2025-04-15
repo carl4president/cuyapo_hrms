@@ -21,7 +21,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
-            DesignationSeeder::class,
             PositionSeeder::class,
             EmployeeSeeder::class,
             UserSeeder::class,
@@ -36,6 +35,7 @@ class DatabaseSeeder extends Seeder
             EmployeeLearningDevelopmentTrainingSeeder::class,
             EmployeeOtherInformationSeeder::class,
             EmployeeEmploymentSeeder::class,
+            EmployeeJobDetailSeeder::class,
             PositionHistorySeeder::class,
             AddJobSeeder::class,
             ApplicantSeeder::class,

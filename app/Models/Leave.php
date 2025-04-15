@@ -23,8 +23,15 @@ class Leave extends Model
         'status',
         'reason',
         'approved_by',
+        'vacation_location',
+        'abroad_specify',
+        'sick_location',
+        'illness_specify',
+        'women_illness',
+        'study_reason',
     ];
     
+
 
 
     /** Save Record Leave or Update */
@@ -48,7 +55,7 @@ class Leave extends Model
             }
 
             // Calculate the number of days for the leave
-            $number_of_days = $request->number_of_day;  // Add 1 to include the start day
+            $number_of_days = $request->number_of_day;  // No restriction for decimal or negative values
 
             // Retrieve the current leave balance for the employee and leave type
             $leave_balance = LeaveBalance::where('staff_id', $employee_id)
@@ -95,7 +102,8 @@ class Leave extends Model
             $original_leave_days = $latest_timestamp[0]; // The leave days before deduction
             $latest_remaining_leave = $latest_timestamp[1]; // The most recent remaining leave
 
-            if ($original_leave_days >= $number_of_days) {
+            // Allow negative or decimal leave days
+            if ($original_leave_days >= $number_of_days || true) {  // no restriction for negative or decimal
                 // Deduct the leave days from the remaining balance
                 $remaining_leave_days[Carbon::now()->toDateTimeString()] = [
                     $latest_remaining_leave,  // Original leave days before deduction
@@ -123,7 +131,13 @@ class Leave extends Model
                         'leave_day'       => json_encode($request->select_leave_day),
                         'status'          => 'Pending',
                         'reason'          => $request->reason,
-                        'approved_by'     => Session::get('line_manager'),
+                        'approved_by'     => null,
+                        'vacation_location' => $request->vacation_location,
+                        'abroad_specify'   => $request->abroad_specify,
+                        'sick_location'    => $request->sick_location,
+                        'illness_specify'  => $request->illness_specify,
+                        'women_illness'    => $request->women_illness,
+                        'study_reason'      => is_array($request->study_reason) ? json_encode($request->study_reason) : $request->study_reason,
                     ]
                 );
 
@@ -148,6 +162,7 @@ class Leave extends Model
             return redirect()->back();
         }
     }
+
 
 
     public function editLeave(Request $request)
@@ -206,7 +221,7 @@ class Leave extends Model
                                 $adjustment = $newUsedDays - $originalUsed; // + means more days used
 
                                 $days[0] = $originalBase;
-                                $days[1] = max(0, $originalBase - $newUsedDays);
+                                $days[1] = $originalBase - $newUsedDays;
 
                                 $previousValue = $days[1];
                                 $startedAdjusting = true;
@@ -216,7 +231,7 @@ class Leave extends Model
                                 $oldUsed = $oldBase - $days[1];
 
                                 $newBase = $previousValue;
-                                $newRemaining = max(0, $newBase - $oldUsed);
+                                $newRemaining = $newBase - $oldUsed;
 
                                 $days[0] = $newBase;
                                 $days[1] = $newRemaining;
@@ -233,6 +248,8 @@ class Leave extends Model
                     }
                 }
 
+                $study_reason = $request->has('study_reason') ? json_encode($request->study_reason) : null;
+
                 $leave->update([
                     'leave_type'      => $request->leave_type,
                     'remaining_leave' => $request->remaining_leave ?? 0,
@@ -244,6 +261,13 @@ class Leave extends Model
                     'status'          => 'Pending',
                     'reason'          => $request->reason,
                     'approved_by'     => Session::get('line_manager', null),
+
+                    'vacation_location' => $request->vacation_location,
+                    'abroad_specify'    => $request->abroad_specify,
+                    'sick_location'     => $request->sick_location,
+                    'illness_specify'   => $request->illness_specify,
+                    'women_illness'     => $request->women_illness,
+                    'study_reason'      => $study_reason,
                 ]);
 
                 flash()->success('Leave updated successfully!');

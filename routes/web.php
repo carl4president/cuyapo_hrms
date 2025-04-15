@@ -1,6 +1,6 @@
 <?php
 
-
+use App\Http\Controllers\pdfController;
 use App\Http\Middleware\LeaveUpdateMiddleware;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -205,21 +205,20 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                     Route::post('/save', 'saveRecordDepartment')->name('form/departments/save');
                     Route::post('/update', 'updateRecordDepartment')->name('form/department/update');
                     Route::post('/delete', 'deleteRecordDepartment')->name('form/department/delete');
+                    Route::post('admin/employee/{emp_id}/assign-head', 'assignHead')->name('admin/assignHead');
+                    Route::post('/add/employee', 'addEmployeeToDepartment')->name('employee/assignToDepartment');
+                    Route::get('employee/departments/{department}', 'employeeDepartments');
+                    Route::post('/employee/editPosition', 'editPosition')->name('employee/editPosition');
+                    Route::delete('/employee/deleteFromDepartment/{emp_id}/{department_id}', 'deleteFromDepartment')->name('employee/deleteFromDepartment');
                 });
                 // ----------------------- Designations ------------------------
-                Route::prefix('designations')->group(function () {
-                    Route::get('/page', 'designationsIndex')->name('form/designations/page');
-                    Route::post('/save', 'saveRecordDesignations')->name('form/designations/save');
-                    Route::post('/update', 'updateRecordDesignations')->name('form/designations/update');
-                    Route::post('/delete', 'deleteRecordDesignations')->name('form/designations/delete');
-                });
                 // ----------------------- Positions ------------------------
                 Route::prefix('positions')->group(function () {
                     Route::get('/page', 'positionsIndex')->name('form/positions/page');
                     Route::post('/save', 'saveRecordPositions')->name('form/positions/save');
                     Route::post('/update', 'updateRecordPositions')->name('form/positions/update');
                     Route::post('/delete', 'deleteRecordPositions')->name('form/positions/delete');
-                    Route::post('get/information/position', 'getInformationPosition')->name('hr/get/information/position');
+                    Route::get('/check-position-employees/{id}', 'checkPositionEmployees')->name('check/employeesPosition');
                 });
                 // ------------------------- Time Sheet -----------------------
                 Route::prefix('timesheet')->group(function () {
@@ -251,6 +250,14 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
         });
     });
 
+
+        // ------------------------- Form PDF ---------------------------//
+        Route::controller(pdfController::class)->group(function () {
+            Route::middleware('auth')->group(function () {
+                Route::post('form/leave/print', 'printLeave')->name('form/leave/print');
+            });
+        });
+
     // ---------------------------- Leaves ------------------------------//
     Route::middleware([LeaveUpdateMiddleware::class])->controller(LeavesController::class)->group(function () {
         Route::middleware('auth')->group(function () {
@@ -265,8 +272,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                 Route::get('/employee/new', 'leavesEmployee')->name('form/leaves/employee/new');
                 Route::post('/edit/delete', 'deleteLeave')->name('form/leaves/edit/delete');
                 Route::get('/leaves/admin/search', 'leaveSearch')->name('form/leaves/list/search');
-                Route::post('/leavesettings/update', 'updateAnnualLeaveSettings')->name('form/leaveSettings/update');
-                Route::post('/sickleavesettings/update', 'updateSickLeaveSettings')->name('form/sickleaveSettings/update');
+                Route::post('/leavesettings/update', 'updateSplLeaveSettings')->name('form/leaveSettings/update');
                 Route::post('/mapaternityleavesettings/update', 'updateMaPaternityLeaveSettings')->name('form/mapaternityLeaveSettings/update');
                 Route::get('/custom-leave-policy/get', 'getCustomLeavePolicy')->name('leave/getCustomLeavePolicy');
                 Route::post('/custom-leave-policy/save', 'saveCustomLeavePolicy')->name('leave/saveCustomLeavePolicy');

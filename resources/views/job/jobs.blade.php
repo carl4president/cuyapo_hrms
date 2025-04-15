@@ -12,6 +12,7 @@
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         <li class="breadcrumb-item active">Jobs</li>
+                        <li class="breadcrumb-item active">Jobs</li>
                     </ul>
                 </div>
                 <div class="col-auto float-right ml-auto">
@@ -63,7 +64,6 @@
                                 <td>{{ ++$key }}</td>
                                 <td hidden class="id">{{ $items->id }}</td>
                                 <td hidden class="position">{{ $items->position->id }}</td>
-                                <td hidden class="designation">{{ $items->designation->id }}</td>
                                 <td hidden class="department_id">{{ $items->department->id }}</td>
                                 <td hidden class="no_of_vacancies">{{ $items->no_of_vacancies }}</td>
                                 <td hidden class="experience">{{ $items->experience }}</td>
@@ -171,14 +171,6 @@
                                         @foreach ($department as $value)
                                         <option value="{{ $value->id }}" {{ old('id') == $value->id ? "selected" :""}}>{{ $value->department }}</option>
                                         @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Designation</label>
-                                    <select class="form-control" id="designation" name="designation_id">
-                                        <option value="" disabled selected>-- Select Designation --</option>
                                     </select>
                                 </div>
                             </div>
@@ -329,7 +321,6 @@
 
         $('#department').change(function() {
             const departmentId = $(this).val();
-            $('#designation').html('<option value="" disabled selected>-- Select Designation --</option>'); // Clear designation dropdown
             $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
 
             if (departmentId) {
@@ -338,36 +329,6 @@
                     , type: "POST"
                     , data: {
                         id: departmentId
-                        , _token: $('meta[name="csrf-token"]').attr('content')
-                    }
-                    , dataType: "json"
-                    , success: function(response) {
-                        if (response.designations) {
-                            response.designations.forEach(designation => {
-                                $('#designation').append(
-                                    `<option value="${designation.id}">${designation.designation_name}</option>`
-                                );
-                            });
-                        }
-                    }
-                    , error: function(xhr, status, error) {
-                        console.error("Error fetching designations:", error);
-                    }
-                });
-            }
-        });
-
-        // On designation change
-        $('#designation').change(function() {
-            const designationId = $(this).val();
-            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
-
-            if (designationId) {
-                $.ajax({
-                    url: url
-                    , type: "POST"
-                    , data: {
-                        id: designationId
                         , _token: $('meta[name="csrf-token"]').attr('content')
                     }
                     , dataType: "json"
@@ -381,11 +342,13 @@
                         }
                     }
                     , error: function(xhr, status, error) {
-                        console.error("Error fetching positions:", error);
+                        console.error("Error fetching designations:", error);
                     }
                 });
             }
         });
+
+        // On designation change
     });
 
 </script>

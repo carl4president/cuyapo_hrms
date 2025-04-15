@@ -237,6 +237,9 @@
                                             <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $items->id }}" data-employee_name="{{ $items->employee_name }}" data-employee_id="{{ $items->staff_id }}" data-leave_type="{{ $items->leave_type }}" data-remaining_leave="" data-date_from="{{ $items->date_from }}" data-date_to="{{ $items->date_to }}" data-number_of_day="{{ $items->number_of_day }}" data-leave_day="{{ $items->leave_day }}" data-reason="{{ $items->reason }}" data-target="#edit_leave">
                                                 <i class="fa fa-pencil m-r-5"></i> Edit
                                             </a>
+                                            <a class="dropdown-item printLeave" href="#" data-id="{{ $items->id }}" data-emp-id="{{ $items->staff_id }}" data-leave_type="{{ $items->leave_type }}" data-date_from="{{ $items->date_from }}" data-date_to="{{ $items->date_to }}">
+                                                <i class="fa fa-print m-r-5"></i> Print
+                                            </a>
                                             <a class="dropdown-item leaveDelete" href="#" data-toggle="modal" data-id="{{ $items->id }}" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                                         </div>
                                     </div>
@@ -363,7 +366,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Remaining Leaves <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="remaining_leave" name="remaining_leave" readonly value="0">
+                                    <input type="text" class="form-control" id="counter_remaining_leave" readonly value="0">
+                                    <input type="hidden" class="form-control" id="remaining_leave" name="remaining_leave" readonly value="0">
                                 </div>
                             </div>
                         </div>
@@ -396,7 +400,7 @@
                         </div>
                         <div class="row">
                             <div id="leave_day_select" class="col-md-12">
-                                <div class="form-group">
+                                <div class="form-group" style="display: none;">
                                     <label>Leave Day <span class="text-danger">*</span></label>
                                     <select class="select" name="select_leave_day[]" id="leave_day">
                                         <option value="Full-Day Leave">Full-Day Leave</option>
@@ -408,10 +412,57 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <!-- Vacation/Special Privilege Leave -->
+                            <div id="vacation_special_leave" class="mb-4">
+                                <label class="form-label">In case of Vacation/Special Privilege Leave:</label>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="vacation_location" value="Philippines" id="vacation_ph">
+                                    <label class="form-check-label" for="vacation_ph">Within the Philippines</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="vacation_location" value="Abroad" id="vacation_abroad">
+                                    <label class="form-check-label" for="vacation_abroad">Abroad</label>
+                                </div>
+                                <input type="text" class="form-control mt-2" id="abroad_specify" name="abroad_specify" placeholder="Specify country" style="display: none;">
+                            </div>
 
+                            <!-- Sick Leave Details -->
+                            <div id="sick_leave_details" class="mb-4">
+                                <label class="form-label">In case of Sick Leave:</label>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="sick_location" value="In Hospital" id="sick_hospital">
+                                    <label class="form-check-label" for="sick_hospital">In Hospital</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="sick_location" value="Out Patient" id="sick_outpatient">
+                                    <label class="form-check-label" for="sick_outpatient">Out Patient</label>
+                                </div>
+                                <input type="text" class="form-control mt-2" name="illness_specify" placeholder="Specify illness">
+                            </div>
+
+                            <!-- Special Leave Benefits for Women -->
+                            <div id="special_leave_women" class="mb-4">
+                                <label class="form-label">In case of Special Leave Benefits for Women:</label>
+                                <input type="text" class="form-control mt-1" name="women_illness" placeholder="Specify illness">
+                            </div>
+
+                            <!-- Study Leave -->
+                            <div id="study_leave" class="mb-4">
+                                <label class="form-label">In case of Study Leave:</label>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="study_reason[]" value="Completion of Master’s Degree" id="study_master">
+                                    <label class="form-check-label" for="study_master">Completion of Master’s Degree</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="study_reason[]" value="BAR/Board Examination Review" id="study_bar">
+                                    <label class="form-check-label" for="study_bar">BAR/Board Examination Review</label>
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>Leave Reason <span class="text-danger">*</span></label>
-                            <textarea rows="2" class="form-control" name="reason"></textarea>
+                            <textarea rows="2" class="form-control" id="reason" name="reason"></textarea>
                         </div>
 
                         <div class="submit-section">
@@ -462,10 +513,7 @@
                                         $currentYear = date('Y');
                                         @endphp
                                         @foreach($leaveInformation as $key => $leaves)
-                                        @if($leaves->leave_type != 'Total Leave Balance' &&
-                                        $leaves->leave_type != 'Use Leave' &&
-                                        $leaves->leave_type != 'Remaining Leave' &&
-                                        isset($leaves->year_leave) && $leaves->year_leave == $currentYear)
+                                        @if(isset($leaves->year_leave) && $leaves->year_leave == $currentYear)
                                         <option value="{{ $leaves->leave_type }}">{{ $leaves->leave_type }}</option>
                                         @endif
                                         @endforeach
@@ -475,7 +523,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Remaining Leaves <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="edit_remaining_leave" name="remaining_leave" readonly value="0">
+                                    <input type="text" class="form-control" id="edit_counter_remaining_leave" readonly value="0">
+                                    <input type="hidden" class="form-control" id="edit_remaining_leave" name="remaining_leave" readonly value="0">
                                 </div>
                             </div>
                         </div>
@@ -506,6 +555,54 @@
                             <label>Number of days <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="edit_number_of_day" name="number_of_day" value="0" readonly>
                         </div>
+
+                        <!-- Vacation/Special Privilege Leave -->
+                        <div id="e_vacation_special_leave" class="form-group mb-3">
+                            <label class="form-label">In case of Vacation/Special Privilege Leave:</label><br>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="e_vacation_location" value="Philippines" id="e_vacation_philippines">
+                                <label class="form-check-label" for="e_vacation_philippines">Within the Philippines</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="e_vacation_location" value="Abroad" id="e_vacation_abroad">
+                                <label class="form-check-label" for="e_vacation_abroad">Abroad</label>
+                            </div>
+                            <input type="text" class="form-control mt-2" id="e_abroad_specify" name="e_abroad_specify" placeholder="Specify country" style="display: none;">
+                        </div>
+
+                        <!-- Sick Leave -->
+                        <div id="e_sick_leave_details" class="form-group mb-3">
+                            <label class="form-label">In case of Sick Leave:</label><br>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="e_sick_location" value="In Hospital" id="e_sick_hospital">
+                                <label class="form-check-label" for="e_sick_hospital">In Hospital</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="e_sick_location" value="Out Patient" id="e_sick_outpatient">
+                                <label class="form-check-label" for="e_sick_outpatient">Out Patient</label>
+                            </div>
+                            <input type="text" class="form-control mt-2" name="e_illness_specify" placeholder="Specify illness">
+                        </div>
+
+                        <!-- Special Leave Benefits for Women -->
+                        <div id="e_special_leave_women" class="form-group mb-3">
+                            <label class="form-label">In case of Special Leave Benefits for Women:</label>
+                            <input type="text" class="form-control" name="e_women_illness" placeholder="Specify illness">
+                        </div>
+
+                        <!-- Study Leave -->
+                        <div id="e_study_leave" class="form-group mb-3">
+                            <label class="form-label">In case of Study Leave:</label><br>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="e_study_reason[]" value="Completion of Master’s Degree" id="e_study_master">
+                                <label class="form-check-label" for="e_study_master">Completion of Master’s Degree</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="e_study_reason[]" value="BAR/Board Examination Review" id="e_study_bar">
+                                <label class="form-check-label" for="e_study_bar">BAR/Board Examination Review</label>
+                            </div>
+                        </div>
+
 
                         <div class="form-group">
                             <label>Leave Reason <span class="text-danger">*</span></label>
@@ -648,6 +745,198 @@
 </div>
 <!-- /Page Wrapper -->
 @section('script')
+<script>
+    $('#add_leave').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset(); // Reset the form
+        // Reset additional fields manually if needed
+        $('#counter_remaining_leave, #remaining_leave, #number_of_day').val('0');
+        $('#leave_dates_display, #select_leave_day').hide();
+        // Reset checkboxes or any additional elements
+        $('#vacation_ph, #vacation_abroad').prop('checked', false);
+        $('#abroad_specify').hide().val('');
+        $('#sick_hospital, #sick_outpatient').prop('checked', false);
+        $('#illness_specify').val('');
+        $('#study_master, #study_bar').prop('checked', false);
+        $('#women_illness').val('');
+    });
+
+    $('#edit_leave').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset(); // Reset the form
+        // Reset additional fields manually if needed
+        $('#edit_counter_remaining_leave, #edit_remaining_leave, #edit_number_of_day').val('0');
+        $('#edit_leave_dates_display, #edit_select_leave_day').hide();
+        // Reset checkboxes or any additional elements
+        $('#e_vacation_philippines, #e_vacation_abroad').prop('checked', false);
+        $('#e_abroad_specify').hide().val('');
+        $('#e_sick_hospital, #e_sick_outpatient').prop('checked', false);
+        $('#e_illness_specify').val('');
+        $('#e_study_master, #e_study_bar').prop('checked', false);
+        $('#e_women_illness').val('');
+    });
+
+</script>
+
+{{-- Add Modal --}}
+<script>
+    $(document).ready(function() {
+        // Initially hide all sections
+        $('#vacation_special_leave, #sick_leave_details, #special_leave_women, #study_leave').hide();
+        $('#abroad_specify').hide(); // Hide abroad input
+        $('#sick_leave_details_input').hide(); // Hide sick leave input section
+
+        // Handle leave type selection
+        $('#leave_type').change(function() {
+            const leaveType = $(this).val();
+
+            // Hide all sections first
+            $('#vacation_special_leave, #sick_leave_details, #special_leave_women, #study_leave').hide();
+
+            if (leaveType.includes('Vacation') || leaveType.includes('Special Privilege')) {
+                $('#vacation_special_leave').show();
+            } else if (leaveType.includes('Sick')) {
+                $('#sick_leave_details').show();
+            } else if (leaveType.includes('Special Leave Benefits for Women')) {
+                $('#special_leave_women').show();
+            } else if (leaveType.includes('Study')) {
+                $('#study_leave').show();
+            }
+
+            // Hide optional input fields when switching leave type
+            $('#abroad_specify').hide().val('');
+            $('#sick_leave_details_input').hide();
+            $('input[name="vacation_location"]').prop('checked', false);
+            $('input[name="sick_location"]').prop('checked', false);
+        });
+
+        // Show/hide abroad input field
+        $('input[name="vacation_location"]').on('change', function() {
+            if ($(this).val() === 'Abroad') {
+                $('#abroad_specify').show();
+            } else {
+                $('#abroad_specify').hide().val('');
+            }
+        });
+
+        // Show sick leave details input only after selection
+        $('input[name="sick_location"]').on('change', function() {
+            $('#sick_leave_details_input').show();
+        });
+    });
+
+</script>
+
+{{-- edit modal --}}
+<script>
+    $(document).ready(function() {
+        // Ensure the element exists before attaching the event handler
+        const leaveTypeElement = $('#edit_leave_type');
+
+        if (leaveTypeElement.length) {
+            // Initially hide all sections
+            $('#e_vacation_special_leave, #e_sick_leave_details, #e_special_leave_women, #e_study_leave').hide();
+            $('#e_abroad_specify').hide(); // Hide abroad input
+
+            // Handle leave type selection
+            leaveTypeElement.change(function() {
+                const leaveType = $(this).val();
+
+                // Ensure leaveType is valid before attempting to use .includes()
+                if (leaveType && typeof leaveType === 'string') {
+                    // Hide all sections first
+                    $('#e_vacation_special_leave, #e_sick_leave_details, #e_special_leave_women, #e_study_leave').hide();
+
+                    if (leaveType.includes('Vacation Leave') || leaveType.includes('Special Privilege Leave')) {
+                        $('#e_vacation_special_leave').show();
+                    } else if (leaveType.includes('Sick')) {
+                        $('#e_sick_leave_details').show();
+                    } else if (leaveType.includes('Special Leave Benefits for Women')) {
+                        $('#e_special_leave_women').show();
+                    } else if (leaveType.includes('Study')) {
+                        $('#e_study_leave').show();
+                    }
+
+                    // Hide optional input fields when switching leave type
+                    $('#e_abroad_specify').hide().val('');
+                }
+            });
+        } else {
+            console.error('#edit_leave_type not found in the DOM');
+        }
+
+        // Show/hide abroad input field
+        $('input[name="vacation_location"]').on('change', function() {
+            if ($(this).val() === 'Abroad') {
+                $('#e_abroad_specify').show();
+            } else {
+                $('#e_abroad_specify').hide().val('');
+            }
+        });
+
+        // Show sick leave details input only after selection
+        $('input[name="sick_location"]').on('change', function() {
+            $('#sick_leave_details_input').show();
+        });
+    });
+
+</script>
+
+
+<script>
+    $(document).on('click', '.printLeave', function(e) {
+        e.preventDefault();
+
+        var id = $(this).data('id');
+        var emp_id = $(this).data('emp-id');
+        var leaveType = $(this).data('leave_type');
+        var dateFrom = $(this).data('date_from');
+        var dateTo = $(this).data('date_to');
+
+        // Debugging: Log the data being sent
+        console.log('Sending Data:', {
+            id: id
+            , leave_type: leaveType
+            , date_from: dateFrom
+            , date_to: dateTo
+        });
+
+        // Send request to generate PDF with selected data
+        $.ajax({
+            url: '{{ route("form/leave/print") }}', // Your named route
+            method: 'POST'
+            , data: {
+                _token: '{{ csrf_token() }}'
+                , id: id
+                , emp_id: emp_id
+                , leave_type: leaveType
+                , date_from: dateFrom
+                , date_to: dateTo
+            }
+            , xhrFields: {
+                responseType: 'blob'
+            }
+            , success: function(response) {
+                var blob = new Blob([response], {
+                    type: 'application/pdf'
+                });
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = "Leave_Application.pdf";
+                link.click();
+            }
+            , error: function(xhr, status, error) {
+                // Log error details for better debugging
+                console.error('AJAX Request Failed:', {
+                    status: status
+                    , error: error
+                    , response: xhr.responseText
+                });
+                alert('Failed to generate PDF. Please check the server logs for more details.');
+            }
+        });
+    });
+
+</script>
+
 
 <script>
     $(document).ready(function() {
@@ -657,27 +946,32 @@
         });
 
         function fetchLeaveTypes(employee_id, targetSelect) {
-
             if (employee_id) {
+                // Show loading placeholder
+                $(targetSelect).html('<option selected disabled>Loading...</option>');
+
                 $.ajax({
-                    url: "{{ route('hr/get/leaveStaffOptions') }}", // Ensure this route is correct
-                    type: "GET"
+                    url: "{{ route('hr/get/leaveStaffOptions') }}"
+                    , type: "GET"
                     , data: {
                         employee_id: employee_id
                     }
                     , success: function(response) {
-                        $(targetSelect).html('<option selected disabled>Select Leave Type</option>');
+                        let options = '<option selected disabled>Select Leave Type</option>';
                         $.each(response, function(key, value) {
-                            $(targetSelect).append('<option value="' + value.leave_type + '">' + value.leave_type + '</option>');
+                            options += '<option value="' + value.leave_type + '">' + value.leave_type + '</option>';
                         });
+                        $(targetSelect).html(options);
                     }
                     , error: function(xhr, status, error) {
-                        console.error("AJAX Error:", error); // Debugging
-                        alert('Error fetching leave types.');
+                        console.error("AJAX Error:", error);
+                        $(targetSelect).html('<option selected disabled>Error loading leave types</option>');
+                        alert('Error fetching leave types. Please try again.');
                     }
                 });
             } else {
-                console.log("No Employee ID found."); // Debugging
+                console.warn("No employee ID found.");
+                $(targetSelect).html('<option selected disabled>Select Leave Type</option>');
             }
         }
 
@@ -718,10 +1012,14 @@
                     $("#edit_employee_id").val(leave.staff_id);
                     $("#edit_leave_type").val(leave.leave_type).trigger('change');
                     $("#edit_remaining_leave").val('');
+                    $("#edit_counter_remaining_leave").val('');
                     $("#edit_date_from").val(leave.date_from);
                     $("#edit_date_to").val(leave.date_to);
                     $("#edit_number_of_day").val(leave.number_of_day);
                     $("textarea[name='reason']").val(leave.reason);
+
+                    renderLeaveDetails(leave);
+
 
                     // ✅ Clear previous data
                     $('#edit_leave_dates_display').empty().hide();
@@ -789,6 +1087,56 @@
                 toastr.error("Error loading leave data.");
             });
     });
+
+    function renderLeaveDetails(leave) {
+
+        // Vacation/Special Privilege Leave
+        if (leave.leave_type === 'Vacation Leave' || leave.leave_type === 'Special Privilege Leave') {
+            $('#e_vacation_special_leave').show();
+            $('input[name="e_vacation_location"][value="' + leave.vacation_location + '"]').prop('checked', true);
+
+            if (leave.vacation_location === 'Abroad') {
+                $('#e_abroad_specify').show().val(leave.abroad_specify);
+            } else {
+                $('#e_abroad_specify').hide().val('');
+            }
+        } else {
+            $('#e_vacation_special_leave').hide();
+        }
+
+        // Sick Leave
+        if (leave.leave_type === 'Sick Leave') {
+
+            $('#e_sick_leave_details').show();
+            $('input[name="e_sick_location"][value="' + leave.sick_location + '"]').prop('checked', true);
+            $('input[name="e_illness_specify"]').val(leave.illness_specify);
+        } else {
+            $('#e_sick_leave_details').hide();
+        }
+
+        // Special Leave Benefits for Women
+        if (leave.leave_type === 'Special Leave Benefits for Women') {
+
+            $('#e_special_leave_women').show();
+            $('input[name="e_women_illness"]').val(leave.women_illness);
+        } else {
+            $('#e_special_leave_women').hide();
+        }
+
+        if (leave.leave_type === 'Study Leave') {
+
+            $('#e_study_leave').show();
+
+            const studyReasons = JSON.parse(leave.study_reason || "[]");
+
+            $('input[name="e_study_reason[]"]').each(function() {
+                // Check if the checkbox value is included in the parsed studyReasons array
+                $(this).prop('checked', studyReasons.includes($(this).val()));
+            });
+        } else {
+            $('#e_study_leave').hide();
+        }
+    }
 
 
     function e_handleLeaveExistingDates() {
@@ -937,16 +1285,8 @@
             , _token: $('meta[name="csrf-token"]').attr('content')
         }, function(data) {
             if (data.response_code == 200) {
-                console.log('leave_id:', data.number_of_day);
                 $('#edit_remaining_leave').val(data.remaining_leave);
-                $('#editleave').prop('disabled', data.remaining_leave < 0);
-
-                if (data.remaining_leave < 0 && !$('#editleave').data('alerted')) {
-                    toastr.info('You cannot apply for leave at this time.');
-                    $('#editleave').data('alerted', true);
-                } else if (data.remaining_leave < 0) {
-                    $('#editleave').prop('disabled', true);
-                }
+                $('#edit_counter_remaining_leave').val(data.counter_remaining_leave);
             }
         }, 'json');
     }
@@ -974,6 +1314,7 @@
         var remaining_leave = $("#edit_remaining_leave").val();
         var reason = $("textarea[name='reason']").val();
 
+        // Collecting the leave dates and leave days
         var leave_dates = $("input[name='edit_leave_date[]']").map(function() {
             return $(this).val();
         }).get();
@@ -982,7 +1323,17 @@
             return $(this).val();
         }).get();
 
+        // Collecting the additional fields for vacation location, abroad specify, sick location, illness specify, women illness, and study reason
+        var vacation_location = $("input[name='e_vacation_location']:checked").val(); // Assuming vacation_location is a radio button
+        var abroad_specify = $("input[name='e_abroad_specify']").val(); // Assuming it's a text input
+        var sick_location = $("input[name='e_sick_location']:checked").val(); // Assuming sick_location is a radio button
+        var illness_specify = $("input[name='e_illness_specify']").val(); // Assuming it's a text input
+        var women_illness = $("input[name='e_women_illness']").val(); // Assuming it's a text input
+        var study_reason = $("input[name='e_study_reason[]']:checked").map(function() {
+            return $(this).val(); // Collect selected study reasons
+        }).get();
 
+        // Sending the data via POST request
         $.post("{{ route('form/leaves/edit') }}", {
                 leave_id: leave_id
                 , leave_type: leave_type
@@ -991,11 +1342,16 @@
                 , remaining_leave: remaining_leave
                 , number_of_day: number_of_day
                 , reason: reason
-                , edit_leave_date: leave_dates, // Match this with the backend field name
-                edit_select_leave_day: leave_days, // Match this with the backend field name
+                , edit_leave_date: leave_dates
+                , edit_select_leave_day: leave_days
+                , vacation_location: vacation_location, // Adding vacation location
+                abroad_specify: abroad_specify, // Adding abroad specify
+                sick_location: sick_location, // Adding sick location
+                illness_specify: illness_specify, // Adding illness specify
+                women_illness: women_illness, // Adding women illness
+                study_reason: study_reason, // Adding study reason
                 _token: $('meta[name="csrf-token"]').attr('content')
             })
-
             .done(function(response) {
                 // ✅ Force a full-page reload to display flash messages
                 window.location.reload();
@@ -1027,6 +1383,7 @@
         }, function(data) {
             if (data.response_code == 200) {
                 $('#remaining_leave').val(data.leave_type);
+                $('#counter_remaining_leave').val(data.counter_remaining_leave_day);
                 existingLeaveDates = data.existing_leave_dates || [];
                 disableExistingLeaveDates();
             }
@@ -1176,15 +1533,8 @@
         }, function(data) {
             if (data.response_code == 200) {
                 $('#remaining_leave').val(data.leave_type);
-                $('#apply_leave').prop('disabled', data.leave_type < 0);
-                console.log(data.number_of_day);
-                // Show the alert only once if leave type is less than 0
-                if (data.leave_type < 0 && !$('#apply_leave').data('alerted')) {
-                    toastr.info('You cannot apply for leave at this time.');
-                    $('#apply_leave').data('alerted', true);
-                } else if (numDays < 0.5) {
-                    $('#apply_leave').prop('disabled', true);
-                }
+                $('#counter_remaining_leave').val(data.counter_remaining_leave_day);
+
             }
         }, 'json');
     }
@@ -1203,8 +1553,10 @@
         $('#number_of_day').val('');
         $('#date_from').val('');
         $('#date_to').val('');
+        $('#reason').val('');
         $('#leave_type').val(''); // Reset to default value if needed
         $('#remaining_leave').val('');
+        $('#counter_remaining_leave').val('');
         // Optionally hide any UI elements
         $('#leave_day_select').hide(); // or reset to its original state
     });

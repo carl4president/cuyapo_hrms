@@ -23,8 +23,20 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="name" placeholder="Enter full name">
+                                <label>Surname <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="lname" placeholder="Enter surname">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="fname" placeholder="Enter first name">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Middle Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="mname" placeholder="Enter middle name">
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -245,7 +257,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Mother's Name <span class="text-danger">*</span></label>
+                                <label>Mother's Maiden Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="mother_name">
                             </div>
                         </div>
@@ -359,6 +371,12 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -366,12 +384,24 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
-                                                    <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated">
+                                                    <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -403,6 +433,12 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -410,12 +446,24 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
-                                                    <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated">
+                                                    <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -451,6 +499,12 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -458,6 +512,12 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -469,7 +529,13 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
-                                                    <input class="form-control yearpicker" type="text" name="year_graduated[]">
+                                                    <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -505,6 +571,12 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -512,6 +584,12 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -523,7 +601,13 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
-                                                    <input class="form-control yearpicker" type="text" name="year_graduated[]">
+                                                    <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -560,6 +644,12 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -567,12 +657,24 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
-                                                    <input class="form-control yearpicker" type="text" name="year_graduated[]">
+                                                    <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <label class="form-check-label" for="year_to_na">
+                                                            N/A
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -1287,12 +1389,34 @@
 @section('script')
 
 <script>
+$(document).ready(function() {
+    // Check if N/A checkbox is checked on page load
+    $(".form-check-input").each(function() {
+        if ($(this).is(":checked")) {
+            $(this).closest(".form-group").find(".yearpicker").prop("disabled", true);
+        }
+    });
+
+    // Toggle the state of the date picker based on the checkbox
+    $(".form-check-input").on("change", function() {
+        var inputField = $(this).closest(".form-group").find(".yearpicker");
+        if ($(this).is(":checked")) {
+            inputField.prop("disabled", true); // Disable date picker
+            inputField.val("N/A"); // Clear any selected date
+        } else {
+            inputField.prop("disabled", false); // Enable date picker
+            inputField.val("");
+        }
+    });
+});
+</script>
+
+<script>
     $(document).ready(function() {
         var url = "{{ $routeUrl }}";
 
         $('#department').change(function() {
             const departmentId = $(this).val();
-            $('#designation').html('<option value="" disabled selected>-- Select Designation --</option>'); // Clear designation dropdown
             $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
 
             if (departmentId) {
@@ -1301,37 +1425,6 @@
                     , type: "POST"
                     , data: {
                         id: departmentId
-                        , _token: $('meta[name="csrf-token"]').attr('content')
-                    }
-                    , dataType: "json"
-                    , success: function(response) {
-                        console.log("AJAX Response:", response);
-                        if (response.designations) {
-                            response.designations.forEach(designation => {
-                                $('#designation').append(
-                                    `<option value="${designation.id}">${designation.designation_name}</option>`
-                                );
-                            });
-                        }
-                    }
-                    , error: function(xhr, status, error) {
-                        console.error("Error fetching designations:", error);
-                    }
-                });
-            }
-        });
-
-        // On designation change
-        $('#designation').change(function() {
-            const designationId = $(this).val();
-            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
-
-            if (designationId) {
-                $.ajax({
-                    url: url
-                    , type: "POST"
-                    , data: {
-                        id: designationId
                         , _token: $('meta[name="csrf-token"]').attr('content')
                     }
                     , dataType: "json"
@@ -1346,7 +1439,7 @@
                         }
                     }
                     , error: function(xhr, status, error) {
-                        console.error("Error fetching positions:", error);
+                        console.error("Error fetching designations:", error);
                     }
                 });
             }
@@ -1537,7 +1630,13 @@
         // Ensure the form ID is correct and validate
         if ($('#employeeForm').length) {
             validateDynamicForm('#employeeForm', {
-                "name": {
+                "fname": {
+                    required: true
+                }
+                ,"mname": {
+                    required: true
+                }
+                ,"lname": {
                     required: true
                 }
                 , "email": {
@@ -1737,7 +1836,9 @@
                     required: true
                 }
             }, {
-                "name": "Please enter full name"
+                "fname": "Please enter first name"
+                ,"mname": "Please enter middle name"
+                ,"lname": "Please enter surname"
                 , "email": {
                     required: "Please enter an email address"
                     , email: "Please enter a valid email address"

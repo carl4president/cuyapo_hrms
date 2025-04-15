@@ -13,13 +13,10 @@ class EmployeeEmployment extends Model
 
     protected $fillable = [
         'emp_id',
-        'department_id',
-        'designation_id',
-        'position_id',
-        'line_manager',
         'employment_status',
         'date_hired'
     ];
+
 
     public function employee()
     {
@@ -28,16 +25,7 @@ class EmployeeEmployment extends Model
 
     public function department()
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(Department::class);
     }
 
-    public function designation()
-    {
-        return $this->belongsTo(Designation::class, 'designation_id');
-    }
-
-    public function position()
-    {
-        return $this->belongsTo(Position::class, 'position_id');
-    }
 }

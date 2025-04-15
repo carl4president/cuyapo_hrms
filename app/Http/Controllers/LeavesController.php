@@ -110,77 +110,56 @@ class LeavesController extends Controller
                 ->latest('created_at')
                 ->first();
 
-            // Get previous year's oldest leave from leave balance table
-            $previousYear = now()->subYear()->year;
-            $oldestLeavePrevYear = LeaveBalance::where('staff_id', $staffId)
-                ->where('leave_type', $leaveType)
-                ->whereYear('created_at', $previousYear)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
             // Default remaining leave days
             $remainingLeaveDays = 0;
             $originalLeaveDays = 0;
 
             // Prioritize the latest leave record if it exists
             if ($latestLeave) {
-                // Retrieve the remaining leave days from the latest record's JSON
                 $remainingLeaveDaysJson = $latestLeave->remaining_leave_days;
-
-                // Decode the JSON string into an associative array
                 $decodedJson = json_decode($remainingLeaveDaysJson, true);
 
-                // Ensure decodedJson is an array
                 if (is_array($decodedJson) && count($decodedJson) > 0) {
-                    // Get the latest timestamp (key) from the JSON
                     $latestTimestamp = max(array_keys($decodedJson));
 
-                    // Ensure we're getting the second element from the array (updated leave days)
                     if (isset($decodedJson[$latestTimestamp][1])) {
-                        $originalLeaveDays = $decodedJson[$latestTimestamp][0]; // The first value (e.g., 25)
-                        $remainingLeaveDays = $decodedJson[$latestTimestamp][1]; // The second value (e.g., 23)
+                        $originalLeaveDays = $decodedJson[$latestTimestamp][0];
+                        $remainingLeaveDays = $decodedJson[$latestTimestamp][1];
                     } else {
-                        // Fallback: If there's no second value, just use the first value as the remaining days
                         $remainingLeaveDays = $decodedJson[$latestTimestamp][0];
-                        $originalLeaveDays = $remainingLeaveDays; // No change
+                        $originalLeaveDays = $remainingLeaveDays;
                     }
 
-                    // Apply the deduction, ensuring we don't go below 0
-                    $remainingLeaveDays = max($remainingLeaveDays - $numberOfDay, 0);
+                    $remainingLeaveDays -= $numberOfDay;
 
-                    // Collect all leave data to return in response
+                    $countertotalRemainingLeaves = $latestLeave->total_leave_days - $latestLeave->used_leave_days;
+
+                    $counterRemainingLeaves = $countertotalRemainingLeaves -= $numberOfDay;
+
                     $leaveData = [
                         'timestamp' => $latestTimestamp,
                         'original_leave_days' => $originalLeaveDays,
-                        'remaining_leave_days' => $remainingLeaveDays
+                        'remaining_leave_days' => $remainingLeaveDays,
+                        'counter_remaining_leave_day' => ceil($counterRemainingLeaves * 1000) / 1000,
                     ];
                 } else {
-                    // Handle the case where the JSON structure is not as expected (not an array)
                     throw new \Exception("Invalid remaining leave days data structure.");
                 }
             } else {
                 // If no leave record this year, use LeaveInformation
                 if ($leaveInfo) {
-                    if ($leaveInfo->carried_forward == 1 && $oldestLeavePrevYear && $oldestLeavePrevYear->remaining_leave_days > 0) {
-                        // Carry forward previous year's remaining leave
-                        $originalLeaveDays = $oldestLeavePrevYear->remaining_leave_days + ($leaveInfo->leave_days ?? 0);
-                        $remainingLeaveDays = $originalLeaveDays - $numberOfDay; // Deduct the requested days
-                    } else {
-                        // Use default leave days
-                        $originalLeaveDays = $leaveInfo->leave_days ?? 0;
-                        $remainingLeaveDays = $originalLeaveDays - $numberOfDay; // Deduct the requested days
-                    }
+                    $originalLeaveDays = $leaveInfo->leave_days ?? 0;
+                    $remainingLeaveDays = $originalLeaveDays - $numberOfDay;
+                    $counterRemainingLeaves = $originalLeaveDays - $numberOfDay;
                 }
             }
-
-            // Ensure that remaining leave days do not go below 0
-            $remainingLeaveDays = max($remainingLeaveDays, 0);
 
             return response()->json([
                 'response_code' => 200,
                 'status' => 'success',
                 'message' => 'Leave information retrieved successfully.',
-                'leave_type' => $remainingLeaveDays, // Include all 3 data points
+                'leave_type' => $remainingLeaveDays,
+                'counter_remaining_leave_day' => ceil($counterRemainingLeaves * 1000) / 1000,
                 'staff_id' => $staffId,
                 'number_of_day' => $numberOfDay,
                 'existing_leave_dates' => $existingLeaveDates
@@ -194,7 +173,6 @@ class LeavesController extends Controller
         }
     }
 
-
     public function getEditInformationLeave(Request $request)
     {
         try {
@@ -203,7 +181,7 @@ class LeavesController extends Controller
             $leaveId     = $request->leave_id;
             $numberOfDay = $request->number_of_day;
 
-            // Retrieve the specific leave entry by ID to get its created_at
+
             $specificLeave = Leave::find($leaveId);
 
             // Retrieve all existing leaves for the staff
@@ -280,12 +258,31 @@ class LeavesController extends Controller
             // Subtract the number of days taken from the remaining leave
             $newRemainingLeave = $remainingLeave - $numberOfDay;
 
-            // Log the remaining leave after subtraction
+            $numberOfDay = $request->number_of_day; // new number of days after edit
 
-            // Ensure that the new remaining leave does not go below zero
-            if ($newRemainingLeave < 0) {
-                $newRemainingLeave = 0;
-            }
+            // 1. Get the current leave entry to retrieve original number of days
+            $oldNumberOfDay = $specificLeave->number_of_day ?? 0;
+
+            // 2. Decode the JSON leave balance
+            $lastTimestamp = array_key_last($remainingLeaveJson);
+            $totalLeaveAtTimestamp = $remainingLeaveJson[$lastTimestamp][0]; // total at that point
+            $remainingLeaveAtTimestamp = $remainingLeaveJson[$lastTimestamp][1]; // remaining at that point
+
+            // 3. Calculate previously used leave days
+            $oldUsedLeave = $totalLeaveAtTimestamp - $remainingLeaveAtTimestamp;
+
+            // 4. Recalculate with the new number of days
+            $countertotalRemainingLeaves = $totalLeaveAtTimestamp - ($oldUsedLeave - $oldNumberOfDay + $numberOfDay);
+
+            $firstTimestamp = array_key_first($remainingLeaveJson);
+
+            $minus = $latestLeaveBalance->total_leave_days - $remainingLeaveJson[$firstTimestamp][0];
+
+            $countertotalRemainingLeaves = $minus + $countertotalRemainingLeaves;
+
+            $countertotalRemainingLeaves = $countertotalRemainingLeaves >= 0
+                ? ceil($countertotalRemainingLeaves * 1000) / 1000
+                : floor($countertotalRemainingLeaves * 1000) / 1000;
 
 
             // Return the response with the updated information
@@ -296,6 +293,7 @@ class LeavesController extends Controller
                 'staff_id'         => $staffId,
                 'leave_id'         => $leaveId,
                 'remaining_leave'  => $newRemainingLeave,
+                'counter_remaining_leave'  => $countertotalRemainingLeaves,
                 'number_of_day'    => $numberOfDay,
                 'existing_leave_dates' => $existingLeaveDates,
             ]);
@@ -498,15 +496,11 @@ class LeavesController extends Controller
         // Fetch all employee emp_id values
         $employeeIds = Employee::pluck('emp_id')->toArray();
 
-        // Retrieve and manage leave data for "Vacation Leave" and "Sick Leave"
-        $this->manageLeaveType('Vacation Leave', $employeeIds, $currentYear, $previousYear);
-        $this->manageLeaveType('Sick Leave', $employeeIds, $currentYear, $previousYear);
-
         // Process gender-based leave for maternity/paternity
         $this->processGenderBasedLeaves($currentYear);
 
         // Fetch all employees with their departments
-        $employees = Employee::with(['employment.department'])->get();
+        $employees = Employee::with(['jobDetails.department'])->get();
         $departments = Department::all();
 
         // Ensure remaining_leave_days are in sequence
@@ -518,13 +512,17 @@ class LeavesController extends Controller
 
         $this->updateEmployeeNamesInLeaves();
 
+        $this->assignVacationLeave();
+
+        $this->assignSickLeave();
+
+        $this->assignSplLeave();
+
         // Return the view with the necessary data
         return view('employees.leaves_manage.leavesettings', [
-            'vacationLeave'   => $this->getLeaveDays('Vacation Leave', $currentYear),
-            'carryForward'    => $this->getCarriedForward('Vacation Leave', $currentYear),
-            'sickLeave'       => $this->getLeaveDays('Sick Leave', $currentYear),
-            'maternityLeave'  => $this->getLeaveDays('Maternity Leave', $currentYear),
-            'paternityLeave'  => $this->getLeaveDays('Paternity Leave', $currentYear),
+            'spl'              => (int) $this->getLeaveDays('Special Privilege Leave', $currentYear),
+            'maternityLeave'  => (int) $this->getLeaveDays('Maternity Leave', $currentYear),
+            'paternityLeave'  => (int) $this->getLeaveDays('Paternity Leave', $currentYear),
             'employees'       => $employees,
             'departments'     => $departments,
         ]);
@@ -662,67 +660,7 @@ class LeavesController extends Controller
                 ->update(['employee_name' => $employee->name]);
         }
     }
-    /**
-     * Handles leave management for a specific leave type.
-     */
-    private function manageLeaveType($leaveType, $employeeIds, $currentYear, $previousYear)
-    {
-        // Convert employee IDs to a JSON array
-        $staffIdJson = json_encode($employeeIds);
 
-        // Check if leave record for the current year already exists
-        $leave = DB::table('leave_information')
-            ->where('leave_type', $leaveType)
-            ->where('year_leave', $currentYear)
-            ->first();
-
-        if (!$leave) {
-            // Fetch previous year leave data
-            $previousYearLeave = DB::table('leave_information')
-                ->where('leave_type', $leaveType)
-                ->where('year_leave', $previousYear)
-                ->first();
-
-            $carriedForward = ($previousYearLeave && $previousYearLeave->carried_forward == 1)
-                ? $previousYearLeave->leave_days
-                : 0;
-
-            $leaveDays = $previousYearLeave->leave_days ?? 15; // Default to 15 if no record exists
-
-            // Insert a new leave record only if it doesn't already exist
-            DB::table('leave_information')->insert([
-                'staff_id'        => $staffIdJson,  // Store employee IDs as JSON
-                'leave_type'      => $leaveType,
-                'leave_days'      => $leaveDays,
-                'carried_forward' => $carriedForward,
-                'year_leave'      => $currentYear,
-                'created_at'      => now(),
-                'updated_at'      => now(),
-            ]);
-        } else {
-            // Decode the current staff_id from the JSON, ensuring it's an array if it's null
-            $existingStaffIds = json_decode($leave->staff_id, true);
-            $existingStaffIds = is_array($existingStaffIds) ? $existingStaffIds : []; // Ensure it's an array
-
-            // Merge the existing employee IDs with the new ones, ensuring no duplicates
-            $mergedStaffIds = array_unique(array_merge($existingStaffIds, $employeeIds));
-
-            // Update the leave record with the merged staff IDs
-            DB::table('leave_information')
-                ->where('leave_type', $leaveType)
-                ->where('year_leave', $currentYear)
-                ->update([
-                    'staff_id' => json_encode($mergedStaffIds),  // Update the staff_id with merged values
-                    'updated_at' => now(),
-                ]);
-        }
-    }
-
-
-
-    /**
-     * Process gender-based leave types for employees.
-     */
     private function processGenderBasedLeaves($currentYear)
     {
         $employees = Employee::all();
@@ -769,7 +707,6 @@ class LeavesController extends Controller
                     'staff_id' => json_encode($femaleEmployees),  // Store all female employee IDs as JSON
                     'leave_type' => 'Maternity Leave',
                     'leave_days' => 105,
-                    'carried_forward' => 0,
                     'year_leave' => $currentYear,
                     'created_at' => now(),
                     'updated_at' => now()
@@ -806,7 +743,6 @@ class LeavesController extends Controller
                     'staff_id' => json_encode($maleEmployees),  // Store all male employee IDs as JSON
                     'leave_type' => 'Paternity Leave',
                     'leave_days' => 7,
-                    'carried_forward' => 0,
                     'year_leave' => $currentYear,
                     'created_at' => now(),
                     'updated_at' => now()
@@ -831,10 +767,6 @@ class LeavesController extends Controller
         }
     }
 
-
-
-
-
     /**
      * Get leave days for a specific leave type.
      */
@@ -846,122 +778,154 @@ class LeavesController extends Controller
             ->first()->leave_days ?? 15; // Default 15 days
     }
 
-    /**
-     * Get carried forward leave days for a specific leave type.
-     */
-    private function getCarriedForward($leaveType, $currentYear)
+    public function assignVacationLeave()
     {
-        return DB::table('leave_information')
-            ->where('leave_type', $leaveType)
-            ->where('year_leave', $currentYear)
-            ->first()->carried_forward ?? 0;
-    }
-
-
-    public function updateAnnualLeaveSettings(Request $request)
-    {
-        $validated = $request->validate([
-            'staff_id'       => 'string',
-            'vacation_leave' => 'nullable|integer|min:0',
-            'carry_forward'  => 'nullable|in:0,1',
-        ]);
-
-        // For global settings, staff_id is "all"
-        $staffId = $validated['staff_id'];
+        // Get the current year and today's date
         $currentYear = date('Y');
+        $today = now();
+        $startOfYear = Carbon::createFromDate($currentYear, 1, 1); // January 1st of the current year
+        $daysFromStart = $startOfYear->diffInDays($today); // Calculate the number of days from Jan 1st to today
 
-        // Check if a record exists for the given leave_type and year_leave (ignoring staff_id)
-        $existingLeave = DB::table('leave_information')
-            ->where('leave_type', 'Vacation Leave')
-            ->where('year_leave', $currentYear)
-            ->first();
+        // Calculate vacation leave earned (0.041666 leave per day)
+        $leavePerDay = 0.041666;
+        $earnedLeaveRaw = $daysFromStart * $leavePerDay;
+        $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
 
-        // If the record doesn't exist, insert a new one
-        if (!$existingLeave) {
-            if (isset($validated['vacation_leave'])) {
-                DB::table('leave_information')->insert([
-                    'staff_id'        => $staffId,
-                    'leave_type'      => 'Vacation Leave',
-                    'leave_days'      => $validated['vacation_leave'],
-                    'carried_forward' => isset($validated['carry_forward']) ? $validated['carry_forward'] : 0,  // Default to 0 if not set
-                    'year_leave'      => $currentYear,
-                    'created_at'      => now(),
-                    'updated_at'      => now(),
-                ]);
-            }
-        } else {
-            // Prepare update data conditionally
-            $updateData = [];
 
-            // Only include vacation_leave if it's set
-            if (isset($validated['vacation_leave'])) {
-                $updateData['leave_days'] = $validated['vacation_leave'];
-            }
+        // Fetch all employee ids
+        $employeeIds = Employee::pluck('emp_id')->toArray();
 
-            // Only include carry_forward if it's set
-            if (isset($validated['carry_forward'])) {
-                $updateData['carried_forward'] = $validated['carry_forward'];
-            }
+        // Separate employees who need deductions
+        foreach ($employeeIds as $staffId) {
+            // Get leave balance for the employee
+            $leaveBalance = LeaveBalance::where('staff_id', $staffId)
+                ->where('leave_type', 'Vacation Leave')
+                ->latest('created_at')
+                ->first();
 
-            // If there's any data to update, apply the changes
-            if (!empty($updateData)) {
-                $updateData['updated_at'] = now();
-                DB::table('leave_information')
-                    ->where('leave_type', 'Vacation Leave') // Only check for leave_type and year_leave
-                    ->where('year_leave', $currentYear)
-                    ->update($updateData);
+
+
+            // Calculate the earned leave after deduction for those who need it
+            if ($leaveBalance && $leaveBalance->total_leave_days < $leaveBalance->used_leave_days) {
+                $deduction = $leaveBalance->used_leave_days * 0.042; // Deduction factor
+                $earnedLeaveAfterDeduction = max(0, $earnedLeave - $deduction);
+                \Log::info('Earned Leave After Deduction for Staff ID ' . $staffId . ': ' . $earnedLeaveAfterDeduction);
+
+                // Update the leave record or insert if not present
+                $this->updateOrInsertLeaveRecord($staffId, $earnedLeaveAfterDeduction, $currentYear);
+            } else {
+                // If no deduction, use the regular earned leave value
+                $this->updateOrInsertLeaveRecord($staffId, $earnedLeave, $currentYear);
             }
         }
 
-        return redirect()->back()->with('success', 'Vacation Leave settings updated successfully.');
+        return response()->json(['message' => 'Vacation leave assigned and adjusted successfully.']);
     }
 
-
-
-    public function updateSickLeaveSettings(Request $request)
+    public function assignSickLeave()
     {
-        $validated = $request->validate([
-            'staff_id'   => 'required',
-            'sick_leave' => 'required|integer|min:0',
-        ]);
-
-        $staffId = $validated['staff_id'];
+        // Get the current year and today's date
         $currentYear = date('Y');
+        $today = now();
+        $startOfYear = Carbon::createFromDate($currentYear, 1, 1); // January 1st of the current year
+        $daysFromStart = $startOfYear->diffInDays($today); // Calculate the number of days from Jan 1st to today
 
-        // Check if a sick leave record exists for the given leave_type and current year (ignoring staff_id)
+        // Calculate vacation leave earned (0.041666 leave per day)
+        $leavePerDay = 0.041666;
+        $earnedLeaveRaw = $daysFromStart * $leavePerDay;
+        $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
+
+
+        // Fetch all employee ids
+        $employeeIds = Employee::pluck('emp_id')->toArray();
+
+        // Separate employees who need deductions
+        foreach ($employeeIds as $staffId) {
+            // Get leave balance for the employee
+            $leaveBalance = LeaveBalance::where('staff_id', $staffId)
+                ->where('leave_type', 'Sick Leave')
+                ->latest('created_at')
+                ->first();
+
+            // Debug: Log the leave balance for each employee
+
+            // Calculate the earned leave after deduction for those who need it
+            if ($leaveBalance && $leaveBalance->total_leave_days < $leaveBalance->used_leave_days) {
+                $deduction = $leaveBalance->used_leave_days * 0.042; // Deduction factor
+                $earnedLeaveAfterDeduction = max(0, $earnedLeave - $deduction);
+                \Log::info('Earned Leave After Deduction for Staff ID ' . $staffId . ': ' . $earnedLeaveAfterDeduction);
+
+                // Update the leave record or insert if not present
+                $this->updateOrInsertLeaveRecord($staffId, $earnedLeaveAfterDeduction, $currentYear);
+            } else {
+                // If no deduction, use the regular earned leave value
+                $this->updateOrInsertLeaveRecord($staffId, $earnedLeave, $currentYear);
+            }
+        }
+
+        return response()->json(['message' => 'Vacation leave assigned and adjusted successfully.']);
+    }
+
+    // Helper function to update or insert the leave record
+    private function updateOrInsertLeaveRecord($staffId, $leaveDays, $year)
+    {
+        // Check if a leave record exists for this staff_id and year_leave
         $existingLeave = DB::table('leave_information')
-            ->where('leave_type', 'Sick Leave')
-            ->where('year_leave', $currentYear)
+            ->where('leave_type', 'Vacation Leave')
+            ->where('year_leave', $year)
+            ->whereJsonContains('staff_id', $staffId)
             ->first();
 
         if (!$existingLeave) {
-            // Insert a new sick leave record if it doesn't exist
+            // Insert a new record if it doesn't exist
             DB::table('leave_information')->insert([
-                'staff_id'   => $staffId,
-                'leave_type' => 'Sick Leave',
-                'leave_days' => $validated['sick_leave'],
-                'year_leave' => $currentYear,
-                'carried_forward' => 0,
+                'staff_id'   => json_encode([$staffId]), // Store the staff_id as JSON
+                'leave_type' => 'Vacation Leave',
+                'leave_days' => $leaveDays, // After deduction
+                'year_leave' => $year,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         } else {
-            // Prepare update data
-            $updateData = [
-                'leave_days' => $validated['sick_leave'],
-                'updated_at' => now(),
-            ];
-
-            // Update the sick leave record
+            // Update the existing record with the correct leave days
             DB::table('leave_information')
-                ->where('leave_type', 'Sick Leave')  // Only check for leave_type and year_leave
-                ->where('year_leave', $currentYear)
-                ->update($updateData);
+                ->where('leave_type', 'Vacation Leave')
+                ->where('year_leave', $year)
+                ->whereJsonContains('staff_id', $staffId)
+                ->update([
+                    'leave_days'  => $leaveDays,
+                    'updated_at'  => now(),
+                ]);
         }
 
-        return redirect()->back()->with('success', 'Sick Leave settings updated successfully.');
-    }
+        $existingSickLeave = DB::table('leave_information')
+            ->where('leave_type', 'Sick Leave')
+            ->where('year_leave', $year)
+            ->whereJsonContains('staff_id', $staffId)
+            ->first();
 
+        if (!$existingSickLeave) {
+            // Insert a new record if it doesn't exist
+            DB::table('leave_information')->insert([
+                'staff_id'   => json_encode([$staffId]), // Store the staff_id as JSON
+                'leave_type' => 'Sick Leave',
+                'leave_days' => $leaveDays, // After deduction
+                'year_leave' => $year,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            // Update the existing record with the correct leave days
+            DB::table('leave_information')
+                ->where('leave_type', 'Sick Leave')
+                ->where('year_leave', $year)
+                ->whereJsonContains('staff_id', $staffId)
+                ->update([
+                    'leave_days'  => $leaveDays,
+                    'updated_at'  => now(),
+                ]);
+        }
+    }
 
 
     public function updateMaPaternityLeaveSettings(Request $request)
@@ -1004,7 +968,6 @@ class LeavesController extends Controller
                     'leave_type'    => 'Maternity Leave',
                     'leave_days'    => $maternityLeaveDays,
                     'year_leave'    => $currentYear,
-                    'carried_forward' => 0, // No carry forward
                     'created_at'    => now(),
                     'updated_at'    => now(),
                 ]);
@@ -1052,7 +1015,6 @@ class LeavesController extends Controller
                     'leave_type'    => 'Paternity Leave',
                     'leave_days'    => $paternityLeaveDays,
                     'year_leave'    => $currentYear,
-                    'carried_forward' => 0, // No carry forward
                     'created_at'    => now(),
                     'updated_at'    => now(),
                 ]);
@@ -1086,6 +1048,107 @@ class LeavesController extends Controller
         }
     }
 
+    public function updateSplLeaveSettings(Request $request)
+    {
+        // Validate the SPL input
+        $validated = $request->validate([
+            'spl' => 'nullable|integer|min:0', // Special Leave Privilege (optional, must be 0 or more)
+        ]);
+
+        $currentYear = date('Y');
+
+        // Check if input exists
+        if (!isset($validated['spl']) || $validated['spl'] === null) {
+            return redirect()->back()->with('error', 'No SPL value provided.');
+        }
+
+        $splDays = $validated['spl'];
+
+        // Get all employee emp_id's (for SPL, applied to all employees)
+        $empIds = Employee::pluck('emp_id')->toArray();
+        $staffIdJson = json_encode($empIds);
+
+        // Check if SPL leave record exists for the current year
+        $existingLeave = DB::table('leave_information')
+            ->where('leave_type', 'Special Privilege Leave')
+            ->where('year_leave', $currentYear)
+            ->first();
+
+        if (!$existingLeave) {
+            // Insert new SPL leave record
+            DB::table('leave_information')->insert([
+                'staff_id'      => $staffIdJson,
+                'leave_type'    => 'Special Privilege Leave',
+                'leave_days'    => $splDays,
+                'year_leave'    => $currentYear,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ]);
+        } else {
+            // Update existing SPL leave record
+            DB::table('leave_information')
+                ->where('leave_type', 'Special Privilege Leave')
+                ->where('year_leave', $currentYear)
+                ->update([
+                    'leave_days'    => $splDays,
+                    'updated_at'    => now(),
+                ]);
+        }
+
+        return redirect()->back()->with('success', 'Special Leave Privilege (SPL) settings updated successfully.');
+    }
+
+    private function assignSplLeave()
+    {
+        $currentYear = date('Y');
+        $splDays = 3;
+
+        // Get all employee emp_id's
+        $empIds = Employee::pluck('emp_id')->toArray();
+        $staffIdJson = json_encode($empIds); // Save as JSON
+
+        // Check if SPL leave already exists for the current year
+        $existingLeave = DB::table('leave_information')
+            ->where('leave_type', 'Special Privilege Leave')
+            ->where('year_leave', $currentYear)
+            ->first();
+
+        // If no existing SPL leave record found, create one
+        if (!$existingLeave) {
+            // Insert SPL leave record for all employees for the current year
+            DB::table('leave_information')->insert([
+                'staff_id'      => $staffIdJson,  // Store emp_id's as JSON
+                'leave_type'    => 'Special Privilege Leave',
+                'leave_days'    => $splDays,
+                'year_leave'    => $currentYear,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ]);
+        } else {
+            // If SPL leave record exists, ensure all employees are in the current staff_id list
+            $currentStaffIds = json_decode($existingLeave->staff_id, true);  // Decode existing JSON
+
+            // Check if all employees are assigned SPL leave
+            $missingStaffIds = array_diff($empIds, $currentStaffIds);  // Get the difference
+
+            if (!empty($missingStaffIds)) {
+                // Update SPL leave record by adding missing staff_ids
+                $updatedStaffIds = array_merge($currentStaffIds, $missingStaffIds);  // Merge missing staff
+
+                // Update the record with the new staff_id list
+                DB::table('leave_information')
+                    ->where('leave_type', 'Special Privilege Leave')
+                    ->where('year_leave', $currentYear)
+                    ->update([
+                        'staff_id' => json_encode($updatedStaffIds),  // Update with new JSON
+                        'updated_at' => now(),
+                    ]);
+            }
+        }
+    }
+
+
+
 
 
     public function saveCustomLeavePolicy(Request $request)
@@ -1112,7 +1175,6 @@ class LeavesController extends Controller
             'leave_type' => $request->policy_name,  // Set the policy name as the leave type
             'leave_days' => $request->days,  // Set the leave days
             'year_leave' => $currentYear,  // Default to current year
-            'carried_forward' => 0,  // Default to 0
         ]);
 
         return back()->with('success', 'Custom leave policy added successfully!');
@@ -1165,7 +1227,7 @@ class LeavesController extends Controller
     {
         try {
             // Define standard leave types to exclude
-            $excludedLeaves = ['Vacation Leave', 'Sick Leave', 'Paternity Leave', 'Maternity Leave'];
+            $excludedLeaves = ['Vacation Leave', 'Sick Leave', 'Paternity Leave', 'Maternity Leave', 'Special Leave Privilege'];
 
             // Perform the JOIN query and filter out standard leave types
             $policies = \DB::table('leave_information')
@@ -1188,7 +1250,7 @@ class LeavesController extends Controller
             $groupedPolicies = $policies->groupBy('leave_type')->map(function ($policies) {
                 return [
                     'leave_type' => $policies->first()->leave_type,
-                    'leave_days' => $policies->first()->leave_days,
+                    'leave_days' => (int) $policies->first()->leave_days,
                     'policy_id' => $policies->first()->policy_id,
                     'employees' => $policies->map(function ($policy) {
                         return [

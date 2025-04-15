@@ -11,7 +11,7 @@ use App\Models\Applicant;
 use App\Models\ApplicantEmployment;
 use App\Models\ApplicantInterview;
 use App\Models\department;
-use App\Models\Designation;
+use App\Models\Employee;
 use App\Models\Position;
 use App\Models\TypeJob;
 use App\Models\User;
@@ -44,19 +44,27 @@ class JobController extends Controller
     /** Users Dashboard */
     public function userDashboard()
     {
-        $job_list   = AddJob::with('position', 'department', 'designation')->get();
+        $job_list   = AddJob::with('position', 'department')->get();
         return view('job.userdashboard', compact('job_list'));
     }
 
     /** Jobs Dashboard */
     public function jobsDashboard()
     {
-        $job_list   = AddJob::with('position', 'department', 'designation')->get();
+        $job_list   = AddJob::with('position', 'department')->get();
         $appJobs = AddJob::with('applicants.applicant')
             ->whereHas('applicants') // Ensure AddJobs have related applicants
             ->get();
+            
+        $shortlistedJobs = AddJob::with(['applicants.applicant', 'position', 'department'])
+            ->whereHas('applicants', function ($query) {
+                $query->where('status', 'Shortlisted');
+            })
+            ->get();
 
-        return view('job.jobsdashboard', compact('job_list', 'appJobs'));
+        $employee = Employee::all();
+
+        return view('job.jobsdashboard', compact('job_list', 'appJobs', 'employee', 'shortlistedJobs'));
     }
 
     /** User All Job */
@@ -106,7 +114,7 @@ class JobController extends Controller
     {
         $department = DB::table('departments')->get();
         $type_job   = DB::table('type_jobs')->get();
-        $job_list   = AddJob::with('position', 'department', 'designation')->get();
+        $job_list   = AddJob::with('position', 'department')->get();
         return view('job.jobs', compact('department', 'type_job', 'job_list'));
     }
 
@@ -161,7 +169,6 @@ class JobController extends Controller
     {
         $request->validate([
             'department_id'   => 'required|integer',
-            'designation_id'  => 'required|integer',
             'position_id'     => 'required|integer',
             'no_of_vacancies' => 'required|string|max:255',
             'experience'      => 'required|string|max:255',
@@ -285,7 +292,7 @@ class JobController extends Controller
     {
         $department = DB::table('departments')->get();
         $type_job   = DB::table('type_jobs')->get();
-        $job_view_detail = AddJob::with('position', 'department', 'designation')->where('id', $id)->get();
+        $job_view_detail = AddJob::with('position', 'department')->where('id', $id)->get();
         return view('job.jobdetails', compact('department', 'type_job', 'job_view_detail'));
     }
 
@@ -335,7 +342,6 @@ class JobController extends Controller
             'id'              => 'required|integer|exists:add_jobs,id',
             'position_id'       => 'required|integer',
             'department_id'      => 'required|integer',
-            'designation_id'    => 'required|integer',
             'no_of_vacancies' => 'required|integer',
             'experience'      => 'required|string|max:255',
             'age'             => 'required|integer',
@@ -624,24 +630,19 @@ class JobController extends Controller
         if ($request->has('id')) {
             $id = $request->id;
 
-            // Fetch designations that exist in the add_jobs table
-            $designations = Designation::where('department_id', $id)
-                ->whereIn('id', AddJob::pluck('designation_id')) // Check existence in AddJob table
-                ->get();
 
             // Fetch positions that exist in the add_jobs table
-            $positions = Position::where('designation_id', $id)
+            $positions = Position::where('department_id', $id)
                 ->whereIn('id', AddJob::where('no_of_vacancies', '>', 0)
                     ->get()
                     ->filter(function ($job) {
-                        return Carbon::createFromFormat('d M, Y', $job->expired_date)->gt(Carbon::today());
+                        return Carbon::createFromFormat('Y-m-d', $job->expired_date)->gt(Carbon::today());
                     })
                     ->pluck('position_id'))
                 ->get();
 
 
             return response()->json([
-                'designations' => $designations,
                 'positions' => $positions,
             ]);
         }
@@ -653,7 +654,9 @@ class JobController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'name'               => 'required|string|max:255',
+                'fname'               => 'required|string|max:255',
+                'mname'               => 'required|string|max:255',
+                'lname'               => 'required|string|max:255',
                 'email'              => 'required|string|email|unique:applicants,email',
                 'birth_date'         => 'required|string|max:255',
                 'place_of_birth'     => 'required|string|max:255',
@@ -709,9 +712,7 @@ class JobController extends Controller
 
                 // Employment
                 'department_id'         => 'required|integer',
-                'designation_id'        => 'required|integer',
                 'position_id'           => 'required|integer',
-                'line_manager'          => 'required|string|max:255',
                 'employment_status'     => 'required|string|max:255',
 
                 //children
@@ -793,9 +794,15 @@ class JobController extends Controller
 
             DB::beginTransaction();
 
+            $fullName = $validatedData['fname'] . ' ' . $validatedData['mname'] . ' ' . $validatedData['lname'];
+
+
             // Create employee record
             $applicant = Applicant::create([
-                'name'         => $validatedData['name'],
+                'name'          => $fullName,
+                'first_name'    => $validatedData['fname'],
+                'middle_name'   => $validatedData['mname'],
+                'last_name'     => $validatedData['lname'],
                 'email'        => $validatedData['email'],
                 'birth_date'   => $validatedData['birth_date'],
                 'place_of_birth' => $validatedData['place_of_birth'],
@@ -838,9 +845,7 @@ class JobController extends Controller
 
             $applicant->employment()->create([
                 'department_id'           => $validatedData['department_id'],
-                'designation_id'          => $validatedData['designation_id'],
                 'position_id'             => $validatedData['position_id'],
-                'line_manager'            => $validatedData['line_manager'],
                 'employment_status'       => $validatedData['employment_status'],
                 'status'                  => 'Qualified',
             ]);
@@ -993,12 +998,11 @@ class JobController extends Controller
             ->unique('id')
             ->filter();
 
-        $designations = DB::table('designations')->get();
         $positions = DB::table('positions')->get();
         $typeJobs = TypeJob::all();
 
 
-        return view('job.editapplicant', compact('employee', 'departments', 'designations', 'positions', 'typeJobs'));
+        return view('job.editapplicant', compact('employee', 'departments', 'positions', 'typeJobs'));
     }
 
     /** Update Record For Profile Info */
@@ -1015,9 +1019,7 @@ class JobController extends Controller
             'mobile_number'       => 'nullable|string|max:15',
             'email'               => 'required|email|max:255',
             'department_id'       => 'required|integer',
-            'designation_id'      => 'required|integer',
             'position_id'         => 'required|integer',
-            'line_manager'        => 'required|string|max:255',
             'employment_status'   => 'required|string|max:255',
             'images'              => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // File validation
         ]);
@@ -1052,9 +1054,7 @@ class JobController extends Controller
                 [
                     'employment_status'   => $validatedData['employment_status'],
                     'department_id'       => $validatedData['department_id'],
-                    'designation_id'      => $validatedData['designation_id'],
                     'position_id'         => $validatedData['position_id'],
-                    'line_manager'        => $validatedData['line_manager'],
                 ]
             );
 

@@ -79,10 +79,12 @@ class HomeController extends Controller
 
         // If there’s no ongoing position (no null end_date), no step increment is awarded
         if ($latestPosition === null) {
-            return [0, 0, 0, 0, 0, 0];  // No step increment, no service years in position, no progress
+            return [0, 0, 0, 0, 0, 0, 0, 'N/A']; // Now returns 8 elements
         }
+        
 
         $currentPositionName = $latestPosition?->position?->position_name ?? 'N/A';
+        
 
         // Calculate total years worked in the latest ongoing position with no end date
         $latestStartDate = Carbon::parse($latestPosition->start_date);
@@ -209,39 +211,49 @@ class HomeController extends Controller
 
     private function calculateEmployeeAwards($employee, $currentDate)
     {
-        $years = $employee->serviceYears;
+        if (isset($employee->employment) && isset($employee->employment->date_hired)) {
+            $years = $employee->serviceYears;
 
-        $earnedAwards = [];
-        $nextAwardInYears = 0;
-        $progressPercentage = 0;
-        $timeUntilNextAward = null;
-        $nextAwardYear = 0;  // This will hold the next award year
+            $earnedAwards = [];
+            $nextAwardInYears = 0;
+            $progressPercentage = 0;
+            $timeUntilNextAward = null;
+            $nextAwardYear = 0;  // This will hold the next award year
 
-        if ($years < 10) {
-            // Not yet eligible for any Loyalty Award
-            $nextAwardInYears = 10 - $years;
-            $progressPercentage = ($years / 10) * 100;
-            $timeUntilNextAward = $this->calculateTimeDifference($currentDate, Carbon::parse($employee->employment->date_hired)->addYears(10));
-            $nextAwardYear = 10;
-        } else {
-            // Calculate earned awards
-            for ($i = 10; $i <= $years; $i += 5) {
-                $earnedAwards[] = "{$i}-Year Loyalty Award";
+            if ($years < 10) {
+                // Not yet eligible for any Loyalty Award
+                $nextAwardInYears = 10 - $years;
+                $progressPercentage = ($years / 10) * 100;
+                $timeUntilNextAward = $this->calculateTimeDifference($currentDate, Carbon::parse($employee->employment->date_hired)->addYears(10));
+                $nextAwardYear = 10;
+            } else {
+                // Calculate earned awards
+                for ($i = 10; $i <= $years; $i += 5) {
+                    $earnedAwards[] = "{$i}-Year Loyalty Award";
+                }
+
+                // Determine next award milestone
+                $nextAwardYear = (floor($years / 5) + 1) * 5;
+                $nextAwardInYears = $nextAwardYear - $years;
+                $progressPercentage = (($years % 5) / 5) * 100;
+                $timeUntilNextAward = $this->calculateTimeDifference($currentDate, Carbon::parse($employee->employment->date_hired)->addYears($nextAwardYear));
             }
 
-            // Determine next award milestone
-            $nextAwardYear = (floor($years / 5) + 1) * 5;
-            $nextAwardInYears = $nextAwardYear - $years;
-            $progressPercentage = (($years % 5) / 5) * 100;
-            $timeUntilNextAward = $this->calculateTimeDifference($currentDate, Carbon::parse($employee->employment->date_hired)->addYears($nextAwardYear));
-        }
+            // Assign calculated values to the employee object
+            $employee->earnedAwards = $earnedAwards;
+            $employee->nextAwardInYears = $nextAwardInYears;
+            $employee->progressPercentage = $progressPercentage;
+            $employee->timeUntilNextAward = $timeUntilNextAward;
+            $employee->nextaward = $nextAwardYear;  // Add the next award year to the employee object
 
-        // Assign calculated values to the employee object
-        $employee->earnedAwards = $earnedAwards;
-        $employee->nextAwardInYears = $nextAwardInYears;
-        $employee->progressPercentage = $progressPercentage;
-        $employee->timeUntilNextAward = $timeUntilNextAward;
-        $employee->nextaward = $nextAwardYear;  // Add the next award year to the employee object
+        } else {
+            // Handle the case when employment or date_hired is missing
+            $employee->earnedAwards = [];
+            $employee->nextAwardInYears = 0;
+            $employee->progressPercentage = 0;
+            $employee->timeUntilNextAward = null;
+            $employee->nextaward = 0;
+        }
     }
 
     private function calculateTimeDifference($startDate, $endDate)

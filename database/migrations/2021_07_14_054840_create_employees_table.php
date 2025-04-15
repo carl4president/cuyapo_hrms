@@ -18,6 +18,9 @@ class CreateEmployeesTable extends Migration
             $table->id();
             $table->string('emp_id')->unique()->index(); // Auto-generated Employee ID
             $table->string('name');
+            $table->string('first_name');
+            $table->string('middle_name');
+            $table->string('last_name');
             $table->string('email')->unique();
             $table->string('birth_date');
             $table->string('place_of_birth');

@@ -18,6 +18,12 @@
                 </div>
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-body">
+                @include('sidebar.sidebarmanagejobs')
+            </div>
+        </div>
         <!-- /Page Header -->
 
         <div class="row">
@@ -26,7 +32,7 @@
                     <div class="card-body">
                         <span class="dash-widget-icon"><i class="fa fa-briefcase"></i></span>
                         <div class="dash-widget-info">
-                            <h3>110</h3>
+                            <h3>{{ count($job_list) }}</h3>
                             <span>Jobs</span>
                         </div>
                     </div>
@@ -48,7 +54,7 @@
                     <div class="card-body">
                         <span class="dash-widget-icon"><i class="fa fa-user"></i></span>
                         <div class="dash-widget-info">
-                            <h3>374</h3>
+                            <h3>{{ $employee->count() }}</h3>
                             <span>Employees</span>
                         </div>
                     </div>
@@ -59,7 +65,7 @@
                     <div class="card-body">
                         <span class="dash-widget-icon"><i class="fa fa-clipboard"></i></span>
                         <div class="dash-widget-info">
-                            <h3>220</h3>
+                            <h3>{{ $appJobs->sum(fn($job) => $job->applicants->count()) }}</h3>
                             <span>Applications</span>
                         </div>
                     </div>
@@ -82,16 +88,18 @@
                         <div class="card flex-fill">
                             <div class="card-body">
                                 <h3 class="card-title text-center">Latest Jobs</h3>
-                                <ul class="list-group">
-                                    @foreach ($job_list as $key => $items)
-                                    @php
-                                    $date = $items->created_at;
-                                    $date = Carbon\Carbon::parse($date);
-                                    $elapsed = $date->diffForHumans();
-                                    @endphp
-                                    <li class="list-group-item list-group-item-action">{{ $items->position->position_name }} <span class="float-right text-sm text-muted">{{ $elapsed }}</span></li>
-                                    @endforeach
-                                </ul>
+                                <div style="max-height: 280px; overflow-y: auto;">
+                                    <ul class="list-group">
+                                        @foreach ($job_list as $key => $items)
+                                        @php
+                                        $date = $items->created_at;
+                                        $date = Carbon\Carbon::parse($date);
+                                        $elapsed = $date->diffForHumans();
+                                        @endphp
+                                        <li class="list-group-item list-group-item-action">{{ $items->position->position_name }} <span class="float-right text-sm text-muted">{{ $elapsed }}</span></li>
+                                        @endforeach
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -106,13 +114,12 @@
                         <h3 class="card-title mb-0">Applicants List</h3>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive" style="min-height: 180px;">
+                        <div class="table-responsive" style="min-height: 180px; max-height: 380px;">
                             <table class="table table-nowrap custom-table mb-0">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Name</th>
-                                        <th>Designation</th>
                                         <th>Departments</th>
                                         <th>Start Date</th>
                                         <th>Expire Date</th>
@@ -137,7 +144,6 @@
                                                 </a>
                                             </h2>
                                         </td>
-                                        <td>{{ $appJob->designation->designation_name ?? 'N/A' }}</td>
                                         <td>{{ $appJob->department->department ?? 'N/A' }}</td>
                                         <td>{{ $appJob->start_date ?? 'N/A' }}</td>
                                         <td>{{ $appJob->expired_date ?? 'N/A' }}</td>
@@ -214,12 +220,7 @@
                                                     <i class="material-icons">more_vert</i>
                                                 </a>
                                                 <div class="dropdown-menu dropdown-menu-right">
-                                                    <a href="#" class="dropdown-item" data-toggle="modal" data-target="#edit_job">
-                                                        <i class="fa fa-pencil m-r-5"></i> Edit
-                                                    </a>
-                                                    <a href="#" class="dropdown-item" data-toggle="modal" data-target="#delete_job">
-                                                        <i class="fa fa-trash-o m-r-5"></i> Delete
-                                                    </a>
+                                                    <a class="dropdown-item" href="{{ url('applicant/view/edit/'.$applicantEmployment->app_id) }}"><i class="fa fa-pencil m-r-5"></i> Edit</a>
                                                 </div>
                                             </div>
                                         </td>
@@ -241,7 +242,7 @@
                         <h3 class="card-title mb-0">Shortlist Candidates</h3>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
+                        <div class="table-responsive" style="min-height: 120px; max-height: 380px;">
                             <table class="table table-nowrap custom-table mb-0">
                                 <thead>
                                     <tr>
@@ -253,67 +254,39 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @php $count = 1; @endphp
+                                    @forelse($shortlistedJobs as $job)
+                                    @foreach($job->applicants as $employment)
+                                    @if($employment->status === 'Shortlisted' && $employment->applicant)
                                     <tr>
-                                        <td>
-                                            1
-                                        </td>
+                                        <td>{{ $count++ }}</td>
                                         <td>
                                             <h2 class="table-avatar">
-                                                <a href="profile.html" class="avatar"><img alt="" src="assets/img/profiles/avatar-02.jpg"></a>
-                                                <a href="profile.html">John Doe <span>Web Designer</span></a>
+                                                <a href="#" class="avatar"><img src="{{ asset('img/avatar.jpg') }}" alt=""></a>
+                                                <a href="#">{{ $employment->applicant->name ?? 'N/A' }}
+                                                    <span>{{ $job->position->name ?? '' }}</span></a>
                                             </h2>
                                         </td>
-                                        <td><a href="job-details.html">Web Designer</a></td>
-                                        <td>Department</td>
+                                        <td>{{ $job->position->position_name ?? 'N/A' }}</td>
+                                        <td>{{ $job->department->department ?? 'N/A' }}</td>
                                         <td class="text-center">
                                             <div class="action-label">
                                                 <a class="btn btn-white btn-sm btn-rounded" href="#">
-                                                    <i class="fa fa-dot-circle-o text-danger"></i>Offered
+                                                    <i class="fa fa-dot-circle-o text-success"></i> {{ $employment->status }}
                                                 </a>
                                             </div>
                                         </td>
                                     </tr>
+                                    @endif
+                                    @endforeach
+                                    @empty
                                     <tr>
-                                        <td>
-                                            2
-                                        </td>
-                                        <td>
-                                            <h2 class="table-avatar">
-                                                <a href="profile.html" class="avatar"><img alt="" src="assets/img/profiles/avatar-09.jpg"></a>
-                                                <a href="profile.html">Richard Miles <span>Web Developer</span></a>
-                                            </h2>
-                                        </td>
-                                        <td><a href="job-details.html">Web Developer</a></td>
-                                        <td>Department</td>
-                                        <td class="text-center">
-                                            <div class="action-label">
-                                                <a class="btn btn-white btn-sm btn-rounded" href="#">
-                                                    <i class="fa fa-dot-circle-o text-danger"></i>Offered
-                                                </a>
-                                            </div>
-                                        </td>
+                                        <td colspan="5" class="text-center">No shortlisted applicants found.</td>
                                     </tr>
-                                    <tr>
-                                        <td>
-                                            3
-                                        </td>
-                                        <td>
-                                            <h2 class="table-avatar">
-                                                <a href="profile.html" class="avatar"><img alt="" src="assets/img/profiles/avatar-10.jpg"></a>
-                                                <a href="profile.html">John Smith <span>Android Developer</span></a>
-                                            </h2>
-                                        </td>
-                                        <td><a href="job-details.html">Android Developer</a></td>
-                                        <td>Department</td>
-                                        <td class="text-center">
-                                            <div class="action-label">
-                                                <a class="btn btn-white btn-sm btn-rounded" href="#">
-                                                    <i class="fa fa-dot-circle-o text-danger"></i>Offered
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    @endforelse
+
                                 </tbody>
+
                             </table>
                         </div>
                     </div>

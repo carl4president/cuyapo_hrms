@@ -15,10 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('emp_id'); 
             $table->foreign('emp_id')->references('emp_id')->on('employees')->onDelete('cascade');
-            $table->foreignId('department_id')->constrained('departments');
-            $table->foreignId('designation_id')->constrained('designations');
-            $table->foreignId('position_id')->constrained('positions');
-            $table->string('line_manager')->nullable();
             $table->string('employment_status');
             $table->string('date_hired');
             $table->timestamps();

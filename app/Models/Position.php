@@ -13,7 +13,6 @@ class Position extends Model
 
     protected $fillable = [
         'position_name',
-        'designation_id',
         'department_id',
     ];
 
@@ -23,16 +22,12 @@ class Position extends Model
 
     }
 
-    public function designation(){
+    public function jobDetails(){
 
-        return $this->belongsTo(Designation::class);
+        return $this->hasMany(EmployeeJobDetail::class, 'position_id');
 
     }
 
-    public function employee_employments()
-    {
-        return $this->hasMany(EmployeeEmployment::class, 'position_id');
-    }
 
     public function add_job()
     {

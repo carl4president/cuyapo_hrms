@@ -19,10 +19,10 @@ return new class extends Migration
             $table->string('education_level'); // Elementary, Secondary, etc.
             $table->string('degree')->nullable();
             $table->string('school_name');
-            $table->integer('year_from')->nullable(); // Changed to integer(4)
-            $table->integer('year_to')->nullable();   // Changed to integer(4)
+            $table->string('year_from')->nullable(); // Changed to integer(4)
+            $table->string('year_to')->nullable();   // Changed to integer(4)
             $table->string('highest_units_earned')->nullable();
-            $table->integer('year_graduated')->nullable(); // Changed to integer(4)
+            $table->string('year_graduated')->nullable(); // Changed to integer(4)
             $table->string('scholarship_honors')->nullable();
             
             $table->timestamps();

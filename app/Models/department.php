@@ -8,25 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 class department extends Model
 {
     use HasFactory;
+    
     protected $fillable = [
         'department',
     ];
 
-    public function designations()
+    public function employeeJobDetails()
     {
-
-        return $this->hasMany(Designation::class);
+        return $this->hasMany(EmployeeJobDetail::class, 'department_id');
     }
 
-    public function position()
+
+
+    public function positions()
     {
 
-        return $this->hasMany(Position::class);
-    }
-
-    public function employee_employments()
-    {
-        return $this->hasMany(EmployeeEmployment::class, 'department_id');
+        return $this->hasMany(Position::class, 'department_id');
     }
 
     public function applicant_employments()

@@ -3,56 +3,57 @@
 
 <!-- Page Wrapper -->
 <div class="page-wrapper">
+
     <!-- Page Content -->
     <div class="content container-fluid">
+
         <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">Position</h3>
+                    <h3 class="page-title">Positions</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{route('home')}}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Position</li>
+                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Positions</li>
                     </ul>
                 </div>
                 <div class="col-auto float-right ml-auto">
-                    <a href="#" class="btn add-btn" data-toggle="modal" data-target="#add_position"><i class="fa fa-plus"></i> Add Position</a>
+                    <a href="#" class="btn add-btn" data-toggle="modal" data-target="#add_designation"><i class="fa fa-plus"></i> Add Position</a>
                 </div>
             </div>
         </div>
-
         <!-- /Page Header -->
 
         <div class="row">
             <div class="col-md-12">
-                <div>
+                <div class="table-responsive">
                     <table class="table table-striped custom-table mb-0 datatable">
                         <thead>
                             <tr>
                                 <th style="width: 30px;">No</th>
                                 <th hidden></th>
-                                <th>Position Name</th>
-                                <th>Designation Name</th>
-                                <th>Department Name</th>
+                                <th>Position </th>
+                                <th>Department </th>
                                 <th class="text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($positions as $key=>$position)
+                            @foreach($positions as $key=>$position)
                             <tr>
                                 <td>{{ ++$key }}</td>
-                                <td hidden class="id">{{ $position->id }}</td>
-                                <td class="position">{{ $position->position_name }}</td>
-                                <td>{{ $position->designation->designation_name }}</td>
+                                <td hidden class="id">>{{ $position->id }}</td>
+                                <td>{{ $position->position_name }}</td>
                                 <td>{{ $position->department->department }}</td>
                                 <td class="text-right">
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item edit_position" data-toggle="modal" data-id="{{ $position->id }}" data-position_name="{{ $position->position_name }}" data-designation_id="{{ $position->designation_id }}" data-department_name="{{ $position->department->department }}" data-target="#edit_position">
+                                            <a class="dropdown-item edit-position-btn" href="#" data-id="{{ $position->id }}" data-name="{{ $position->position_name }}" data-department-id="{{ $position->department_id }}" data-toggle="modal" data-target="#edit_designation">
                                                 <i class="fa fa-pencil m-r-5"></i> Edit
                                             </a>
-                                            <a class="dropdown-item delete_position" href="#" data-toggle="modal" data-target="#delete_position"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                                            <a class="dropdown-item delete-position-btn" href="#" data-id="{{ $position->id }}" data-toggle="modal" data-target="#delete_designation">
+                                                <i class="fa fa-trash-o m-r-5"></i> Delete
+                                            </a>
                                         </div>
                                     </div>
                                 </td>
@@ -66,8 +67,8 @@
     </div>
     <!-- /Page Content -->
 
-    <!-- Add Position Modal -->
-    <div id="add_position" class="modal custom-modal fade" role="dialog">
+    <!-- Add position Modal -->
+    <div id="add_designation" class="modal custom-modal fade" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -77,42 +78,34 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{ route('form/positions/save') }}" method="POST">
+                    <form method="POST" action="{{ route('form/positions/save') }}">
                         @csrf
                         <div class="form-group">
                             <label>Position Name <span class="text-danger">*</span></label>
-                            <input class="form-control @error('position') is-invalid @enderror" type="text" id="position" name="position">
-                            @error('position')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                        <div class="form-group">
-                            <label>Designation <span class="text-danger">*</span></label>
-                            <select class="form-control select designation-dropdown" name="designation" required>
-                                <option value="" disabled selected>-- Select Designation --</option>
-                                @foreach($designations as $designation)
-                                <option value="{{ $designation->id }}">{{ $designation->designation_name }}</option>
-                                @endforeach
-                            </select>
+                            <input class="form-control" type="text" name="position_name" required>
                         </div>
                         <div class="form-group">
                             <label>Department <span class="text-danger">*</span></label>
-                            <input type="text" name="department" readonly class="form-control" id="department-field">
+                            <select class="form-control select" name="department" required>
+                                <option value="" disabled selected>-- Select Department --</option>
+                                @foreach($departments as $department)
+                                <option value="{{ $department->department }}">{{ $department->department }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="submit-section">
-                            <button type="submit" class="btn btn-primary submit-btn">Submit</button>
+                            <button class="btn btn-primary submit-btn" type="submit">Submit</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    <!-- /Add Position Modal -->
 
-    <!-- Edit Position Modal -->
-    <div id="edit_position" class="modal custom-modal fade" role="dialog">
+    <!-- /Add position Modal -->
+
+    <!-- Edit position Modal -->
+    <div id="edit_designation" class="modal custom-modal fade" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -124,32 +117,24 @@
                 <div class="modal-body">
                     <form action="{{ route('form/positions/update') }}" method="POST">
                         @csrf
-                        <!-- Hidden Input for ID -->
-                        <input type="hidden" name="id" id="e_id" value="">
 
-                        <!-- Position Name Input -->
+                        <input type="hidden" name="id" id="designation_id" value="">
+
                         <div class="form-group">
                             <label>Position Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="position_edit" name="position_name" value="">
+                            <input class="form-control" name="position_name" id="position_name" type="text" value="" required>
                         </div>
-
-                        <!-- Designation Dropdown -->
-                        <div class="form-group">
-                            <label>Designation <span class="text-danger">*</span></label>
-                            <select class="form-control select designation-dropdown" id="designation_edit" name="designation_id">
-                                <!-- Options will be dynamically populated -->
-                            </select>
-                        </div>
-
-                        <!-- Department Name (Readonly) -->
                         <div class="form-group">
                             <label>Department <span class="text-danger">*</span></label>
-                            <input type="text" name="department" class="form-control" id="department_edit" readonly>
+                            <select class="form-control" name="department_id" id="department_id" required>
+                                <option value="" disabled>-- Select Department --</option>
+                                @foreach($departments as $department)
+                                <option value="{{ $department->id }}">{{ $department->department }}</option>
+                                @endforeach
+                            </select>
                         </div>
-
-                        <!-- Submit Button -->
                         <div class="submit-section">
-                            <button type="submit" class="btn btn-primary submit-btn">Save</button>
+                            <button class="btn btn-primary submit-btn" type="submit">Save</button>
                         </div>
                     </form>
                 </div>
@@ -157,167 +142,100 @@
         </div>
     </div>
 
+
     <!-- /Edit position Modal -->
 
     <!-- Delete position Modal -->
-    <div class="modal custom-modal fade" id="delete_position" role="dialog">
+    <div class="modal custom-modal fade" id="delete_designation" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-body">
-                    <div class="form-header">
-                        <h3>Delete Position</h3>
-                        <p>Are you sure want to delete?</p>
-                    </div>
-                    <div class="modal-btn delete-action">
-                        <form action="{{ route('form/positions/delete') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="id" class="e_id" value="">
+                <form action="{{ route('form/positions/delete') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-header">
+                            <h3>Delete Position</h3>
+                            <p>Are you sure you want to delete this position?</p>
+                        </div>
+                        <input type="hidden" name="id" id="delete_designation_id" value="">
+                        <div class="modal-btn delete-action">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                    <button style="width:100%" type="submit" class="btn btn-primary continue-btn">Delete</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
-    <!-- /Delete Position Modal -->
+
+    <!-- /Delete position Modal -->
+
 </div>
-
 <!-- /Page Wrapper -->
+
 @section('script')
-{{-- get populate department --}}
 <script>
-    $(document).ready(function() {
-        var url = "{{ route('hr/get/information/position') }}";
+    document.addEventListener('DOMContentLoaded', function() {
+        const editButtons = document.querySelectorAll('.edit-position-btn');
 
-        $('.designation-dropdown').on('change', function() {
-            var designationId = $(this).val();
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Get data attributes from the clicked button
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                const departmentId = this.getAttribute('data-department-id');
 
-            $.post(
-                url, {
-                    id: designationId
-                    , _token: $('meta[name="csrf-token"]').attr('content')
-                , }
-                , function(data) {
-
-                    if (data.department) {
-                        $('#department-field').val(data.department); // Populate the department field
-                    } else {
-                        $('#department-field').val(''); // Clear the field if no department is found
-                    }
-                }
-                , 'json'
-            ).fail(function(xhr) {});
-        });
-
-    });
-
-</script>
-
-
-{{-- update js --}}
-<script>
-    // Function to initialize the edit modal and populate fields
-    function initializeEditModal(data) {
-        var id = data.id;
-        var positionName = data.positionName;
-        var designationId = data.designationId;
-        var departmentName = data.departmentName;
-
-        // Set modal fields
-        $('#e_id').val(id);
-        $('#position_edit').val(positionName);
-        $('#department_edit').val(departmentName);
-
-        // Populate the designation dropdown
-        populateDesignationDropdown(designationId);
-    }
-
-
-    function populateDesignationDropdown(selectedDesignationId) {
-        var designations = @json($designations); 
-        $('#designation_edit').empty();
-
-
-        $('#designation_edit').append('<option value="" disabled>Select a Designation</option>');
-
-
-        if (designations && designations.length > 0) {
-            designations.forEach(function (designation) {
-                var isSelected = designation.id == selectedDesignationId ? 'selected' : '';
-                $('#designation_edit').append(
-                    `<option value="${designation.id}" ${isSelected}>${designation.designation_name}</option>`
-                );
+                // Populate modal fields
+                document.getElementById('designation_id').value = id;
+                document.getElementById('position_name').value = name;
+                document.getElementById('department_id').value = departmentId;
             });
-        } else {
-            $('#designation_edit').append('<option value="" disabled>No designations available</option>');
-        }
-        
-
-        $('#designation_edit').selectpicker('refresh');
-        $('#designation_edit').selectpicker('val', selectedDesignationId);
-    }
-
-
-    function fetchAndSetDepartment(designationId) {
-        var url = "{{ route('hr/get/information/position') }}";
-        $.ajax({
-            url: url,
-            type: "POST",
-            data: {
-                id: designationId,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            dataType: "json",
-            success: function (response) {
-                if (response.department) {
-                    $('#department_edit').val(response.department);
-                } else {
-                    $('#department_edit').val('');
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error("Error fetching department:", error);
-            }
         });
-    }
 
-    $(document).on('changed.bs.select', '#designation_edit', function () {
-        var selectedDesignationId = $(this).selectpicker('val');
-        console.log('changed.bs.select fired. Selected Designation ID:', selectedDesignationId);
-        fetchAndSetDepartment(selectedDesignationId);
-    });
+        const deleteButtons = document.querySelectorAll('.delete-position-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Get the ID of the position to delete
+                const id = this.getAttribute('data-id');
 
-    $(document).on('change', '#designation_edit', function () {
-        var selectedDesignationId = $(this).val();
-        console.log('Native change event fired. Selected Designation ID:', selectedDesignationId);
-        fetchAndSetDepartment(selectedDesignationId);
-    });
+                // Set the hidden input value in the delete modal
+                document.getElementById('delete_designation_id').value = id;
 
+                // Perform AJAX to check if the position has employees
+                fetch(`/form/positions/check-position-employees/${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const deleteMessage = document.querySelector('#delete_designation .modal-body p');
 
-    $(document).on('click', '.edit_position', function () {
-        var data = {
-            id: $(this).data('id'),
-            positionName: $(this).data('position_name'),
-            designationId: $(this).data('designation_id'),
-            departmentName: $(this).data('department_name')
-        };
+                        if (data.error) {
+                            deleteMessage.textContent = data.error;
+                            document.querySelector('.continue-btn').disabled = true; // Disable the delete button
+                        } else {
+                            deleteMessage.textContent = "Are you sure you want to delete this position?";
+                            document.querySelector('.continue-btn').disabled = false; // Enable the delete button
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const deleteMessage = document.querySelector('#delete_designation .modal-body p');
+                        deleteMessage.textContent = "Error occurred while checking position.";
+                        document.querySelector('.continue-btn').disabled = true; // Disable the delete button
+                    });
 
-        initializeEditModal(data);
-    });
-</script>
+                // Add a click listener for the "Delete" confirmation
+                const confirmDeleteButton = document.querySelector('.continue-btn');
+                confirmDeleteButton.addEventListener('click', function() {
+                    // Submit the delete form
+                    document.querySelector('#delete_designation form').submit();
+                });
+            });
+        });
 
-{{-- delete model --}}
-<script>
-    $(document).on('click', '.delete_position', function() {
-        var _this = $(this).parents('tr');
-        $('.e_id').val(_this.find('.id').text());
     });
 
 </script>

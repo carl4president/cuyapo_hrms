@@ -83,7 +83,20 @@
                                 <td>{{ $items->email }}</td>
                                 <td>{{ $items->contact->mobile_number }}</td>
                                 <td>{{ $items->employment->date_hired }}</td>
-                                <td>{{ $items->employment->position->position_name }}</td>
+                                <td>
+                                    @php
+                                    // Get all main jobs (where is_designation == 0)
+                                    $mainJobs = $items->jobDetails->where('is_designation', 0);
+                                    @endphp
+
+                                    @if($mainJobs->isNotEmpty())
+                                    @foreach ($mainJobs as $job)
+                                    <div>{{ $job->position->position_name ?? 'N/A' }}</div>
+                                    @endforeach
+                                    @else
+                                    N/A
+                                    @endif
+                                </td>
                                 <td class="text-right">
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
@@ -121,28 +134,9 @@
         </div>
         <div class="col-md-4">
             <div class="form-group">
-                <label>Designation</label>
-                <select class="form-control" id="designation" name="designation_id">
-                    <option value="" disabled selected>-- Select Designation --</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="form-group">
                 <label>Position</label>
                 <select class="form-control" id="position" name="position_id">
                     <option value="" disabled selected>-- Select Position --</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>Line Manager</label>
-                <select class="form-control" name="line_manager">
-                    <option selected disabled>-- Select --</option>
-                    @foreach ($userList as $user)
-                    <option value="{{ $user->name }}">{{ $user->name }}</option>
-                    @endforeach
                 </select>
             </div>
         </div>

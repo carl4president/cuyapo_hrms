@@ -85,40 +85,40 @@
     }
 
     @media (max-width: 992px) {
-    .employee-info-row {
-        min-width: 100px;
-        max-width: 140px;
-        padding: 8px 12px;
+        .employee-info-row {
+            min-width: 100px;
+            max-width: 140px;
+            padding: 8px 12px;
+        }
+
+        .employee-info-row .employee-initials {
+            font-size: 14px;
+        }
     }
 
-    .employee-info-row .employee-initials {
-        font-size: 14px;
-    }
-}
+    /* Small devices (phones, 600px and below) */
+    @media (max-width: 600px) {
+        .employee-info-container {
+            justify-content: center;
+        }
 
-/* Small devices (phones, 600px and below) */
-@media (max-width: 600px) {
-    .employee-info-container {
-        justify-content: center;
-    }
+        .employee-info-row {
+            min-width: 70px;
+            max-width: 100px;
+            margin-right: 0;
+            flex: 1 1 100%;
+            justify-content: center;
+        }
 
-    .employee-info-row {
-        min-width: 70px;
-        max-width: 100px;
-        margin-right: 0;
-        flex: 1 1 100%;
-        justify-content: center;
-    }
+        .employee-info-row .avatar img {
+            width: 35px;
+            height: 35px;
+        }
 
-    .employee-info-row .avatar img {
-        width: 35px;
-        height: 35px;
+        .employee-info-row .employee-initials {
+            font-size: 13px;
+        }
     }
-
-    .employee-info-row .employee-initials {
-        font-size: 13px;
-    }
-}
 
 </style>
 <!-- Page Wrapper -->
@@ -150,7 +150,7 @@
                 <div class="card leave-box" id="leave_annual">
                     <div class="card-body">
                         <div class="h3 card-title with-switch">
-                            Vacation Leave
+                            Special Leave Privilege
                             <div class="onoffswitch">
                                 <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_annual">
                                 <label class="onoffswitch-label" for="switch_annual">
@@ -170,8 +170,8 @@
                                     <div class="leave-left">
                                         <div class="input-box">
                                             <div class="form-group">
-                                                <label>Vacation Leave (Days)</label>
-                                                <input type="text" class="form-control" name="vacation_leave" value="{{ old('vacation_leave', $vacationLeave ?? 15) }}" disabled>
+                                                <label>SPL (Days)</label>
+                                                <input type="text" class="form-control" name="spl" value="{{ old('spl', $spl ?? 3) }}" disabled>
                                             </div>
                                         </div>
                                     </div>
@@ -180,29 +180,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Carry Forward (Vacation Leave Only) -->
-                                <div class="leave-row">
-                                    <div class="leave-left">
-                                        <div class="input-box">
-                                            <label class="d-block">Carry Forward (VL only)</label>
-                                            <div class="leave-inline-form">
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="carry_forward" id="carry_no" value="0" {{ old('carry_forward', $carryForward) == 0 ? 'checked' : '' }} disabled>
-                                                    <label class="form-check-label" for="carry_no">No</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="carry_forward" id="carry_yes" value="1" {{ old('carry_forward', $carryForward) == 1 ? 'checked' : '' }} disabled>
-                                                    <label class="form-check-label" for="carry_yes">Yes</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="leave-right">
-                                        <button type="button" class="leave-edit-btn">
-                                            Edit
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                         </form>
 
@@ -236,44 +213,6 @@
                     </div>
                 </div>
                 <!-- /Annual Leave -->
-
-                <!-- Sick Leave -->
-                <form action="{{ route('form/sickleaveSettings/update') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="staff_id" value="all"> <!-- Global Settings -->
-                    <div class="card leave-box" id="leave_sick">
-                        <div class="card-body">
-                            <div class="h3 card-title with-switch">
-                                Sick
-                                <div class="onoffswitch">
-                                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch_sick">
-                                    <label class="onoffswitch-label" for="switch_sick">
-                                        <span class="onoffswitch-inner"></span>
-                                        <span class="onoffswitch-switch"></span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="leave-item">
-                                <div class="leave-row">
-                                    <div class="leave-left">
-                                        <div class="input-box">
-                                            <div class="form-group">
-                                                <label>Days</label>
-                                                <input type="text" class="form-control" name="sick_leave" value="{{ old('sick_leave', $sickLeave ?? 15) }}" disabled>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="leave-right">
-                                        <button class="leave-edit-btn">
-                                            Edit
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-                <!-- /Sick Leave -->
 
                 <!-- Hospitalisation Leave -->
 
@@ -402,7 +341,8 @@
                                     <select name="customleave_from" id="customleave_select" class="form-control" size="5" multiple="multiple">
                                         @foreach ($employees as $emp)
                                         @php
-                                        $deptId = optional($emp->employment->department)->id;
+                                        $jobDetail = $emp->jobDetails->where('is_designation', 0)->first();
+                                        $deptId = optional($jobDetail?->department)->id;
                                         $fullName = $emp->name;
                                         @endphp
                                         <option value="{{ $emp->emp_id }}" data-department="{{ $deptId }}">{{ $fullName }}</option>
@@ -760,15 +700,18 @@
             });
 
             allEmployees.forEach(emp => {
-                const deptId = emp.employment && emp.employment.department ? emp.employment.department.id : null;
+                // Find the first jobDetail with is_designation == 0
+                const jobDetail = (emp.job_details || []).find(jd => jd.is_designation == 0);
+                const deptId = jobDetail && jobDetail.department ? jobDetail.department.id : null;
+
                 const isMatch = selectedDeptId === "" || deptId == selectedDeptId;
                 const alreadyAssigned = $rightSelect.find(`option[value="${emp.emp_id}"]`).length > 0;
 
-                // Only add to the left box if the employee is not already assigned
                 if (isMatch && !alreadyAssigned) {
                     $leftSelect.append(`<option value="${emp.emp_id}">${emp.name}</option>`);
                 }
             });
+
 
             updateSelectedEmployees();
         });

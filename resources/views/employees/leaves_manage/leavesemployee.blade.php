@@ -75,9 +75,16 @@
                         </h6>
                         <h3 class="mb-2" style="font-size: 1.8rem; font-weight: 700; color: #0d2d59;">
                             @if($leaveBalance)
-                            {{ $leaveBalance->total_leave_days - $leaveBalance->used_leave_days }}
+                            @php
+                            $remainingLeave = $leaveBalance->total_leave_days - $leaveBalance->used_leave_days;
+                            @endphp
+                            @if($remainingLeave == floor($remainingLeave))
+                            {{ number_format($remainingLeave, 0) }}
                             @else
-                            {{ $leaves->leave_days }}
+                            {{ number_format($remainingLeave, 3) }}
+                            @endif
+                            @else
+                            {{ $leaves->leave_days == floor($leaves->leave_days) ? number_format($leaves->leave_days, 0) : number_format($leaves->leave_days, 3) }}
                             @endif
                         </h3>
                         <small class="text-muted" style="font-size: 0.75rem;">Remaining Leave</small>
@@ -105,9 +112,9 @@
                                 <th hidden>No of Days</th>
                                 <th hidden>Leave Date</th>
                                 <th hidden>Leave Day</th>
-                                <th>Reason</th>
+                                <th>Decline Reason</th>
                                 <th class="text-center">Status</th>
-                                <th>Approved by</th>
+                                <th>Dis/Approved by</th>
                                 <th class="text-right">Actions</th>
                             </tr>
                         </thead>
@@ -130,7 +137,7 @@
                                 <td hidden class="number_of_day">{{ $leave->number_of_day }}</td>
                                 <td hidden class="leave_date">{{ $leave->leave_date }}</td>
                                 <td hidden class="leave_day">{{ $leave->leave_day }}</td>
-                                <td class="reason">{{ $leave->reason }}</td>
+                                <td class="leave_reason">{{ \Illuminate\Support\Str::limit($leave->reason, 20, '...') }}</td>
                                 <td class="text-center">
                                     <div class="action-label">
                                         <a class="btn btn-white btn-sm btn-rounded" href="javascript:void(0);" style="pointer-events: none; opacity: 0.5;">
@@ -147,6 +154,18 @@
                                         <a href="#">{{ $leave->approved_by }}</a>
                                     </h2>
                                     @endforeach
+                                </td>
+                                <td class="text-right">
+                                    @if($leave->status != 'Approved')
+                                    <div class="dropdown dropdown-action">
+                                        <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <a class="dropdown-item printLeave" href="#" data-id="{{ $leave->id }}" data-emp-id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}">
+                                                <i class="fa fa-print m-r-5"></i> Print
+                                            </a>
+                                        </div>
+                                    </div>
+                                    @endif
                                 </td>
 
                             </tr>
@@ -170,7 +189,8 @@
                                 <td hidden class="number_of_day">{{ $leave->number_of_day }}</td>
                                 <td hidden class="leave_date">{{ $leave->leave_date }}</td>
                                 <td hidden class="leave_day">{{ $leave->leave_day }}</td>
-                                <td class="reason">{{ $leave->reason }}</td>
+                                <td class="leave_reason">{{ \Illuminate\Support\Str::limit($leave->reason, 20, '...') }}</td>
+
                                 <td class="text-center">
                                     <div class="action-label">
                                         @php
@@ -198,17 +218,24 @@
                                     @endforeach
                                 </td>
                                 <td class="text-right">
-                                    @if($leave->status != 'Approved')
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
+                                            @if($leave->status != 'Approved')
                                             <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $leave->id }}" data-employee_name="{{ $leave->employee_name }}" data-employee_id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-remaining_leave="" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}" data-number_of_day="{{ $leave->number_of_day }}" data-leave_day="{{ $leave->leave_day }}" data-reason="{{ $leave->reason }}" data-target="#edit_leave">
                                                 <i class="fa fa-pencil m-r-5"></i> Edit
                                             </a>
+                                            <a class="dropdown-item printLeave" href="#" data-id="{{ $leave->id }}" data-emp-id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}">
+                                                <i class="fa fa-print m-r-5"></i> Print
+                                            </a>
                                             <a class="dropdown-item delete_leave" href="#" data-toggle="modal" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                                            @else
+                                            <a class="dropdown-item printLeave" href="#" data-id="{{ $leave->id }}" data-emp-id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}">
+                                                <i class="fa fa-print m-r-5"></i> Print
+                                            </a>
+                                            @endif
                                         </div>
                                     </div>
-                                    @endif
                                 </td>
                             </tr>
                             @endif
@@ -353,11 +380,6 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label>Leave Reason <span class="text-danger">*</span></label>
-                            <textarea rows="2" class="form-control" name="reason"></textarea>
-                        </div>
-
                         <div class="submit-section">
                             <button type="submit" id="apply_leave" class="btn btn-primary submit-btn">Submit</button>
                         </div>
@@ -473,11 +495,6 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label>Leave Reason <span class="text-danger">*</span></label>
-                            <textarea rows="2" class="form-control" name="reason"></textarea>
-                        </div>
-
                         <div class="submit-section">
                             <button type="submit" id="editleave" class="btn btn-primary submit-btn">Submit</button>
                         </div>
@@ -521,33 +538,34 @@
 <!-- /Page Wrapper -->
 @section('script')
 <script>
-$('#add_leave').on('hidden.bs.modal', function () {
-    $(this).find('form')[0].reset(); // Reset the form
-    // Reset additional fields manually if needed
-    $('#counter_remaining_leave, #remaining_leave, #number_of_day').val('0');
-    $('#leave_dates_display, #select_leave_day').hide();
-    // Reset checkboxes or any additional elements
-    $('#vacation_ph, #vacation_abroad').prop('checked', false);
-    $('#abroad_specify').hide().val('');
-    $('#sick_hospital, #sick_outpatient').prop('checked', false);
-    $('#illness_specify').val('');
-    $('#study_master, #study_bar').prop('checked', false);
-    $('#women_illness').val('');
-});
+    $('#add_leave').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset(); // Reset the form
+        // Reset additional fields manually if needed
+        $('#counter_remaining_leave, #remaining_leave, #number_of_day').val('0');
+        $('#leave_dates_display, #select_leave_day').hide();
+        // Reset checkboxes or any additional elements
+        $('#vacation_ph, #vacation_abroad').prop('checked', false);
+        $('#abroad_specify').hide().val('');
+        $('#sick_hospital, #sick_outpatient').prop('checked', false);
+        $('#illness_specify').val('');
+        $('#study_master, #study_bar').prop('checked', false);
+        $('#women_illness').val('');
+    });
 
-$('#edit_leave').on('hidden.bs.modal', function () {
-    $(this).find('form')[0].reset(); // Reset the form
-    // Reset additional fields manually if needed
-    $('#edit_counter_remaining_leave, #edit_remaining_leave, #edit_number_of_day').val('0');
-    $('#edit_leave_dates_display, #edit_select_leave_day').hide();
-    // Reset checkboxes or any additional elements
-    $('#e_vacation_philippines, #e_vacation_abroad').prop('checked', false);
-    $('#e_abroad_specify').hide().val('');
-    $('#e_sick_hospital, #e_sick_outpatient').prop('checked', false);
-    $('#e_illness_specify').val('');
-    $('#e_study_master, #e_study_bar').prop('checked', false);
-    $('#e_women_illness').val('');
-});
+    $('#edit_leave').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset(); // Reset the form
+        // Reset additional fields manually if needed
+        $('#edit_counter_remaining_leave, #edit_remaining_leave, #edit_number_of_day').val('0');
+        $('#edit_leave_dates_display, #edit_select_leave_day').hide();
+        // Reset checkboxes or any additional elements
+        $('#e_vacation_philippines, #e_vacation_abroad').prop('checked', false);
+        $('#e_abroad_specify').hide().val('');
+        $('#e_sick_hospital, #e_sick_outpatient').prop('checked', false);
+        $('#e_illness_specify').val('');
+        $('#e_study_master, #e_study_bar').prop('checked', false);
+        $('#e_women_illness').val('');
+    });
+
 </script>
 
 
@@ -583,17 +601,20 @@ $('#edit_leave').on('hidden.bs.modal', function () {
             $('input[name="sick_location"]').prop('checked', false);
         });
 
-        // Show/hide abroad input field
+        // Ensure only one vacation_location checkbox can be checked at a time
         $('input[name="vacation_location"]').on('change', function() {
-            if ($(this).val() === 'Abroad') {
+            $('input[name="vacation_location"]').not(this).prop('checked', false);
+
+            if ($(this).val() === 'Abroad' && $(this).is(':checked')) {
                 $('#abroad_specify').show();
             } else {
                 $('#abroad_specify').hide().val('');
             }
         });
 
-        // Show sick leave details input only after selection
+        // Ensure only one sick_location checkbox can be checked at a time
         $('input[name="sick_location"]').on('change', function() {
+            $('input[name="sick_location"]').not(this).prop('checked', false);
             $('#sick_leave_details_input').show();
         });
     });
@@ -603,33 +624,43 @@ $('#edit_leave').on('hidden.bs.modal', function () {
 {{-- edit modal --}}
 <script>
     $(document).ready(function() {
-        // Initially hide all sections
-        $('#e_vacation_special_leave, #e_sick_leave_details, #e_special_leave_women, #e_study_leave').hide();
-        $('#e_abroad_specify').hide(); // Hide abroad input
+        // Ensure the element exists before attaching the event handler
+        const leaveTypeElement = $('#edit_leave_type');
 
-        // Handle leave type selection
-        $('#edit_leave_type').change(function() {
-            const leaveType = $(this).val();
-
-            // Hide all sections first
+        if (leaveTypeElement.length) {
+            // Initially hide all sections
             $('#e_vacation_special_leave, #e_sick_leave_details, #e_special_leave_women, #e_study_leave').hide();
+            $('#e_abroad_specify').hide(); // Hide abroad input
 
-            if (leaveType.includes('Vacation') || leaveType.includes('Special Privilege')) {
-                $('#e_vacation_special_leave').show();
-            } else if (leaveType.includes('Sick')) {
-                $('#e_sick_leave_details').show();
-            } else if (leaveType.includes('Special Leave Benefits for Women')) {
-                $('#e_special_leave_women').show();
-            } else if (leaveType.includes('Study')) {
-                $('#e_study_leave').show();
-            }
+            // Handle leave type selection
+            leaveTypeElement.change(function() {
+                const leaveType = $(this).val();
 
-            // Hide optional input fields when switching leave type
-            $('#e_abroad_specify').hide().val('');
-        });
+                // Ensure leaveType is valid before attempting to use .includes()
+                if (leaveType && typeof leaveType === 'string') {
+                    // Hide all sections first
+                    $('#e_vacation_special_leave, #e_sick_leave_details, #e_special_leave_women, #e_study_leave').hide();
 
-        // Show/hide abroad input field
-        $('input[name="vacation_location"]').on('change', function() {
+                    if (leaveType.includes('Vacation Leave') || leaveType.includes('Special Privilege Leave')) {
+                        $('#e_vacation_special_leave').show();
+                    } else if (leaveType.includes('Sick')) {
+                        $('#e_sick_leave_details').show();
+                    } else if (leaveType.includes('Special Leave Benefits for Women')) {
+                        $('#e_special_leave_women').show();
+                    } else if (leaveType.includes('Study')) {
+                        $('#e_study_leave').show();
+                    }
+
+                    // Hide optional input fields when switching leave type
+                    $('#e_abroad_specify').hide().val('');
+                }
+            });
+        } else {
+            console.error('#edit_leave_type not found in the DOM');
+        }
+
+        // Show/hide abroad input field for vacation leave
+        $('input[name="e_vacation_location"]').on('change', function() {
             if ($(this).val() === 'Abroad') {
                 $('#e_abroad_specify').show();
             } else {
@@ -637,14 +668,83 @@ $('#edit_leave').on('hidden.bs.modal', function () {
             }
         });
 
+        // Allow only one checkbox to be checked for Vacation/Special Privilege Leave
+        $('#e_vacation_philippines, #e_vacation_abroad').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#e_vacation_philippines, #e_vacation_abroad').not(this).prop('checked', false); // Uncheck other
+            }
+        });
+
+        // Allow only one checkbox to be checked for Sick Leave
+        $('#e_sick_hospital, #e_sick_outpatient').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#e_sick_hospital, #e_sick_outpatient').not(this).prop('checked', false); // Uncheck other
+            }
+        });
+
         // Show sick leave details input only after selection
-        $('input[name="sick_location"]').on('change', function() {
-            $('#sick_leave_details_input').show();
+        $('input[name="e_sick_location"]').on('change', function() {
+            $('#e_illness_specify').show();
         });
     });
 
 </script>
 
+<script>
+    $(document).on('click', '.printLeave', function(e) {
+        e.preventDefault();
+
+        var id = $(this).data('id');
+        var emp_id = $(this).data('emp-id');
+        var leaveType = $(this).data('leave_type');
+        var dateFrom = $(this).data('date_from');
+        var dateTo = $(this).data('date_to');
+
+        // Debugging: Log the data being sent
+        console.log('Sending Data:', {
+            id: id
+            , leave_type: leaveType
+            , date_from: dateFrom
+            , date_to: dateTo
+        });
+
+        // Send request to generate PDF with selected data
+        $.ajax({
+            url: '{{ route("form/leave/print") }}', // Your named route
+            method: 'POST'
+            , data: {
+                _token: '{{ csrf_token() }}'
+                , id: id
+                , emp_id: emp_id
+                , leave_type: leaveType
+                , date_from: dateFrom
+                , date_to: dateTo
+            }
+            , xhrFields: {
+                responseType: 'blob'
+            }
+            , success: function(response) {
+                var blob = new Blob([response], {
+                    type: 'application/pdf'
+                });
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = "Leave_Application.pdf";
+                link.click();
+            }
+            , error: function(xhr, status, error) {
+                // Log error details for better debugging
+                console.error('AJAX Request Failed:', {
+                    status: status
+                    , error: error
+                    , response: xhr.responseText
+                });
+                alert('Failed to generate PDF. Please check the server logs for more details.');
+            }
+        });
+    });
+
+</script>
 
 <script>
     $(document).ready(function() {
@@ -999,7 +1099,6 @@ $('#edit_leave').on('hidden.bs.modal', function () {
                     $("#edit_date_from").val(leave.date_from);
                     $("#edit_date_to").val(leave.date_to);
                     $("#edit_number_of_day").val(leave.number_of_day);
-                    $("textarea[name='reason']").val(leave.reason);
 
                     renderLeaveDetails(leave);
 
@@ -1347,7 +1446,6 @@ $('#edit_leave').on('hidden.bs.modal', function () {
                 toastr.error("Error updating leave data.");
             });
     });
-    
 
 </script>
 

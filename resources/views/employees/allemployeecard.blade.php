@@ -161,6 +161,6 @@
             </div>
         </div>
     </x-layouts.add-emp-modal>
-
-    @endsection
-    @endsection
+</div>
+@endsection
+@endsection

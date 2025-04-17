@@ -39,7 +39,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Auth'], function () {
     });
 
     // ------------------------------ Register ---------------------------------//
-    Route::controller(RegisterController::class)->group(function () {
+    Route::middleware([LeaveUpdateMiddleware::class])->controller(RegisterController::class)->group(function () {
         Route::get('/register', 'register')->name('register');
         Route::post('/register', 'storeUser')->name('register');
     });
@@ -73,7 +73,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
     });
 
     // --------------------------- Settings -------------------------------//
-    Route::controller(SettingController::class)->group(function () {
+    Route::middleware([LeaveUpdateMiddleware::class])->controller(SettingController::class)->group(function () {
         Route::middleware('auth')->group(function () {
             Route::get('company/settings/page', 'companySettings')->name('company/settings/page');
             /** index page */
@@ -111,7 +111,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
     });
 
     // -------------------------------- Job ------------------------------//
-    Route::controller(JobController::class)->group(function () {
+    Route::middleware([LeaveUpdateMiddleware::class])->controller(JobController::class)->group(function () {
         Route::middleware('auth')->group(function () {
             Route::get('form/job/list', 'jobList')->name('form/job/list');
             Route::get('form/job/view/{id}', 'jobView');
@@ -287,6 +287,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::post('get/information/leave-options', 'getLeaveOptions')->name('hr/get/information/leaveOptions');
             Route::get('get/staff-leave-options', 'getStaffLeaveOptions')->name('hr/get/leaveStaffOptions');
             Route::get('get/session_user_id', 'getSessionUserId')->name('hr/get/userId');
+            Route::get('leave/details/{id}', 'leaveDetails');
             Route::get('form/leavesettings/page', 'leaveSettings')->name('form/leavesettings/page');
             Route::get('attendance/page', 'attendanceIndex')->name('attendance/page');
             Route::get('attendance/employee/page', 'AttendanceEmployee')->name('attendance/employee/page');

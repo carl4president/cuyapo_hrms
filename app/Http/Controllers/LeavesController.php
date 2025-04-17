@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Applicant;
+use App\Models\ApplicantEmployment;
 use App\Models\department;
 use App\Models\Employee;
 use App\Models\Holiday;
@@ -10,6 +12,7 @@ use App\Models\LeaveInformation;
 use App\Models\LeavesAdmin;
 use App\Models\Leave;
 use App\Models\LeaveBalance;
+use App\Models\User;
 use DateTime;
 use Session;
 use DB;
@@ -333,6 +336,12 @@ class LeavesController extends Controller
         return $leave->editLeave($request);
     }
 
+    public function leaveDetails($id)
+    {
+        $leave = Leave::findOrFail($id);
+        return view('employees.leaves_manage.leavedetails', compact('leave'));
+    }
+
 
 
     /** Approve Leave */
@@ -414,6 +423,8 @@ class LeavesController extends Controller
             }
 
             // Finally, set status to Declined
+            $leave->reason = $request->reason;
+            $leave->approved_by = Auth::user()->user_id;
             $leave->status = 'Declined';
             $leave->save();
 
@@ -438,6 +449,7 @@ class LeavesController extends Controller
             return back()->with('error', 'Leave request not found');
         }
 
+        $leave->approved_by = null;
         $leave->status = 'Pending';
         $leave->save();
 
@@ -486,6 +498,53 @@ class LeavesController extends Controller
         return view('employees.leaves_manage.leavesadmin', compact('leaves', 'userList', 'leaveInformation', 'getLeave'));
     }
 
+    private function syncUserIdWithEmpId()
+    {
+        $employees = Employee::all();
+
+        foreach ($employees as $employee) {
+            $user = User::where('email', $employee->email)->first();
+
+            if ($user && $user->user_id != $employee->emp_id) {
+                // Update user_id to match emp_id
+                $user->user_id = $employee->emp_id;
+                $user->save();
+            }
+        }
+    }
+
+    private function deleteHiredApplicantsAndRelations()
+    {
+        $hiredEmployments = ApplicantEmployment::where('status', 'Hired')->get();
+
+        foreach ($hiredEmployments as $employment) {
+            $applicant = Applicant::where('app_id', $employment->app_id)->first();
+
+            if ($applicant) {
+                // Delete hasOne relationships
+                $applicant->contact()->delete();
+                $applicant->governmentIds()->delete();
+                $applicant->familyInfo()->delete();
+                $applicant->employment()->delete(); // Also delete employment record
+
+                // Delete hasMany relationships
+                $applicant->education()->delete();
+                $applicant->children()->delete();
+                $applicant->civilServiceEligibility()->delete();
+                $applicant->workExperiences()->delete();
+                $applicant->voluntaryWorks()->delete();
+                $applicant->trainings()->delete();
+                $applicant->otherInformations()->delete();
+                $applicant->interviews()->delete();
+
+                // Finally, delete the applicant itself
+                $applicant->delete();
+            }
+        }
+    }
+
+
+
 
     /** Leave Settings Page */
     public function leaveSettings()
@@ -504,6 +563,10 @@ class LeavesController extends Controller
         $departments = Department::all();
 
         // Ensure remaining_leave_days are in sequence
+        $this->syncUserIdWithEmpId();
+
+        $this->deleteHiredApplicantsAndRelations();
+
         $this->checkAndFixLeaveSequences();
 
         $this->updateUsedLeaveDays();

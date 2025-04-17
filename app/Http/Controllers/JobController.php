@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InterviewScheduleUpdated;
+use App\Mail\Mailer;
+use App\Mail\StatusUpdateMailer;
 use Illuminate\Http\Request;
 use App\Models\ApplyForJob;
 use App\Models\Category;
@@ -12,12 +15,17 @@ use App\Models\ApplicantEmployment;
 use App\Models\ApplicantInterview;
 use App\Models\department;
 use App\Models\Employee;
+use App\Models\EmployeeEmployment;
+use App\Models\EmployeeJobDetail;
 use App\Models\Position;
 use App\Models\TypeJob;
 use App\Models\User;
 use Carbon\Carbon;
 use Response;
 use DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class JobController extends Controller
 {
@@ -55,7 +63,7 @@ class JobController extends Controller
         $appJobs = AddJob::with('applicants.applicant')
             ->whereHas('applicants') // Ensure AddJobs have related applicants
             ->get();
-            
+
         $shortlistedJobs = AddJob::with(['applicants.applicant', 'position', 'department'])
             ->whereHas('applicants', function ($query) {
                 $query->where('status', 'Shortlisted');
@@ -224,12 +232,23 @@ class JobController extends Controller
         $request->validate([
             'app_id' => 'required|exists:applicant_employment,app_id',
             'status' => 'required|string',
+            'status_message' => 'required|string',
         ]);
 
-        $applicantEmployment = ApplicantEmployment::where('app_id', $request->app_id)->first();
+        // Fetch the employment and applicant info
+        $employment = ApplicantEmployment::where('app_id', $request->app_id)->first();
+        $applicant = Applicant::where('app_id', $request->app_id)->first();
 
+        if (!$employment || !$applicant) {
+            return response()->json(['error' => 'Applicant not found.'], 404);
+        }
+
+        // Update status
+        $employment->status = $request->status;
+        $employment->save();
+
+        // If status is Shortlisted, create or update interview entry
         if ($request->status === 'Shortlisted') {
-            // Update or create the corresponding interview details
             ApplicantInterview::updateOrCreate(
                 ['app_id' => $request->app_id],
                 [
@@ -238,14 +257,127 @@ class JobController extends Controller
                     'location' => null,
                 ]
             );
+        } else if ($request->status !== 'Eligible for Interview') {
+            // Delete interview record if status is not 'Eligible for Interview'
+            ApplicantInterview::where('app_id', $request->app_id)->delete();
+        }
+
+        if ($request->status === 'Hired') {
+            $existingEmployee = Employee::where('email', $applicant->email)->first();
+    
+            if (!$existingEmployee) {
+                // Create Employee record (emp_id auto-generated in boot method)
+                $employee = Employee::create([
+                    'name' => $applicant->name,
+                    'first_name' => $applicant->first_name,
+                    'middle_name' => $applicant->middle_name,
+                    'last_name' => $applicant->last_name,
+                    'email' => $applicant->email,
+                    'birth_date' => $applicant->birth_date,
+                    'place_of_birth' => $applicant->place_of_birth,
+                    'height' => $applicant->height,
+                    'weight' => $applicant->weight,
+                    'blood_type' => $applicant->blood_type,
+                    'gender' => $applicant->gender,
+                    'civil_status' => $applicant->civil_status,
+                    'nationality' => $applicant->nationality,
+                ]);
+    
+                // Transfer 1:1 relationships
+                if ($applicant->contact) {
+                    $employee->contact()->create($applicant->contact->toArray());
+                }
+                if ($applicant->governmentIds) {
+                    $employee->governmentIds()->create($applicant->governmentIds->toArray());
+                }
+                if ($applicant->familyInfo) {
+                    $employee->familyInfo()->create($applicant->familyInfo->toArray());
+                }
+    
+                // Transfer 1:N relationships
+                foreach ($applicant->education as $education) {
+                    $employee->education()->create($education->toArray());
+                }
+                foreach ($applicant->children as $child) {
+                    $employee->children()->create($child->toArray());
+                }
+                foreach ($applicant->civilServiceEligibility as $eligibility) {
+                    $employee->civilServiceEligibility()->create($eligibility->toArray());
+                }
+                foreach ($applicant->workExperiences as $work) {
+                    $employee->workExperiences()->create($work->toArray());
+                }
+                foreach ($applicant->voluntaryWorks as $vol) {
+                    $employee->voluntaryWorks()->create($vol->toArray());
+                }
+                foreach ($applicant->trainings as $training) {
+                    $employee->trainings()->create($training->toArray());
+                }
+                foreach ($applicant->otherInformations as $info) {
+                    $employee->otherInformations()->create($info->toArray());
+                }
+    
+                // Transfer the department_id and position_id to EmployeeJobDetails
+                $employeeJobDetail = EmployeeJobDetail::create([
+                    'emp_id' => $employee->emp_id,
+                    'department_id' => $employment->department_id,
+                    'position_id' => $employment->position_id,
+                    'is_head' => false, // Default value, adjust as necessary
+                    'is_designation' => false, // Default value, adjust as necessary
+                ]);
+    
+                // Transfer the employment status and date_hired to EmployeeEmployment
+                $employeeEmployment = EmployeeEmployment::create([
+                    'emp_id' => $employee->emp_id,
+                    'employment_status' => $employment->employment_status,
+                    'date_hired' => now()->format('d M, Y'),
+                ]);
+    
+                // Optional: Associate emp_id to ApplicantEmployment
+
+                $randomPassword = Str::random(8);
+                $hashedPassword = Hash::make($randomPassword);
+    
+                // Optional: Create user account (adjust as needed)
+                User::create([
+                    'user_id' => $employee->emp_id,
+                    'name' => $employee->name,
+                    'email' => $employee->email,
+                    'avatar' => $employee->photo,
+                    'join_date' => now()->format('D, M d, Y g:i A'),
+                    'status' => 'Active', 
+                    'role_name' => 'Employee', 
+                    'password' => $hashedPassword, // Change or randomize
+                ]);
+
+                Mail::to($employee->email)->send(new Mailer($employee->name, $employee->email, $randomPassword));
+            }
         }
 
 
-        // Update the status using Eloquent
-        ApplicantEmployment::where('app_id', $request->app_id)->update(['status' => $request->status]);
+        // Send email notification
+        try {
+            Mail::to($applicant->email)->send(
+                new StatusUpdateMailer(
+                    $applicant->name,
+                    $request->status,
+                    $request->status_message
+                )
+            );
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to send email: ' . $e->getMessage()], 500);
+        }
 
-        return response()->json(['success' => 'Status updated successfully!', 'status' => $request->status], 200);
+        return response()->json([
+            'success' => 'Status updated and email sent successfully!',
+            'status' => $request->status,
+        ], 200);
     }
+
+
+
+
+
 
 
     /** Job Applicants */
@@ -636,7 +768,7 @@ class JobController extends Controller
                 ->whereIn('id', AddJob::where('no_of_vacancies', '>', 0)
                     ->get()
                     ->filter(function ($job) {
-                        return Carbon::createFromFormat('Y-m-d', $job->expired_date)->gt(Carbon::today());
+                        return Carbon::createFromFormat('d M, Y', $job->expired_date)->gt(Carbon::today());
                     })
                     ->pluck('position_id'))
                 ->get();
@@ -666,6 +798,7 @@ class JobController extends Controller
                 'gender'             => 'required|string|max:20',
                 'civil_status'       => 'required|string|max:50',
                 'nationality'        => 'required|string|max:100',
+                'image'                 => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
 
                 // Contact
                 'residential_address' => 'required|string',
@@ -794,7 +927,18 @@ class JobController extends Controller
 
             DB::beginTransaction();
 
+            $randomPassword = Str::random(8);
+            $hashedPassword = Hash::make($randomPassword);
+
             $fullName = $validatedData['fname'] . ' ' . $validatedData['mname'] . ' ' . $validatedData['lname'];
+
+            $image = $request->file('image');
+            if ($image) {
+                // Generate a unique name for the image
+                $imageName = time() . '.' . $image->extension(); // Get the file extension dynamically
+                // Move the uploaded image to the 'assets/images' folder
+                $image->move(public_path('assets/images'), $imageName);
+            }
 
 
             // Create employee record
@@ -812,6 +956,7 @@ class JobController extends Controller
                 'gender'       => $validatedData['gender'],
                 'civil_status' => $validatedData['civil_status'],
                 'nationality'  => $validatedData['nationality'],
+                'photo'  => isset($imageName) ? $imageName : null,
             ]);
 
             // Save related records
@@ -849,6 +994,7 @@ class JobController extends Controller
                 'employment_status'       => $validatedData['employment_status'],
                 'status'                  => 'Qualified',
             ]);
+
 
             if (!empty($validatedData['child_name'])) {
                 foreach ($validatedData['child_name'] as $index => $name) {
@@ -1009,7 +1155,9 @@ class JobController extends Controller
     public function updateProfileInfo(Request $request)
     {
         $validatedData = $request->validate([
-            'name'                => 'required|string|max:255',
+            'fname'               => 'required|string|max:255',
+            'mname'               => 'required|string|max:255',
+            'lname'               => 'required|string|max:255',
             'birth_date'          => 'required|string|max:255',
             'residential_address' => 'nullable|string|max:255',
             'residential_zip'     => 'nullable|string|max:10',
@@ -1029,9 +1177,14 @@ class JobController extends Controller
             // Find Employee
             $employee = Applicant::where('app_id', $request->emp_id)->firstOrFail();
 
+            $fullName = $validatedData['fname'] . ' ' . $validatedData['mname'] . ' ' . $validatedData['lname'];
+
             // Update Employee Personal Info
             $employee->update([
-                'name'       => $validatedData['name'],
+                'name'          => $fullName,
+                'first_name'    => $validatedData['fname'],
+                'middle_name'   => $validatedData['mname'],
+                'last_name'     => $validatedData['lname'],
                 'birth_date' => $validatedData['birth_date'],
                 'email'      => $validatedData['email'],
             ]);
@@ -1776,7 +1929,7 @@ class JobController extends Controller
         // Fetch applicants where the employment status is 'Shortlisted'
         $applicants = Applicant::with('interviews', 'employment')
             ->whereHas('employment', function ($query) {
-                $query->where('status', 'Shortlisted');
+                $query->where('status', 'Eligible for Interview');
             })
             ->get();
 
@@ -1786,7 +1939,7 @@ class JobController extends Controller
 
     public function scheduleTimingEdit(Request $request)
     {
-        // Validation of the incoming request
+        // Validate incoming request
         $request->validate([
             'app_id' => 'required|exists:applicants,app_id',
             'schedule_date' => 'required|array',
@@ -1795,47 +1948,97 @@ class JobController extends Controller
             'location' => 'required|string',
         ]);
 
-        // Check if the arrays have the same number of elements
-        if (count($request->schedule_date) !== count($request->schedule_start_time) || count($request->schedule_date) !== count($request->schedule_end_time)) {
+        // Check if the number of dates, start times, and end times are consistent
+        if (
+            count($request->schedule_date) !== count($request->schedule_start_time) ||
+            count($request->schedule_date) !== count($request->schedule_end_time)
+        ) {
             return redirect()->back()->with('error', 'Mismatch in the number of schedule dates and times.');
         }
 
-        // Begin transaction to ensure consistency
         DB::beginTransaction();
 
         try {
-            // Create a new interview record for the applicant
+            // Prepare new dates and times
+            $newDates = $request->schedule_date;
+            $newTimes = [];
+
+            // Process times for each date
+            foreach ($newDates as $index => $date) {
+                $startTime = $request->schedule_start_time[$index] ?? null;
+                $endTime = $request->schedule_end_time[$index] ?? null;
+
+                if ($startTime === null || $endTime === null) {
+                    continue;
+                }
+
+                $newTimes[] = $startTime . ' - ' . $endTime;
+            }
+
+            // Reindex to ensure consistent keys
+            $newDates = array_values($newDates);
+            $newTimes = array_values($newTimes);
+
+            if (empty($newTimes)) {
+                return redirect()->back()->with('error', 'No valid times were provided for updating.');
+            }
+
+            // Retrieve existing interview data
             $interview = ApplicantInterview::where('app_id', $request->app_id)->first();
 
-            if ($interview) {
-                // Prepare the data for multiple schedules (as JSON arrays)
-                $scheduleDates = $request->schedule_date;
-                $scheduleTimes = array_map(function ($start, $end) {
-                    return $start . ' - ' . $end;
-                }, $request->schedule_start_time, $request->schedule_end_time);
+            $updatedDates = [];
+            $updatedTimes = [];
 
-                // Update the interview record with multiple schedules
+            foreach ($newDates as $index => $date) {
+                $timeRange = $newTimes[$index] ?? null;
+
+                if ($timeRange !== null && $timeRange !== '') {
+                    $updatedDates[] = $date;
+                    $updatedTimes[] = $timeRange;
+                }
+            }
+
+            if ($interview) {
                 $interview->update([
-                    'interview_date' => $scheduleDates, // Save dates as a JSON array
-                    'interview_time' => $scheduleTimes, // Save times as a JSON array
+                    'interview_date' => json_encode($updatedDates),
+                    'interview_time' => json_encode($updatedTimes),
                     'location' => $request->location,
                 ]);
             } else {
-                return redirect()->back()->with('error', "No interview record found for the selected applicant.");
+                ApplicantInterview::create([
+                    'app_id' => $request->app_id,
+                    'interview_date' => json_encode($updatedDates),
+                    'interview_time' => json_encode($updatedTimes),
+                    'location' => $request->location,
+                ]);
             }
 
-            // Commit the transaction if everything is successful
             DB::commit();
 
-            return redirect()->back()->with('success', 'Interview details updated successfully.');
+            $applicant = Applicant::where('app_id', $request->app_id)->first();
+
+            // Prepare email data
+            $emailData = [
+                'applicant_name' => $applicant->name,
+                'dates' => $newDates,  // Array of dates
+                'times' => $newTimes,  // Array of times
+                'location' => $request->location,
+            ];
+
+            // Send email notification
+            Mail::to($applicant->email)->send(new InterviewScheduleUpdated($emailData));
+
+            return redirect()->back()->with('success', 'Interview details saved successfully and email notification sent.');
         } catch (\Exception $e) {
-            // Rollback transaction if an error occurs
             DB::rollBack();
 
-            // Log the error or handle it as needed
-            return redirect()->back()->with('error', 'An error occurred while updating the interview details. Please try again.');
+            return redirect()->back()->with('error', 'An error occurred while saving the interview details. Please try again.');
         }
     }
+
+
+
+
 
 
 

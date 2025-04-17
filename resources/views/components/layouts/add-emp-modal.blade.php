@@ -273,6 +273,9 @@
                         <div class="col-12">
                             <div id="children-container">
                                 <div class="card child-entry">
+                                    <div class="alert alert-info">
+                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Child Information
                                             <a href="javascript:void(0);" class="delete-icon remove-child">
@@ -308,6 +311,9 @@
                         <!-- Hidden template for a child entry -->
                         <div id="child-template" style="display:none;">
                             <div class="card child-entry">
+                                <div class="alert alert-info">
+                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
                                         Child Information
@@ -363,7 +369,7 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>School Name <span class="text-danger">*</span></label>
-                                                    <input class="form-control" type="text" name="school_name[]" placeholder="Enter school name">
+                                                    <input class="form-control school-name" type="text" name="school_name[]" placeholder="Enter school name">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -425,7 +431,7 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>School Name <span class="text-danger">*</span></label>
-                                                    <input class="form-control" type="text" name="school_name[]" placeholder="Enter school name">
+                                                    <input class="form-control school-name" type="text" name="school_name[]" placeholder="Enter school name">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -485,7 +491,7 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>School Name</label>
-                                                    <input class="form-control" type="text" name="school_name[]" placeholder="Enter school name">
+                                                    <input class="form-control school-name" type="text" name="school_name[]" placeholder="Enter school name">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -557,7 +563,7 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>School Name</label>
-                                                    <input class="form-control" type="text" name="school_name[]" placeholder="Enter school name">
+                                                    <input class="form-control school-name" type="text" name="school_name[]" placeholder="Enter school name">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -630,7 +636,7 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>School Name</label>
-                                                    <input class="form-control" type="text" name="school_name[]" placeholder="Enter school name">
+                                                    <input class="form-control school-name" type="text" name="school_name[]" placeholder="Enter school name">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -705,6 +711,9 @@
                         <div class="col-12">
                             <div id="eligibility-container">
                                 <div class="card civil-service-entry">
+                                    <div class="alert alert-info">
+                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Eligibility Information
                                             <a href="javascript:void(0);" class="delete-icon remove-civil-service">
@@ -769,6 +778,9 @@
                         <!-- Hidden template for a Civil Service Eligibility entry -->
                         <div id="eligibility-template" style="display:none;">
                             <div class="card civil-service-entry">
+                                <div class="alert alert-info">
+                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
                                         Civil Service Eligibility
@@ -844,6 +856,9 @@
                         <div class="col-12">
                             <div id="experience-container">
                                 <div class="card work-experience-entry">
+                                    <div class="alert alert-info">
+                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Work Experience
                                             <a href="javascript:void(0);" class="delete-icon remove-experience">
@@ -924,6 +939,9 @@
                         <!-- Hidden template for a Work Experience entry -->
                         <div id="experience-template" style="display:none;">
                             <div class="card work-experience-entry">
+                                <div class="alert alert-info">
+                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
                                         Work Experience
@@ -1017,6 +1035,9 @@
                         <div class="col-12">
                             <div id="voluntary-work-container">
                                 <div class="card voluntary-work-entry">
+                                    <div class="alert alert-info">
+                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Voluntary Work
                                             <a href="javascript:void(0);" class="delete-icon remove-voluntary-work">
@@ -1074,6 +1095,9 @@
                         <!-- Hidden template for a Voluntary Work entry -->
                         <div id="voluntary-work-template" style="display:none;">
                             <div class="card voluntary-work-entry">
+                                <div class="alert alert-info">
+                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
                                         Voluntary Work
@@ -1144,6 +1168,9 @@
                         <div class="col-12">
                             <div id="training-container">
                                 <div class="card training-entry">
+                                    <div class="alert alert-info">
+                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Training Program
                                             <a href="javascript:void(0);" class="delete-icon remove-training">
@@ -1207,6 +1234,9 @@
                         <!-- Hidden template for adding more trainings -->
                         <div id="training-template" style="display:none;">
                             <div class="card training-entry">
+                                <div class="alert alert-info">
+                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                </div>
                                 <div class="card-body">
                                     <h3 class="card-title">Training Program
                                         <a href="javascript:void(0);" class="delete-icon remove-training">
@@ -1283,6 +1313,9 @@
                         <div class="col-12">
                             <div id="other-info-container">
                                 <div class="card other-info-entry">
+                                    <div class="alert alert-info">
+                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Other Information
                                             <a href="javascript:void(0);" class="delete-icon remove-other-info">
@@ -1322,6 +1355,9 @@
                         <!-- Hidden template for adding more other information -->
                         <div id="other-info-template" style="display:none;">
                             <div class="card other-info-entry">
+                                <div class="alert alert-info">
+                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                </div>
                                 <div class="card-body">
                                     <h3 class="card-title">Other Information
                                         <a href="javascript:void(0);" class="delete-icon remove-other-info">
@@ -1389,26 +1425,27 @@
 @section('script')
 
 <script>
-$(document).ready(function() {
-    // Check if N/A checkbox is checked on page load
-    $(".form-check-input").each(function() {
-        if ($(this).is(":checked")) {
-            $(this).closest(".form-group").find(".yearpicker").prop("disabled", true);
-        }
+    $(document).ready(function() {
+        // Check if N/A checkbox is checked on page load
+        $(".form-check-input").each(function() {
+            if ($(this).is(":checked")) {
+                $(this).closest(".form-group").find(".yearpicker").prop("disabled", true);
+            }
+        });
+
+        // Toggle the state of the date picker based on the checkbox
+        $(".form-check-input").on("change", function() {
+            var inputField = $(this).closest(".form-group").find(".yearpicker");
+            if ($(this).is(":checked")) {
+                inputField.prop("disabled", true); // Disable date picker
+                inputField.val("N/A"); // Clear any selected date
+            } else {
+                inputField.prop("disabled", false); // Enable date picker
+                inputField.val("");
+            }
+        });
     });
 
-    // Toggle the state of the date picker based on the checkbox
-    $(".form-check-input").on("change", function() {
-        var inputField = $(this).closest(".form-group").find(".yearpicker");
-        if ($(this).is(":checked")) {
-            inputField.prop("disabled", true); // Disable date picker
-            inputField.val("N/A"); // Clear any selected date
-        } else {
-            inputField.prop("disabled", false); // Enable date picker
-            inputField.val("");
-        }
-    });
-});
 </script>
 
 <script>
@@ -1633,10 +1670,10 @@ $(document).ready(function() {
                 "fname": {
                     required: true
                 }
-                ,"mname": {
+                , "mname": {
                     required: true
                 }
-                ,"lname": {
+                , "lname": {
                     required: true
                 }
                 , "email": {
@@ -1837,8 +1874,8 @@ $(document).ready(function() {
                 }
             }, {
                 "fname": "Please enter first name"
-                ,"mname": "Please enter middle name"
-                ,"lname": "Please enter surname"
+                , "mname": "Please enter middle name"
+                , "lname": "Please enter surname"
                 , "email": {
                     required: "Please enter an email address"
                     , email: "Please enter a valid email address"
@@ -1963,6 +2000,8 @@ $(document).ready(function() {
                     required: 'Please enter a school name'
                 }
             });
+
+
             // Validate child entries separately
             $('.child-entry').each(function() {
                 var entry = $(this);

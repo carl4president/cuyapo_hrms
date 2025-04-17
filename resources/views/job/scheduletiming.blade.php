@@ -23,142 +23,355 @@
             </div>
         </div>
         <!-- /Page Header -->
-
         <div class="row">
-            <div class="col-md-12">
-                <div class="table-responsive">
-                    <table class="table table-striped custom-table mb-0 datatable">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Job Title</th>
-                                <th>Applicant Interview Time</th>
-                                <th>Location</th>
-                                <th class="text-center">Schedule Interview Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($applicants as $index => $applicant)
-                            <tr>
-                                <td>{{ ++$index }}</td>
-                                <td>
-                                    <h2 class="table-avatar">
-                                        <a href="profile.html" class="avatar">
-                                            <img alt="" src="assets/img/profiles/avatar-02.jpg">
-                                        </a>
-                                        <a href="profile.html">{{ $applicant->name }} <span>{{ $applicant->job_title }}</span></a>
-                                    </h2>
-                                </td>
-                                <td><a href="{{ url('job/details/'.$applicant->employment->position_id) }}">{{ $applicant->employment->position->position_name }}</a></td>
-                                <td>
-                                    @forelse($applicant->interviews as $interview)
-                                    @php
-                                    // Attempt to decode the JSON stored in the fields.
-                                    $dates = json_decode($interview->interview_date, true);
-                                    $times = json_decode($interview->interview_time, true);
-                                    @endphp
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs nav-tabs-solid nav-justified flex-column">
+                            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#home">Apptitude</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#menu1">Schedule Interview</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div id="home" class="tab-pane show active">
+                                <div class="card-box">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped custom-table mb-0 datatable">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Name</th>
+                                                    <th>Job Title</th>
+                                                    <th>Applicant Interview Time</th>
+                                                    <th>Location</th>
+                                                    <th class="text-center">Schedule Interview Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($applicants as $index => $applicant)
+                                                <tr>
+                                                    <td>{{ ++$index }}</td>
+                                                    <td>
+                                                        <h2 class="table-avatar">
+                                                            <a href="profile.html" class="avatar">
+                                                                <img alt="" src="assets/img/profiles/avatar-02.jpg">
+                                                            </a>
+                                                            <a href="profile.html">{{ $applicant->name }} <span>{{ $applicant->job_title }}</span></a>
+                                                        </h2>
+                                                    </td>
+                                                    <td>
+                                                        <a href="{{ url('job/details/'.$applicant->employment->position_id) }}">
+                                                            {{ $applicant->employment->position->position_name }}
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        @forelse($applicant->interviews as $interview)
+                                                        @php
+                                                        $dates = json_decode($interview->interview_date, true);
+                                                        $times = json_decode($interview->interview_time, true);
+                                                        @endphp
 
-                                    @if(is_array($dates) && is_array($times))
-                                    @foreach($dates as $index => $date)
-                                    <b>{{ $date }}</b> - {{ $times[$index] ?? 'No time scheduled' }}<br>
-                                    @endforeach
-                                    @elseif($interview->interview_date && $interview->interview_time)
-                                    <b>{{ $interview->interview_date }}</b> - {{ $interview->interview_time }}<br>
-                                    @else
-                                    <span>No interview scheduled</span><br>
-                                    @endif
-                                    @empty
-                                    <span>No interview scheduled</span>
-                                    @endforelse
-                                </td>
-                                <td>
-                                    @if($applicant->interviews->isNotEmpty() && $applicant->interviews->first()->location)
-                                    {{ $applicant->interviews->first()->location }}
-                                    @else
-                                    <span>No location assigned</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="action-label">
-                                        <a class="btn btn-primary btn-sm" data-toggle="modal" data-target="#edit_job" href="#" data-applicant-id="{{ $applicant->app_id }}" data-location="{{ $applicant->interviews->first()->location }}" data-interviews="{{ json_encode($applicant->interviews) }}">
-                                            Schedule Time
-                                        </a>
+                                                        @if(is_array($dates) && is_array($times))
+                                                        @foreach($dates as $i => $date)
+                                                        <b>{{ $date }}</b> - {{ $times[$i] ?? 'No time scheduled' }}<br>
+                                                        @endforeach
+                                                        @elseif($interview->interview_date && $interview->interview_time)
+                                                        <b>{{ $interview->interview_date }}</b> - {{ $interview->interview_time }}<br>
+                                                        @else
+                                                        <span>No interview scheduled</span><br>
+                                                        @endif
+                                                        @empty
+                                                        <span>No interview scheduled</span>
+                                                        @endforelse
+                                                    </td>
+                                                    <td>
+                                                        {{ optional($applicant->interviews->first())->location ?? 'No location assigned' }}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="action-label">
+                                                            <a class="btn btn-primary btn-sm" data-toggle="modal" data-target="#edit_job" href="#" data-applicant-id="{{ $applicant->app_id }}" data-location="{{ optional($applicant->interviews->first())->location }}" data-interviews="{{ json_encode($applicant->interviews) }}">
+                                                                Schedule Time
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <!-- /Page Content -->
-
-
-    <!-- Edit Job Modal -->
-    <div id="edit_job" class="modal custom-modal fade" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Interview Schedule</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="scheduleForm" method="POST" action="{{ route('save/schedule/timing') }}">
-                        @csrf
-
-                        <input type="hidden" name="app_id" id="applicant_id">
-                        <div id="scheduleFields">
-                            <!-- Dynamic Schedule Fields -->
-                        </div>
-
-                        <div class="form-group">
-                            <label>Location</label>
-                            <input type="text" name="location" class="form-control" id="location" placeholder="Enter Location">
-                        </div>
-
-                        <div class="submit-section">
-                            <button class="btn btn-primary submit-btn">Save</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- /Edit Job Modal -->
-
-    <!-- Delete Job Modal -->
-    <div class="modal custom-modal fade" id="delete_job" role="dialog">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div class="form-header">
-                        <h3>Delete</h3>
-                        <p>Are you sure want to delete?</p>
-                    </div>
-                    <div class="modal-btn delete-action">
-                        <div class="row">
-                            <div class="col-6">
-                                <a href="javascript:void(0);" class="btn btn-primary continue-btn">Delete</a>
+                                </div>
                             </div>
-                            <div class="col-6">
-                                <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
+                            <div id="menu1" class="tab-pane fade">
+                                <div class="card-box">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped custom-table mb-0 datatable">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Name</th>
+                                                    <th>Job Title</th>
+                                                    <th>Applicant Interview Time</th>
+                                                    <th>Location</th>
+                                                    <th class="text-center">Schedule Interview Time</th>
+                                                    <th class="text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($applicants as $index => $applicant)
+                                                <tr>
+                                                    <td>{{ ++$index }}</td>
+                                                    <td>
+                                                        <h2 class="table-avatar">
+                                                            <a href="profile.html" class="avatar">
+                                                                <img alt="" src="assets/img/profiles/avatar-02.jpg">
+                                                            </a>
+                                                            <a href="profile.html">{{ $applicant->name }} <span>{{ $applicant->job_title }}</span></a>
+                                                        </h2>
+                                                    </td>
+                                                    <td>
+                                                        <a href="{{ url('job/details/'.$applicant->employment->position_id) }}">
+                                                            {{ $applicant->employment->position->position_name }}
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        @forelse($applicant->interviews as $interview)
+                                                        @php
+                                                        $dates = json_decode($interview->interview_date, true);
+                                                        $times = json_decode($interview->interview_time, true);
+                                                        @endphp
+
+                                                        @if(is_array($dates) && is_array($times))
+                                                        @foreach($dates as $i => $date)
+                                                        <b>{{ $date }}</b> - {{ $times[$i] ?? 'No time scheduled' }}<br>
+                                                        @endforeach
+                                                        @elseif($interview->interview_date && $interview->interview_time)
+                                                        <b>{{ $interview->interview_date }}</b> - {{ $interview->interview_time }}<br>
+                                                        @else
+                                                        <span>No interview scheduled</span><br>
+                                                        @endif
+                                                        @empty
+                                                        <span>No interview scheduled</span>
+                                                        @endforelse
+                                                    </td>
+                                                    <td>
+                                                        {{ optional($applicant->interviews->first())->location ?? 'No location assigned' }}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="action-label">
+                                                            <a class="btn btn-primary btn-sm disabled" data-toggle="modal" data-target="#edit_job" href="#" data-applicant-id="{{ $applicant->app_id }}" data-location="{{ optional($applicant->interviews->first())->location }}" data-interviews="{{ json_encode($applicant->interviews) }}">
+                                                                Schedule Time
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="dropdown action-label">
+                                                            <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false" id="status_label{{ $applicant->app_id }}">
+                                                                @php
+                                                                $status = $applicant->employment->status ?? 'Eligible for Interview'; // Default to 'Eligible for Interview'
+                                                                $statusColors = [
+                                                                'Shortlisted' => 'text-info',
+                                                                'Eligible for Interview' => 'text-success',
+                                                                'Rejected' => 'text-danger'
+                                                                ];
+                                                                $colorClass = $statusColors[$status] ?? 'text-secondary'; // Default color if status not found
+                                                                @endphp
+                                                                <i class="fa fa-dot-circle-o {{ $colorClass }}"></i> {{ $status }}
+                                                            </a>
+                                                            <div class="dropdown-menu dropdown-menu-right job_status">
+                                                                <a class="dropdown-item text-muted disabled" aria-disabled="true">
+                                                                    <i class="fa fa-dot-circle-o text-success"></i> Eligible for Interview
+                                                                </a>
+                                                                <a class="dropdown-item status-option" data-id="{{ $applicant->app_id }}" data-status="Shortlisted">
+                                                                    <i class="fa fa-dot-circle-o text-info"></i> Shortlisted
+                                                                </a>
+                                                                <a class="dropdown-item status-option" data-id="{{ $applicant->app_id }}" data-status="Rejected">
+                                                                    <i class="fa fa-dot-circle-o text-danger"></i> Rejected
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+
+        </div>
+        <!-- /Page Content -->
+
+
+        <!-- Edit Job Modal -->
+        <div id="edit_job" class="modal custom-modal fade" role="dialog">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Interview Schedule</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="scheduleForm" method="POST" action="{{ route('save/schedule/timing') }}">
+                            @csrf
+
+                            <input type="hidden" name="app_id" id="applicant_id">
+                            <div id="scheduleFields">
+                                <!-- Dynamic Schedule Fields -->
+                            </div>
+
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" name="location" class="form-control" id="location" placeholder="Enter Location">
+                            </div>
+
+                            <div class="submit-section">
+                                <button class="btn btn-primary submit-btn">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /Edit Job Modal -->
+
+        <!-- Delete Job Modal -->
+        <!-- /Delete Job Modal -->
+
+        <div class="modal custom-modal fade" id="statusEmailModal" tabindex="-1" role="dialog" aria-labelledby="statusEmailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="statusEmailModalLabel">Send Email Notification</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="statusEmailForm" action="{{ route('appstatus/update') }}" method="POST">
+                            @csrf
+                            <input type="hidden" id="modal_app_id" name="app_id">
+                            <input type="hidden" id="modal_status" name="status">
+                            <div class="form-group">
+                                <label for="email_message">Message</label>
+                                <textarea class="form-control" name="message" id="email_message" rows="5"></textarea>
+                            </div>
+                            <div class="submit-section">
+                                <button type="submit" class="btn btn-primary submit-btn">Send & Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <!-- /Delete Job Modal -->
 
 </div>
 @section('script')
+<script>
+    $(document).ready(function() {
+        var table = $("table").DataTable();
+        var selectedAppId = null;
+        var selectedStatus = null;
+
+        var defaultMessages = {
+            "Eligible for Interview": "You are eligible for an interview. We will contact you soon to schedule it."
+            , "Shortlisted": "You have been shortlisted for the next round. Please wait for further instructions."
+            , "Rejected": "Thank you for your time. Unfortunately, you did not qualify for this position."
+        };
+
+        // Handle status option button click
+        $(".status-option").click(function() {
+            selectedAppId = $(this).data("id");
+            selectedStatus = $(this).data("status");
+
+            console.log("Selected App ID:", selectedAppId);
+            console.log("Selected Status:", selectedStatus);
+
+            // Set modal values
+            $("#modal_app_id").val(selectedAppId);
+            $("#modal_status").val(selectedStatus);
+            $("#email_message").val(defaultMessages[selectedStatus] || "");
+
+            // Update modal title
+            $("#statusEmailModalLabel").text("Confirm Status Change to: " + selectedStatus);
+
+            // Show modal
+            $("#statusEmailModal").modal("show");
+        });
+
+        // Handle modal form submission
+        $("#statusEmailForm").submit(function(e) {
+            e.preventDefault();
+
+            var app_id = $("#modal_app_id").val();
+            var status = $("#modal_status").val();
+            var emailMessage = $("#email_message").val();
+            var statusLabel = $("#status_label" + app_id);
+            var row = statusLabel.closest("tr");
+            var button = $(this).find(".submit-btn");
+            var originalButtonText = button.text();
+
+            button.text("Sending...").attr("disabled", true);
+
+            $.ajax({
+                url: "{{ route('appstatus/update') }}"
+                , type: "POST"
+                , data: {
+                    app_id: app_id
+                    , status: status
+                    , status_message: emailMessage
+                    , _token: "{{ csrf_token() }}"
+                }
+                , success: function(response) {
+                    console.log("Status updated:", response);
+
+                    if (status === "Shortlisted" || status === "Rejected") {
+                        table.row(row).remove().draw(); // Remove row if final status
+                    } else {
+                        var statusColor = getStatusColor(status);
+                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + status);
+                    }
+
+                    $("#statusEmailModal").modal("hide");
+                }
+                , error: function(xhr) {
+                    console.error("AJAX error:", xhr.responseText);
+                    alert("Failed to update status. Please try again.");
+                }
+                , complete: function() {
+                    button.text(originalButtonText).attr("disabled", false);
+                }
+            });
+        });
+
+        function getStatusColor(status) {
+            switch (status) {
+                case "Eligible for Interview":
+                    return "text-success";
+                case "Shortlisted":
+                    return "text-info";
+                case "Rejected":
+                    return "text-danger";
+                default:
+                    return "text-secondary";
+            }
+        }
+    });
+
+</script>
+
 
 <script>
     $(document).ready(function() {
@@ -196,9 +409,11 @@
                     <div class="card child-entry mb-3" data-schedule-id="${scheduleCount}">
                         <div class="card-body">
                             <h3 class="card-title">Schedule ${scheduleCount}
-                            <a href="javascript:void(0);" class="delete-icon remove-child">
-                                <i class="fa fa-trash"></i>
-                            </a></h3>
+                                ${(scheduleCount > 1) ? `
+                                <a href="javascript:void(0);" class="delete-icon remove-child">
+                                    <i class="fa fa-trash"></i>
+                                </a>` : ''}
+                                </h3>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
@@ -236,9 +451,11 @@
                                 <div class="card child-entry mb-3" data-schedule-id="${scheduleCount}">
                                     <div class="card-body">
                                         <h3 class="card-title">Schedule ${scheduleCount}
+                                        ${(scheduleCount > 1) ? `
                                         <a href="javascript:void(0);" class="delete-icon remove-child">
                                             <i class="fa fa-trash"></i>
-                                        </a></h3>
+                                        </a>` : ''}
+                                        </h3>
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
@@ -277,7 +494,12 @@
                 const scheduleField = `
                 <div class="card child-entry mb-3" data-schedule-id="${scheduleCount}">
                     <div class="card-body">
-                        <h3 class="card-title">Schedule ${scheduleCount}</h3>
+                        <h3 class="card-title">Schedule ${scheduleCount}
+                        ${(scheduleCount > 1) ? `
+                        <a href="javascript:void(0);" class="delete-icon remove-child">
+                            <i class="fa fa-trash"></i>
+                        </a>` : ''}
+                        </h3>
 
                         <div class="row">
                             <div class="col-md-6">
@@ -334,10 +556,23 @@
         }
 
         function initializeTimepickers() {
-            $('.timepicker').timepicker({
-                showInputs: false
-                , minuteStep: 5
-                , disableFocus: true
+            $(document).ready(function() {
+                // Delay initialization to make sure DOM is fully loaded
+                setTimeout(function() {
+                    // Initialize timepicker for elements with the 'timepicker' class using Flatpickr
+                    $('.timepicker').each(function(index) {
+                        // Check if the element is visible before initializing the timepicker
+                        if ($(this).is(':visible')) {
+                            // Initialize Flatpickr for the element
+                            flatpickr(this, {
+                                enableTime: true
+                                , noCalendar: true
+                                , dateFormat: 'h:i K'
+                                , minuteIncrement: 5
+                            });
+                        }
+                    });
+                }, 500); // Delay for 500ms to allow DOM elements to load fully
             });
         }
 
@@ -358,9 +593,11 @@
             <div class="card child-entry mb-3" data-schedule-id="${scheduleCount}">
                 <div class="card-body">
                     <h3 class="card-title">Schedule ${scheduleCount}
+                    ${(scheduleCount > 1) ? `
                     <a href="javascript:void(0);" class="delete-icon remove-child">
                         <i class="fa fa-trash"></i>
-                    </a></h3>
+                    </a>` : ''}
+                    </h3>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -406,6 +643,14 @@
                 newScheduleCount++;
                 // Update the schedule title
                 $(this).find('.card-title').text(`Schedule ${newScheduleCount}`);
+                $(this).find('.card-title').html(`
+                    Schedule ${newScheduleCount}
+                    ${($('#scheduleFields .child-entry').length > 1) ? `
+                        <a href="javascript:void(0);" class="delete-icon remove-child">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    ` : ''}
+                `);
                 // Update the label texts for 'Schedule Date' and 'Select Time'
                 $(this).find('label').each(function() {
                     $(this).text($(this).text().replace(/\d+$/, newScheduleCount));
@@ -419,12 +664,6 @@
     });
 
 </script>
-
-
-
-
-
-
 
 
 @endsection

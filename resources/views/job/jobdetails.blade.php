@@ -45,7 +45,6 @@
                     <div class="info-list job-type-section">
                         <span class="job-id d-none">{{ $job_view_detail[0]->id }}</span>
                         <span class="department-id d-none">{{ $job_view_detail[0]->department_id }}</span>
-                        <span class="designation-id d-none">{{ $job_view_detail[0]->designation_id }}</span>
                         <span class="position-id d-none">{{ $job_view_detail[0]->position_id }}</span>
                         <span class="salary-from d-none">{{ $job_view_detail[0]->salary_from }}</span>
                         <span class="salary-to d-none">{{ $job_view_detail[0]->salary_to }}</span>
@@ -72,11 +71,6 @@
                         <span><i class="fa fa-ticket"></i></span>
                         <h5>Vacancy</h5>
                         <p class="vacancies">{{ $job_view_detail[0]->no_of_vacancies }}</p>
-                    </div>
-                    <div class="info-list designation-section">
-                        <span><i class="fa fa-map-signs"></i></span>
-                        <h5>Designation</h5>
-                        <p class="designation-name">{!! nl2br($job_view_detail[0]->designation->designation_name) !!}</p>
                     </div>
                     @php
                     $start_date = Carbon\Carbon::parse($job_view_detail[0]->start_date)->timestamp * 1000; // Convert to milliseconds

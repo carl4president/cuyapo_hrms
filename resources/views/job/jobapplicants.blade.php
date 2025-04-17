@@ -95,48 +95,121 @@
             </div>
         </div>
     </div>
+    <div class="modal custom-modal fade" id="statusEmailModal" tabindex="-1" role="dialog" aria-labelledby="statusEmailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusEmailModalLabel">Send Email Notification</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="statusEmailForm" action="{{ route('appstatus/update') }}" method="POST">
+                        @csrf
+                        <input type="hidden" id="modal_app_id" name="app_id">
+                        <input type="hidden" id="modal_status" name="status">
+                        <div class="form-group">
+                            <label for="email_message">Message</label>
+                            <textarea class="form-control" name="message" id="email_message" rows="5"></textarea>
+                        </div>
+                        <div class="submit-section">
+                            <button type="submit" class="btn btn-primary submit-btn">Send & Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
     <!-- /Page Content -->
 </div>
 <!-- /Page Wrapper -->
 @section('script')
 <script>
     $(document).ready(function() {
-        var table = $("table").DataTable(); // Initialize DataTables
+        var table = $("table").DataTable();
+        var selectedAppId = null;
+        var selectedStatus = null;
 
+        var defaultMessages = {
+            "New": "Dear applicant, your application has been received and is currently under review."
+            , "Reviewed": "Dear applicant, your application has been reviewed. Please wait for further updates."
+            , "Qualified": "Congratulations! You have been qualified. We will contact you soon for the next steps."
+            , "Rejected": "We regret to inform you that your application has not been successful. Thank you for your interest."
+        };
+
+        // Event listener for status option click
         $(".status-option").click(function() {
-            var app_id = $(this).data("id"); // Get the application ID
-            var new_status = $(this).data("status"); // Get the selected status
-            var statusLabel = $("#status_label" + app_id); // Get the status label element
-            var row = statusLabel.closest("tr"); // Get the table row
-            var tableBody = $("table tbody"); // Get the table body
+            selectedAppId = $(this).data("id");
+            selectedStatus = $(this).data("status");
+
+            console.log("Selected App ID:", selectedAppId); // Debugging selected app ID
+            console.log("Selected Status:", selectedStatus); // Debugging selected status
+
+            // Set modal values
+            $("#modal_app_id").val(selectedAppId);
+            $("#modal_status").val(selectedStatus);
+            $("#email_message").val(defaultMessages[selectedStatus] || "");
+
+            // Update modal title
+            $("#statusEmailModalLabel").text("Confirm Status Change to: " + selectedStatus);
+
+            // Show the modal
+            $("#statusEmailModal").modal("show");
+        });
+
+        // Event listener for status email form submission
+        $("#statusEmailForm").submit(function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            var emailMessage = $("#email_message").val();
+            var app_id = $("#modal_app_id").val();
+            var status = $("#modal_status").val();
+            var statusLabel = $("#status_label" + app_id);
+            var row = statusLabel.closest("tr");
+
+            var button = $(this).find(".submit-btn");
+            var originalButtonText = button.text();
+            button.text("Sending...").attr("disabled", true);
+
 
             $.ajax({
-                url: "{{ route('appstatus/update') }}", // Your backend update route
-                type: "POST"
+                url: "{{ route('appstatus/update') }}"
+                , type: "POST"
                 , data: {
                     app_id: app_id
-                    , status: new_status
+                    , status: status
+                    , status_message: emailMessage
                     , _token: "{{ csrf_token() }}"
                 }
                 , success: function(response) {
                     console.log("Status updated successfully:", response);
 
-                    if (new_status === "Qualified" || new_status === "Rejected") {
-                        table.row(row).remove().draw();
-
+                    if (status === "Qualified" || status === "Rejected") {
+                        table.row(row).remove().draw(); // Remove row from the table if status is Qualified or Rejected
                     } else {
-
-                        var statusColor = getStatusColor(new_status);
-                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + new_status);
+                        var statusColor = getStatusColor(status);
+                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + status);
                     }
+
+                    // Hide modal after successful update
+                    $("#statusEmailModal").modal("hide");
                 }
                 , error: function(xhr) {
-                    console.error("AJAX error:", xhr.responseText);
+                    console.error("AJAX error:", xhr.responseText); // Log the error message
+                    alert("Failed to update status. Please try again."); // Alert the user in case of error
+                }
+                , complete: function() {
+                    // Revert button text and enable it
+                    button.text(originalButtonText).attr("disabled", false);
                 }
             });
         });
 
-        // Function to get status color class
+        // Function to get the status color class
         function getStatusColor(status) {
             switch (status) {
                 case "New":
@@ -154,6 +227,9 @@
     });
 
 </script>
+
+
+
 
 @endsection
 @endsection

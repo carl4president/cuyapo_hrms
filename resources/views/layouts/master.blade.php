@@ -28,12 +28,20 @@
     <!--Calendar CSS -->
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
-    
+
     <!-- jQuery (necessary for FullCalendar and some interactions) -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
     <!-- FullCalendar JS -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+
+    <!-- Include Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- Include Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+
 
 
 
@@ -106,7 +114,7 @@
                     </a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{ route('profile_user') }}">My Profile</a>
-                      <!--   <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a> -->
+                        <!--   <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a> -->
                         <a class="dropdown-item" href="{{ route('logout') }}">Logout</a>
                     </div>
                 </li>
@@ -120,7 +128,7 @@
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
                     <a class="dropdown-item" href="{{ route('profile_user') }}">My Profile</a>
-                 <!--  <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a> -->
+                    <!--  <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a> -->
                     <a class="dropdown-item" href="{{ route('logout') }}">Logout</a>
                 </div>
             </div>

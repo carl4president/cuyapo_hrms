@@ -161,7 +161,7 @@
                                 <th hidden></th>
                                 <th>To</th>
                                 <th>No of Days</th>
-                                <th>Reason</th>
+                                <th>Decline Reason</th>
                                 <th class="text-center">Status</th>
                                 <th class="text-right">Actions</th>
                             </tr>
@@ -203,7 +203,7 @@
                                     @endif
                                     @endif
                                 </td>
-                                <td class="leave_reason">{{$items->reason}}</td>
+                                <td class="leave_reason">{{ \Illuminate\Support\Str::limit($items->reason, 20, '...') }}</td>
                                 <td class="text-center">
                                     <div class="dropdown action-label">
                                         <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false">
@@ -234,6 +234,8 @@
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
+                                            @if($items->status !== 'Approved')
+                                            <a class="dropdown-item" href="{{ url('leave/details/'.$items->id) }}"><i class="fa fa-eye"></i> View</a>
                                             <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $items->id }}" data-employee_name="{{ $items->employee_name }}" data-employee_id="{{ $items->staff_id }}" data-leave_type="{{ $items->leave_type }}" data-remaining_leave="" data-date_from="{{ $items->date_from }}" data-date_to="{{ $items->date_to }}" data-number_of_day="{{ $items->number_of_day }}" data-leave_day="{{ $items->leave_day }}" data-reason="{{ $items->reason }}" data-target="#edit_leave">
                                                 <i class="fa fa-pencil m-r-5"></i> Edit
                                             </a>
@@ -241,6 +243,12 @@
                                                 <i class="fa fa-print m-r-5"></i> Print
                                             </a>
                                             <a class="dropdown-item leaveDelete" href="#" data-toggle="modal" data-id="{{ $items->id }}" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                                            @else
+                                            <a class="dropdown-item" href="{{ url('leave/details/'.$items->id) }}"><i class="fa fa-eye"></i> View</a>
+                                            <a class="dropdown-item printLeave" href="#" data-id="{{ $items->id }}" data-emp-id="{{ $items->staff_id }}" data-leave_type="{{ $items->leave_type }}" data-date_from="{{ $items->date_from }}" data-date_to="{{ $items->date_to }}">
+                                                <i class="fa fa-print m-r-5"></i> Print
+                                            </a>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -280,7 +288,7 @@
                                     @endif
                                     @endif
                                 </td>
-                                <td class="leave_reason">{{ $items->reason }}</td>
+                                <td class="leave_reason">{{ \Illuminate\Support\Str::limit($items->reason, 20, '...') }}</td>
                                 <td class="text-center" style="pointer-events: none; opacity: 0.5;">
                                     <div class="dropdown action-label">
                                         <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false">
@@ -289,13 +297,13 @@
                                     </div>
                                 </td>
                                 <td class="text-right">
-                                    <div class="dropdown dropdown-action" style="pointer-events: none; opacity: 0.5;">
+                                    <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $items->id }}" data-employee_name="{{ $items->employee_name }}" data-employee_id="{{ $items->staff_id }}" data-leave_type="{{ $items->leave_type }}" data-remaining_leave="" data-date_from="{{ $items->date_from }}" data-date_to="{{ $items->date_to }}" data-number_of_day="{{ $items->number_of_day }}" data-leave_day="{{ $items->leave_day }}" data-reason="{{ $items->reason }}" data-target="#edit_leave">
-                                                <i class="fa fa-pencil m-r-5"></i> Edit
+                                            <a class="dropdown-item" href="{{ url('leave/details/'.$items->id) }}"><i class="fa fa-eye"></i> View</a>
+                                            <a class="dropdown-item printLeave" href="#" data-id="{{ $items->id }}" data-emp-id="{{ $items->staff_id }}" data-leave_type="{{ $items->leave_type }}" data-date_from="{{ $items->date_from }}" data-date_to="{{ $items->date_to }}">
+                                                <i class="fa fa-print m-r-5"></i> Print
                                             </a>
-                                            <a class="dropdown-item leaveDelete" href="#" data-toggle="modal" data-id="{{ $items->id }}" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                                         </div>
                                     </div>
                                 </td>
@@ -460,11 +468,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Leave Reason <span class="text-danger">*</span></label>
-                            <textarea rows="2" class="form-control" id="reason" name="reason"></textarea>
-                        </div>
-
                         <div class="submit-section">
                             <button type="submit" id="apply_leave" class="btn btn-primary submit-btn">Submit</button>
                         </div>
@@ -603,12 +606,6 @@
                             </div>
                         </div>
 
-
-                        <div class="form-group">
-                            <label>Leave Reason <span class="text-danger">*</span></label>
-                            <textarea rows="2" class="form-control" name="reason"></textarea>
-                        </div>
-
                         <div class="submit-section">
                             <button type="submit" id="editleave" class="btn btn-primary submit-btn">Submit</button>
                         </div>
@@ -667,6 +664,12 @@
                         </div>
                         <div class="modal-btn delete-action">
                             <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>Disapproved Due To <span class="text-danger">*</span></label>
+                                        <textarea rows="2" class="form-control" name="reason"></textarea>
+                                    </div>
+                                </div>
                                 <div class="col-6">
                                     <button type="submit" class="btn btn-primary continue-btn submit-btn">Decline</button>
                                 </div>
@@ -808,22 +811,26 @@
             $('input[name="sick_location"]').prop('checked', false);
         });
 
-        // Show/hide abroad input field
+        // Ensure only one vacation_location checkbox can be checked at a time
         $('input[name="vacation_location"]').on('change', function() {
-            if ($(this).val() === 'Abroad') {
+            $('input[name="vacation_location"]').not(this).prop('checked', false);
+
+            if ($(this).val() === 'Abroad' && $(this).is(':checked')) {
                 $('#abroad_specify').show();
             } else {
                 $('#abroad_specify').hide().val('');
             }
         });
 
-        // Show sick leave details input only after selection
+        // Ensure only one sick_location checkbox can be checked at a time
         $('input[name="sick_location"]').on('change', function() {
+            $('input[name="sick_location"]').not(this).prop('checked', false);
             $('#sick_leave_details_input').show();
         });
     });
 
 </script>
+
 
 {{-- edit modal --}}
 <script>
@@ -863,8 +870,8 @@
             console.error('#edit_leave_type not found in the DOM');
         }
 
-        // Show/hide abroad input field
-        $('input[name="vacation_location"]').on('change', function() {
+        // Show/hide abroad input field for vacation leave
+        $('input[name="e_vacation_location"]').on('change', function() {
             if ($(this).val() === 'Abroad') {
                 $('#e_abroad_specify').show();
             } else {
@@ -872,13 +879,28 @@
             }
         });
 
+        // Allow only one checkbox to be checked for Vacation/Special Privilege Leave
+        $('#e_vacation_philippines, #e_vacation_abroad').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#e_vacation_philippines, #e_vacation_abroad').not(this).prop('checked', false); // Uncheck other
+            }
+        });
+
+        // Allow only one checkbox to be checked for Sick Leave
+        $('#e_sick_hospital, #e_sick_outpatient').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#e_sick_hospital, #e_sick_outpatient').not(this).prop('checked', false); // Uncheck other
+            }
+        });
+
         // Show sick leave details input only after selection
-        $('input[name="sick_location"]').on('change', function() {
-            $('#sick_leave_details_input').show();
+        $('input[name="e_sick_location"]').on('change', function() {
+            $('#e_illness_specify').show();
         });
     });
 
 </script>
+
 
 
 <script>
@@ -1016,7 +1038,6 @@
                     $("#edit_date_from").val(leave.date_from);
                     $("#edit_date_to").val(leave.date_to);
                     $("#edit_number_of_day").val(leave.number_of_day);
-                    $("textarea[name='reason']").val(leave.reason);
 
                     renderLeaveDetails(leave);
 
@@ -1605,16 +1626,31 @@
                 , date_to: {
                     required: true
                 }
-                , reason: {
-                    required: true
-                }
             }
             , messages: {
                 employee_name: "Please select employee name"
                 , leave_type: "Please select leave type"
                 , date_from: "Please select date from"
                 , date_to: "Please select date to"
-                , reason: "Please input reason for leave"
+            }
+            , errorElement: 'span'
+            , errorClass: 'text-danger'
+            , errorPlacement: function(error, element) {
+                error.appendTo(element.parent());
+            }
+            , submitHandler: function(form) {
+                form.submit();
+            }
+        });
+
+        $(".declineLeaveForm").validate({
+            rules: {
+                reason: {
+                    required: true
+                }
+            }
+            , messages: {
+                reason: "Please input the reason for disapproving"
             }
             , errorElement: 'span'
             , errorClass: 'text-danger'

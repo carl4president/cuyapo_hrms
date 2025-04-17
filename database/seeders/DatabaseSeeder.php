@@ -23,7 +23,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PositionSeeder::class,
             EmployeeSeeder::class,
-            UserSeeder::class,
             EmployeeContactSeeder::class,
             EmployeeGovernmentIdSeeder::class,
             EmployeeEducationSeeder::class,
@@ -39,6 +38,7 @@ class DatabaseSeeder extends Seeder
             PositionHistorySeeder::class,
             AddJobSeeder::class,
             ApplicantSeeder::class,
+            UserSeeder::class,
             ApplicantContactSeeder::class,
             ApplicantGovernmentIdsSeeder::class,
             ApplicantFamilyInfoSeeder::class,

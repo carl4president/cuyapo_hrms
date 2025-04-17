@@ -85,7 +85,7 @@
                                             @php
                                             // Default to 'Not Set' if no job type is provided
                                             $jobType = $items->job_type ?? 'Not Set';
-                                            
+
                                             $jobTypeRecord = $type_job->where('name_type_job', $jobType)->first();
 
                                             $color = $jobTypeRecord ? $jobTypeRecord->color : 'info';
@@ -174,52 +174,50 @@
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Position Title</label>
                                     <select class="form-control" id="position" name="position_id">
-                                        <option value="" disabled selected>-- Select Position Title --</option>
+                                        <option value="" disabled selected>-- Select Position --</option>
                                     </select>
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>No of Vacancies</label>
                                     <input class="form-control @error('no_of_vacancies') is-invalid @enderror" type="text" name="no_of_vacancies" value="{{ old('no_of_vacancies') }}">
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Experience</label>
                                     <input class="form-control @error('experience') is-invalid @enderror" type="text" name="experience" value="{{ old('experience') }}">
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Age</label>
                                     <input class="form-control @error('age') is-invalid @enderror" type="number" name="age" value="{{ old('age') }}">
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Salary From</label>
                                     <input type="text" class="form-control @error('salary_from') is-invalid @enderror" name="salary_from" value="{{ old('salary_from') }}">
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Salary To</label>
                                     <input type="text" class="form-control @error('salary_to') is-invalid @enderror" name="salary_to" value="{{ old('salary_to') }}">
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Job Type</label>
@@ -231,6 +229,8 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Status</label>
@@ -241,22 +241,20 @@
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Start Date</label>
                                     <input type="text" class="form-control datetimepicker @error('start_date') is-invalid @enderror" name="start_date" value="{{ old('start_date') }}">
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Expired Date</label>
                                     <input type="text" class="form-control datetimepicker @error('expired_date') is-invalid @enderror" name="expired_date" value="{{ old('expired_date') }}">
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label>Description</label>
@@ -321,7 +319,8 @@
 
         $('#department').change(function() {
             const departmentId = $(this).val();
-            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
+            $('#position').html('<option value="" disabled selected>Loading...</option>');
+
 
             if (departmentId) {
                 $.ajax({
@@ -333,6 +332,7 @@
                     }
                     , dataType: "json"
                     , success: function(response) {
+                        $('#position').html('<option value="" disabled selected>-- Select Position --</option>');
                         if (response.positions) {
                             response.positions.forEach(position => {
                                 $('#position').append(

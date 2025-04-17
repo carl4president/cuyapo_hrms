@@ -62,6 +62,7 @@ class User extends Authenticatable
     }
 
 
+
     /** generate id */
     protected static function boot()
     {

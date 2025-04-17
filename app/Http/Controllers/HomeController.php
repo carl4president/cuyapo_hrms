@@ -81,10 +81,10 @@ class HomeController extends Controller
         if ($latestPosition === null) {
             return [0, 0, 0, 0, 0, 0, 0, 'N/A']; // Now returns 8 elements
         }
-        
+
 
         $currentPositionName = $latestPosition?->position?->position_name ?? 'N/A';
-        
+
 
         // Calculate total years worked in the latest ongoing position with no end date
         $latestStartDate = Carbon::parse($latestPosition->start_date);
@@ -286,12 +286,17 @@ class HomeController extends Controller
             return Carbon::createFromFormat('d M, Y', $holiday->date_holiday);
         });
 
-        $currentWeekStart = $dt->startOfWeek();  // This will get Monday of the current week
-        $currentWeekEnd = $dt->endOfWeek();    // This will get Sunday of the current week
+        // Get the start and end of the current week (Monday to Sunday)
+        $currentWeekStart = $dt->copy()->startOfWeek(Carbon::MONDAY);
+        $currentWeekEnd = $dt->copy()->endOfWeek();    
+
 
         // Get the start and end of the next week (Monday to Sunday)
-        $nextWeekStart = $dt->addWeek()->startOfWeek();
-        $nextWeekEnd = $dt->copy()->endOfWeek();
+        $nextWeekStart = $dt->copy()->addWeek()->startOfWeek(Carbon::MONDAY);
+        $nextWeekEnd = $dt->copy()->addWeek()->endOfWeek();     
+
+
+
 
         // Get leaves for the current week (only Pending)
         $currentWeekLeaves = Leave::where('status', 'Pending')
@@ -310,6 +315,7 @@ class HomeController extends Controller
             ->get()
             ->filter(function ($leave) use ($nextWeekStart, $nextWeekEnd) {
                 $leaveDate = Carbon::createFromFormat('d M, Y', $leave->date_from);
+
                 return $leaveDate->between($nextWeekStart, $nextWeekEnd);
             });
 

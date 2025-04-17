@@ -41,7 +41,6 @@ class Leave extends Model
             'leave_type' => 'required|string',
             'date_from'  => 'required',
             'date_to'    => 'required',
-            'reason'     => 'required',
         ]);
 
         try {
@@ -130,7 +129,6 @@ class Leave extends Model
                         'leave_date'      => json_encode($request->leave_date),
                         'leave_day'       => json_encode($request->select_leave_day),
                         'status'          => 'Pending',
-                        'reason'          => $request->reason,
                         'approved_by'     => null,
                         'vacation_location' => $request->vacation_location,
                         'abroad_specify'   => $request->abroad_specify,
@@ -172,7 +170,6 @@ class Leave extends Model
             'leave_type'             => 'required|string',
             'date_from'              => 'required|string',
             'date_to'                => 'required|string',
-            'reason'                 => 'required|string',
             'remaining_leave'        => 'nullable|numeric',
             'number_of_day'          => 'nullable|numeric',
             'edit_leave_date'        => 'nullable|array',
@@ -259,7 +256,6 @@ class Leave extends Model
                     'leave_date'      => $leave_date,
                     'leave_day'       => $select_leave_day,
                     'status'          => 'Pending',
-                    'reason'          => $request->reason,
                     'approved_by'     => Session::get('line_manager', null),
 
                     'vacation_location' => $request->vacation_location,

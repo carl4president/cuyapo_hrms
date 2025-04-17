@@ -43,8 +43,8 @@
                         <tbody>
                             @foreach($applicant as $key=>$app)
                             @php
-                            $status = $app->employment->status ?? 'Eligible for Interview';
-                            if (!in_array($status, ['Eligible for Interview'])) continue;
+                            $status = $app->employment->status ?? 'Shortlisted';
+                            if (!in_array($status, ['Shortlisted'])) continue;
                             @endphp
                             <tr>
                                 <td>{{ ++$key }}</td>
@@ -61,11 +61,11 @@
                                     <div class="dropdown action-label">
                                         <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false" id="status_label{{ $app->app_id }}">
                                             @php
-                                            $status = $app->employment->status ?? 'Eligible for Interview'; // Default to 'Eligible for Interview'
+                                            $status = $app->employment->status ?? 'Shortlisted';
                                             $statusColors = [
-                                            'Shortlisted' => 'text-info',
-                                            'Eligible for Interview' => 'text-success',
-                                            'Qualified' => 'text-danger'
+                                            'Shortlisted' => 'text-success',
+                                            'Hired' => 'text-info',
+                                            'Rejected' => 'text-danger'
                                             ];
                                             $colorClass = $statusColors[$status] ?? 'text-secondary'; // Default color if status not found
                                             @endphp
@@ -73,13 +73,13 @@
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-right job_status">
                                             <a class="dropdown-item text-muted disabled" aria-disabled="true">
-                                                <i class="fa fa-dot-circle-o text-success"></i> Eligible for Interview
+                                                <i class="fa fa-dot-circle-o text-success"></i> Shortlisted
                                             </a>
-                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="Shortlisted">
-                                                <i class="fa fa-dot-circle-o text-info"></i> Shortlisted
+                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="Hired">
+                                                <i class="fa fa-dot-circle-o text-info"></i> Hired
                                             </a>
-                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="Qualified">
-                                                <i class="fa fa-dot-circle-o text-danger"></i> Move Back to Candidate
+                                            <a class="dropdown-item status-option" data-id="{{ $app->app_id }}" data-status="Rejected">
+                                                <i class="fa fa-dot-circle-o text-danger"></i> Rejected
                                             </a>
                                         </div>
                                     </div>
@@ -100,6 +100,32 @@
                 </div>
             </div>
         </div>
+        <div class="modal custom-modal fade" id="statusEmailModal" tabindex="-1" role="dialog" aria-labelledby="statusEmailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="statusEmailModalLabel">Send Email Notification</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="statusEmailForm" action="{{ route('appstatus/update') }}" method="POST">
+                            @csrf
+                            <input type="hidden" id="modal_app_id" name="app_id">
+                            <input type="hidden" id="modal_status" name="status">
+                            <div class="form-group">
+                                <label for="email_message">Message</label>
+                                <textarea class="form-control" name="message" id="email_message" rows="5"></textarea>
+                            </div>
+                            <div class="submit-section">
+                                <button type="submit" class="btn btn-primary submit-btn">Send & Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <!-- /Page Content -->
 </div>
@@ -108,50 +134,90 @@
 <script>
     $(document).ready(function() {
         var table = $("table").DataTable(); // Initialize DataTables
+        var selectedAppId = null;
+        var selectedStatus = null;
 
+        // Default messages for each status
+        var defaultMessages = {
+            "Shortlisted": "You have been shortlisted for the next phase of our recruitment process."
+            , "Hired": "Congratulations! You have been hired. We will contact you with further details."
+            , "Rejected": "We appreciate your interest, but your application has not been successful."
+        };
+
+        // When a status option is clicked
         $(".status-option").click(function() {
-            var app_id = $(this).data("id"); // Get the application ID
-            var new_status = $(this).data("status"); // Get the selected status
-            var statusLabel = $("#status_label" + app_id); // Get the status label element
-            var row = statusLabel.closest("tr"); // Get the table row
-            var tableBody = $("table tbody"); // Get the table body
+            selectedAppId = $(this).data("id");
+            selectedStatus = $(this).data("status");
 
-            console.log("Status option clicked. App ID:", app_id, "New Status:", new_status);
+            console.log("Selected App ID:", selectedAppId);
+            console.log("Selected Status:", selectedStatus);
+
+            // Populate modal inputs
+            $("#modal_app_id").val(selectedAppId);
+            $("#modal_status").val(selectedStatus);
+            $("#email_message").val(defaultMessages[selectedStatus] || "");
+
+            // Update modal title
+            $("#statusEmailModalLabel").text("Confirm Status Change to: " + selectedStatus);
+
+            // Show the modal
+            $("#statusEmailModal").modal("show");
+        });
+
+        // Handle modal form submission
+        $("#statusEmailForm").submit(function(e) {
+            e.preventDefault();
+
+            var app_id = $("#modal_app_id").val();
+            var status = $("#modal_status").val();
+            var message = $("#email_message").val();
+
+            var statusLabel = $("#status_label" + app_id);
+            var row = statusLabel.closest("tr");
+
+            var button = $(this).find(".submit-btn");
+            var originalText = button.text();
+            button.text("Sending...").attr("disabled", true);
 
             $.ajax({
-                url: "{{ route('appstatus/update') }}", // Your backend update route
-                type: "POST"
+                url: "{{ route('appstatus/update') }}"
+                , type: "POST"
                 , data: {
                     app_id: app_id
-                    , status: new_status
+                    , status: status
+                    , status_message: message
                     , _token: "{{ csrf_token() }}"
                 }
                 , success: function(response) {
                     console.log("Status updated successfully:", response);
 
-                    if (new_status === "Shortlisted" || new_status === "Qualified") {
-                        table.row(row).remove().draw();
-
+                    if (status === "Hired" || status === "Rejected") {
+                        table.row(row).remove().draw(); // Remove from table
                     } else {
-
-                        var statusColor = getStatusColor(new_status);
-                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + new_status);
+                        var statusColor = getStatusColor(status);
+                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + status);
                     }
+
+                    $("#statusEmailModal").modal("hide"); // Close modal
                 }
                 , error: function(xhr) {
                     console.error("AJAX error:", xhr.responseText);
+                    alert("Failed to update status. Please try again.");
+                }
+                , complete: function() {
+                    button.text(originalText).attr("disabled", false);
                 }
             });
         });
 
-        // Function to get status color class
+        // Status color class handler
         function getStatusColor(status) {
             switch (status) {
-                case "Eligible for Interview":
-                    return "text-success";
                 case "Shortlisted":
+                    return "text-success";
+                case "Hired":
                     return "text-info";
-                case "Qualified":
+                case "Rejected":
                     return "text-danger";
                 default:
                     return "text-secondary";
@@ -160,5 +226,6 @@
     });
 
 </script>
+
 @endsection
 @endsection

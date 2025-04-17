@@ -136,14 +136,6 @@
         </div>
         <div class="col-md-4">
             <div class="form-group">
-                <label>Designation</label>
-                <select class="form-control" id="designation" name="designation_id">
-                    <option value="" disabled selected>-- Select Designation --</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="form-group">
                 <label>Position</label>
                 <select class="form-control" id="position" name="position_id">
                     <option value="" disabled selected>-- Select Position --</option>
@@ -171,6 +163,32 @@
     <!-- /Edit Job Modal -->
 
     <!-- Delete Job Modal -->
+    <div class="modal custom-modal fade" id="statusEmailModal" tabindex="-1" role="dialog" aria-labelledby="statusEmailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusEmailModalLabel">Send Email Notification</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="statusEmailForm" action="{{ route('appstatus/update') }}" method="POST">
+                        @csrf
+                        <input type="hidden" id="modal_app_id" name="app_id">
+                        <input type="hidden" id="modal_status" name="status">
+                        <div class="form-group">
+                            <label for="email_message">Message</label>
+                            <textarea class="form-control" name="message" id="email_message" rows="5"></textarea>
+                        </div>
+                        <div class="submit-section">
+                            <button type="submit" class="btn btn-primary submit-btn">Send & Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- /Delete Job Modal -->
 </div>
 
@@ -178,43 +196,85 @@
 <script>
     $(document).ready(function() {
         var table = $("table").DataTable(); // Initialize DataTables
+        var selectedAppId = null;
+        var selectedStatus = null;
 
+        var defaultMessages = {
+            "Qualified": "Congratulations! You have been selected. We will contact you soon for the next steps."
+            , "Screened": "Your application has been screened. We will notify you if you are selected for an interview."
+            , "Eligible for Interview": "You are eligible for an interview. Please await further instructions."
+            , "Rejected": "We regret to inform you that your application has been rejected. Thank you for your interest."
+            , "New": "Your application is under review. Please await further updates on your application status."
+        };
+
+        // Event listener for status option click
         $(".status-option").click(function() {
-            var app_id = $(this).data("id"); // Get the application ID
-            var new_status = $(this).data("status"); // Get the selected status
-            var statusLabel = $("#status_label" + app_id); // Get the status label element
-            var row = statusLabel.closest("tr"); // Get the table row
-            var tableBody = $("table tbody"); // Get the table body
+            selectedAppId = $(this).data("id");
+            selectedStatus = $(this).data("status");
 
-            console.log("Status option clicked. App ID:", app_id, "New Status:", new_status);
+            console.log("Selected App ID:", selectedAppId); // Debugging selected app ID
+            console.log("Selected Status:", selectedStatus); // Debugging selected status
+
+            // Set modal values
+            $("#modal_app_id").val(selectedAppId);
+            $("#modal_status").val(selectedStatus);
+            $("#email_message").val(defaultMessages[selectedStatus] || "");
+
+            // Update modal title
+            $("#statusEmailModalLabel").text("Confirm Status Change to: " + selectedStatus);
+
+            // Show the modal
+            $("#statusEmailModal").modal("show");
+        });
+
+        // Event listener for status email form submission
+        $("#statusEmailForm").submit(function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            var emailMessage = $("#email_message").val();
+            var app_id = $("#modal_app_id").val();
+            var status = $("#modal_status").val();
+            var statusLabel = $("#status_label" + app_id);
+            var row = statusLabel.closest("tr");
+
+            var button = $(this).find(".submit-btn");
+            var originalButtonText = button.text();
+            button.text("Sending...").attr("disabled", true);
 
             $.ajax({
-                url: "{{ route('appstatus/update') }}", // Your backend update route
-                type: "POST"
+                url: "{{ route('appstatus/update') }}"
+                , type: "POST"
                 , data: {
                     app_id: app_id
-                    , status: new_status
+                    , status: status
+                    , status_message: emailMessage
                     , _token: "{{ csrf_token() }}"
                 }
                 , success: function(response) {
                     console.log("Status updated successfully:", response);
 
-                    if (new_status === "Eligible for Interview" || new_status === "New" || new_status === "Rejected") {
-                        table.row(row).remove().draw();
-
+                    if (status === "Qualified" || status === "Rejected" || status === "Eligible for Interview") {
+                        table.row(row).remove().draw(); // Remove row from the table if status is Qualified, Rejected, or Eligible for Interview
                     } else {
-
-                        var statusColor = getStatusColor(new_status);
-                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + new_status);
+                        var statusColor = getStatusColor(status);
+                        statusLabel.html('<i class="fa fa-dot-circle-o ' + statusColor + '"></i> ' + status);
                     }
+
+                    // Hide modal after successful update
+                    $("#statusEmailModal").modal("hide");
                 }
                 , error: function(xhr) {
-                    console.error("AJAX error:", xhr.responseText);
+                    console.error("AJAX error:", xhr.responseText); // Log the error message
+                    alert("Failed to update status. Please try again."); // Alert the user in case of error
+                }
+                , complete: function() {
+                    // Revert button text and enable it
+                    button.text(originalButtonText).attr("disabled", false);
                 }
             });
         });
 
-        // Function to get status color class
+        // Function to get the status color class
         function getStatusColor(status) {
             switch (status) {
                 case "Qualified":
@@ -224,9 +284,9 @@
                 case "Eligible for Interview":
                     return "text-secondary";
                 case "Rejected":
-                    return "text-primary";
-                case "New":
                     return "text-danger";
+                case "New":
+                    return "text-primary";
                 default:
                     return "text-secondary";
             }
@@ -234,6 +294,7 @@
     });
 
 </script>
+
 
 {{-- delete --}}
 

@@ -112,9 +112,10 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
 
     // -------------------------------- Job ------------------------------//
     Route::middleware([LeaveUpdateMiddleware::class])->controller(JobController::class)->group(function () {
+        Route::get('form/job/list', 'jobList')->name('form/job/list');
+        Route::get('form/job/view/{id}', 'jobView');
+        
         Route::middleware('auth')->group(function () {
-            Route::get('form/job/list', 'jobList')->name('form/job/list');
-            Route::get('form/job/view/{id}', 'jobView');
             Route::get('user/dashboard/index', 'userDashboard')->name('user/dashboard/index');
             Route::get('jobs/dashboard/index', 'jobsDashboard')->name('jobs/dashboard/index');
             Route::get('user/dashboard/all', 'userDashboardAll')->name('user/dashboard/all');
@@ -166,6 +167,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::post('jobtypestatus/update', 'jobTypeStatusUpdate')->name('jobtypestatus/update'); // update status job type ajax
             Route::post('jobstatus/update', 'jobStatusUpdate')->name('jobstatus/update'); // update status job type ajax
             Route::post('appstatus/update', 'appStatusUpdate')->name('appstatus/update'); // update status application ajax
+
         });
     });
 

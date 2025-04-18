@@ -160,7 +160,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{ route('form/jobs/save') }}" method="POST">
+                    <form action="{{ route('form/jobs/save') }}" method="POST" id="addjobForm">
                         @csrf
                         <div class="row">
                             <div class="col-md-6">
@@ -201,7 +201,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Age</label>
-                                    <input class="form-control @error('age') is-invalid @enderror" type="number" name="age" value="{{ old('age') }}">
+                                    <input class="form-control @error('age') is-invalid @enderror" type="text" name="age" value="{{ old('age') }}" placeholder="Enter age range (e.g. 18-100)">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -311,6 +311,54 @@
 
 
 <x-layouts.edit-job-js />
+
+<script>
+    function validateAgeRange(inputId) {
+    var isValid = true;
+    var $ageInput = $('#' + inputId);
+    var ageRange = $ageInput.val().trim();
+    var agePattern = /^(\d{1,3})-(\d{1,3})$/; // e.g., 18-65
+
+    // Remove previous errors
+    $ageInput.removeClass('is-invalid');
+    $ageInput.next('.age-error').remove();
+
+    if (!agePattern.test(ageRange)) {
+        isValid = false;
+        $ageInput.addClass('is-invalid');
+        $('<div class="text-danger age-error">Please enter a valid age range (e.g., 18-65).</div>')
+            .insertAfter($ageInput);
+    } else {
+        var parts = ageRange.split('-');
+        var min = parseInt(parts[0], 10);
+        var max = parseInt(parts[1], 10);
+
+        if (min >= max || min < 18 || max > 100) {
+            isValid = false;
+            $ageInput.addClass('is-invalid');
+            $('<div class="text-danger age-error">Minimum age should be less than maximum and within 18-100.</div>')
+                .insertAfter($ageInput);
+        }
+    }
+
+    return isValid;
+}
+
+// For edit form
+$('#jobForm').on('submit', function (e) {
+    if (!validateAgeRange('e_age')) {
+        e.preventDefault();
+    }
+});
+
+// For add form
+$('#addjobForm').on('submit', function (e) {
+    if (!validateAgeRange('age')) {
+        e.preventDefault();
+    }
+});
+
+</script>
 
 {{--add--}}
 <script>

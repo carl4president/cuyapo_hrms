@@ -1290,7 +1290,7 @@ class LeavesController extends Controller
     {
         try {
             // Define standard leave types to exclude
-            $excludedLeaves = ['Vacation Leave', 'Sick Leave', 'Paternity Leave', 'Maternity Leave', 'Special Leave Privilege'];
+            $excludedLeaves = ['Vacation Leave', 'Sick Leave', 'Paternity Leave', 'Maternity Leave', 'Special Privilege Leave'];
 
             // Perform the JOIN query and filter out standard leave types
             $policies = \DB::table('leave_information')

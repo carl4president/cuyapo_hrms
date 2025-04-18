@@ -319,7 +319,17 @@
                         @csrf
                         <div class="form-group">
                             <label>Policy Name <span class="text-danger">*</span></label>
-                            <input type="text" name="policy_name" class="form-control" required>
+                            <input list="leaveTypes" type="text" name="policy_name" class="form-control" required>
+                            <datalist id="leaveTypes">
+                                <option value="Mandatory/Forced Leave">
+                                <option value="Solo Parent Leave">
+                                <option value="Study Leave">
+                                <option value="10-Day VAWC Leave">
+                                <option value="Rehabilitation Privilege">
+                                <option value="Special Leave Benefits for Women">
+                                <option value="Special Emergency (Calamity) Leave">
+                                <option value="Adoption Leave">
+                            </datalist>
                         </div>
                         <div class="form-group">
                             <label>Days <span class="text-danger">*</span></label>
@@ -388,7 +398,17 @@
                         <input style="display:none;" type="text" name="policy_id" id="policy_id" value="">
                         <div class="form-group">
                             <label>Policy Name <span class="text-danger">*</span></label>
-                            <input type="text" name="policy_name" class="form-control" value="">
+                            <input list="leaveTypes" type="text" name="policy_name" class="form-control" value="">
+                            <datalist id="leaveTypes">
+                                <option value="Mandatory/Forced Leave">
+                                <option value="Solo Parent Leave">
+                                <option value="Study Leave">
+                                <option value="10-Day VAWC Leave">
+                                <option value="Rehabilitation Privilege">
+                                <option value="Special Leave Benefits for Women">
+                                <option value="Special Emergency (Calamity) Leave">
+                                <option value="Adoption Leave">
+                            </datalist>
                         </div>
                         <div class="form-group">
                             <label>Days <span class="text-danger">*</span></label>

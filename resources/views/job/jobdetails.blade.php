@@ -26,7 +26,7 @@
                     <ul class="job-post-det">
                         <li><i class="fa fa-calendar"></i> Post Date: <span class="text-blue start-date">{{ date('d F, Y', strtotime($job_view_detail[0]->start_date)) }}</span></li>
                         <li><i class="fa fa-calendar"></i> Last Date: <span class="text-blue expired-date">{{ date('d F, Y', strtotime($job_view_detail[0]->expired_date)) }}</span></li>
-                        <li><i class="fa fa-user-o"></i> Applications: <span class="text-blue applications-count">4</span></li>
+                        <li><i class="fa fa-user-o"></i> Applications: <span class="text-blue applications-count">{{ $job_view_detail[0]->applicants->count() }}</span></li>
                         <li><i class="fa fa-eye"></i> Views: <span class="text-blue views-count">3806</span></li>
                     </ul>
                 </div>
@@ -57,6 +57,21 @@
                         <h5>Job Type</h5>
                         <p class="job-type">{{ $job_view_detail[0]->job_type }}</p>
                     </div>
+                    <div class="info-list">
+                        <span>
+                            @if($job_view_detail[0]->status == 'Open')
+                            <i class="fa fa-check-circle"></i>
+                            @elseif($job_view_detail[0]->status == 'Closed')
+                            <i class="fa fa-lock"></i>
+                            @elseif($job_view_detail[0]->status == 'Cancelled')
+                            <i class="fa fa-ban"></i>
+                            @else
+                            <i class="fa fa-question-circle text-warning"></i>
+                            @endif
+                        </span>
+                        <h5>Status</h5>
+                        <p>{{ $job_view_detail[0]->status }}</p>
+                    </div>
                     <div class="info-list salary-section">
                         <span><i class="fa fa-money"></i></span>
                         <h5>Salary</h5>
@@ -66,6 +81,11 @@
                         <span><i class="fa fa-suitcase"></i></span>
                         <h5>Experience</h5>
                         <p class="experience">{{ $job_view_detail[0]->experience }}</p>
+                    </div>
+                    <div class="info-list age-section">
+                        <span><i class="fa fa-birthday-cake"></i></span>
+                        <h5>Age</h5>
+                        <p>{{ $job_view_detail[0]->age }}</p>
                     </div>
                     <div class="info-list vacancy-section">
                         <span><i class="fa fa-ticket"></i></span>
@@ -93,11 +113,49 @@
 <!-- /Page Wrapper -->
 
 @section('script')
-
-{{-- Count Down --}}
 <script>
+    $('#jobForm').on('submit', function(e) {
+        var isValid = true;
+        var $ageInput = $('#e_age');
+        var ageRange = $ageInput.val().trim();
+        var agePattern = /^(\d{1,3})-(\d{1,3})$/; // e.g., 18-65
 
-    const expireDate = {{ $expire_date }};
+        // Remove previous error
+        $ageInput.removeClass('is-invalid');
+        $ageInput.next('.age-error').remove();
+
+        if (!agePattern.test(ageRange)) {
+            isValid = false;
+            $ageInput.addClass('is-invalid');
+            $('<div class="text-danger age-error">Please enter a valid age range (e.g., 18-65).</div>')
+                .insertAfter($ageInput);
+        } else {
+            // Optional: Check logical range, e.g., 18-65 not 70-20
+            var parts = ageRange.split('-');
+            var min = parseInt(parts[0], 10);
+            var max = parseInt(parts[1], 10);
+
+            if (min >= max || min < 18 || max > 100) {
+                isValid = false;
+                $ageInput.addClass('is-invalid');
+                $('<div class="text-danger age-error">Minimum age should be less than maximum and within 18-100.</div>')
+                    .insertAfter($ageInput);
+            }
+        }
+
+        if (!isValid) {
+            e.preventDefault(); // Stop form from submitting
+        }
+    });
+
+</script>
+
+<script>
+    const expireDate = {
+        {
+            $expire_date ? ? 'null'
+        }
+    };
 
 
     function startCountdown() {
@@ -126,99 +184,54 @@
                 // Update the countdown text
                 countdownElement.innerText = `Application ends in ${days}d ${hours}h ${minutes}m ${seconds}s`;
             }
-        }, 1000); 
+        }, 1000);
     }
 
 
     startCountdown();
+
 </script>
 
 
-{{-- update --}}
 <script>
     $(document).ready(function() {
         var url = "{{ route('hr/get/information/emppos') }}";
 
         // Function to reset a dropdown with a placeholder
         function resetDropdown(selector, placeholder) {
-            $(selector).empty(); // Clear all options
-            $(selector).append(`<option value="" disabled selected>${placeholder}</option>`);
+            $(selector).html(`<option value="" disabled selected>${placeholder}</option>`);
         }
 
-        // Function to populate designations based on departmentId
-        function populateDesignations(departmentId, preselectedDesignationId = null) {
-            resetDropdown('#e_designation', '-- Select Designation --');
-            resetDropdown('#e_position', '-- Select Position --');
-
+        function populatePositions(departmentId, preselectedPositionId) {
             if (departmentId) {
+                $('#e_position').html('<option disabled selected>Loading...</option>');
                 $.ajax({
                     url: url
                     , type: "POST"
                     , data: {
                         id: departmentId
                         , _token: $('meta[name="csrf-token"]').attr("content")
-                    }
+                    , }
                     , dataType: "json"
                     , success: function(response) {
-                        const uniqueDesignations = response.designations.filter(
-                            (designation, index, self) =>
-                            index === self.findIndex((d) => d.id === designation.id)
-                        );
 
-                        uniqueDesignations.forEach((designation) => {
-                            $('#e_designation').append(
-                                `<option value="${designation.id}" ${
-                                preselectedDesignationId == designation.id ? "selected" : ""
-                            }>${designation.designation_name}</option>`
-                            );
-                        });
+                        $('#e_position').html('<option value="" disabled selected>-- Select Position --</option>');
 
-                        if (preselectedDesignationId) {
-                            $('#e_designation').val(preselectedDesignationId).trigger('change');
+                        if (response.positions) {
+                            response.positions.forEach((position) => {
+                                $('#e_position').append(
+                                    `<option value="${position.id}" ${
+                                        preselectedPositionId == position.id ? "selected" : ""
+                                    }>${position.position_name}</option>`
+                                );
+                            });
                         }
-                    }
-                    , error: function(xhr, status, error) {
-                        console.error("Error fetching designations:", error);
-                    }
-                });
-            }
-        }
 
-        // Function to populate positions based on designationId
-        function populatePositions(designationId, preselectedPositionId = null) {
-            resetDropdown('#e_position', '-- Select Position --');
-
-            if (designationId) {
-                $.ajax({
-                    url: url
-                    , type: "POST"
-                    , data: {
-                        id: designationId
-                        , _token: $('meta[name="csrf-token"]').attr("content")
-                    }
-                    , dataType: "json"
-                    , success: function(response) {
-                        const uniquePositions = response.positions.filter(
-                            (position, index, self) =>
-                            index === self.findIndex((p) => p.id === position.id)
-                        );
-
-                        uniquePositions.forEach((position) => {
-                            $('#e_position').append(
-                                `<option value="${position.id}" ${
-                                preselectedPositionId == position.id ? "selected" : ""
-                            }>${position.position_name}</option>`
-                            );
-                        });
-
-                        if (preselectedPositionId) {
-                            $('#e_position').val(preselectedPositionId);
-                        }
                     }
                     , error: function(xhr, status, error) {
                         console.error("Error fetching positions:", error);
                     }
-                });
+                , });
             }
         }
 
@@ -238,7 +251,6 @@
             var age = jobContainer.find('.age').text();
             var description = jobContainer.find('.description').text();
             var departmentId = jobContainer.find('.department-id').text();
-            var designationId = jobContainer.find('.designation-id').text();
             var positionId = jobContainer.find('.position-id').text();
 
 
@@ -255,11 +267,9 @@
             $('#e_description').val(description);
 
             $('#e_department').val(departmentId);
-            populateDesignations(departmentId, designationId);
+            populatePositions(departmentId, positionId);
 
-            setTimeout(() => {
-                populatePositions(designationId, positionId);
-            }, 300);
+            setTimeout(() => {}, 300);
 
             var job_type = jobContainer.find('.job-type').text();
             console.log("Job Type:", job_type); // Check if value is correct
@@ -274,15 +284,12 @@
         });
 
         // Event listener for department dropdown change
-        $('#e_department').off('change').on('change', function() {
-            const departmentId = $(this).val();
-            populateDesignations(departmentId);
-        });
 
-        // Event listener for designation dropdown change
-        $('#e_designation').off('change').on('change', function() {
-            const designationId = $(this).val();
-            populatePositions(designationId);
+        // Handle department change
+        $('#e_department').change(function() {
+            const departmentId = $(this).val();
+            resetDropdown('#e_position', '-- Select Position --');
+            populatePositions(departmentId);
         });
     });
 

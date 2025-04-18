@@ -28,8 +28,8 @@
                 <div class="card">
                     <div class="card-body">
                         <ul class="nav nav-tabs nav-tabs-solid nav-justified flex-column">
-                            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#home">Apptitude</a></li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#menu1">Schedule Interview</a></li>
+                            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#home">Schedule Interview</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#menu1">Interview Result</a></li>
                         </ul>
                     </div>
                 </div>
@@ -237,7 +237,7 @@
                             </div>
 
                             <div class="submit-section">
-                                <button class="btn btn-primary submit-btn">Save</button>
+                                <button class="btn btn-primary submit-btn sched-btn">Save</button>
                             </div>
                         </form>
                     </div>
@@ -665,7 +665,13 @@
 
 </script>
 
-
+<script>
+    document.getElementById('scheduleForm').addEventListener('submit', function () {
+        const btn = document.querySelector('.sched-btn');
+        btn.disabled = true;
+        btn.innerHTML = 'Sending...';
+    });
+</script>
 @endsection
 <!-- /Page Wrapper -->
 @endsection

@@ -32,22 +32,29 @@ class JobController extends Controller
     /** Job List */
     public function jobList()
     {
-        $job_list = DB::table('add_jobs')->get();
+        $job_list = AddJob::with('position', 'department')
+        ->where('status', '!=', 'Cancelled') // Exclude cancelled jobs
+        ->get();
+        
         return view('job.joblist', compact('job_list'));
     }
 
     /** Job View */
     public function jobView($id)
     {
-        // Find the job post by ID and increment the count
-        $post = AddJob::find($id);
-        $update = ['count' => $post->count + 1,];
-        AddJob::where('id', $post->id)->update($update);
+        $job_view = AddJob::with(['position', 'department'])->where('id', $id)->get();
 
-        $job_view = DB::table('add_jobs')->where('id', $id)->get();
-        // Return the view with the job details
+        // Increment the count
+        if ($job_view->isNotEmpty()) {
+            $job = $job_view->first();
+            $job->count = (int)$job->count + 1;
+            $job->save();
+        }
+
         return view('job.jobview', compact('job_view'));
     }
+
+
 
     /** Users Dashboard */
     public function userDashboard()
@@ -180,7 +187,7 @@ class JobController extends Controller
             'position_id'     => 'required|integer',
             'no_of_vacancies' => 'required|string|max:255',
             'experience'      => 'required|string|max:255',
-            'age'             => 'required|integer',
+            'age'             => 'required|string',
             'salary_from'     => 'required|string|max:255',
             'salary_to'       => 'required|string|max:255',
             'job_type'        => 'required|string|max:255',
@@ -264,7 +271,7 @@ class JobController extends Controller
 
         if ($request->status === 'Hired') {
             $existingEmployee = Employee::where('email', $applicant->email)->first();
-    
+
             if (!$existingEmployee) {
                 // Create Employee record (emp_id auto-generated in boot method)
                 $employee = Employee::create([
@@ -282,7 +289,7 @@ class JobController extends Controller
                     'civil_status' => $applicant->civil_status,
                     'nationality' => $applicant->nationality,
                 ]);
-    
+
                 // Transfer 1:1 relationships
                 if ($applicant->contact) {
                     $employee->contact()->create($applicant->contact->toArray());
@@ -293,7 +300,7 @@ class JobController extends Controller
                 if ($applicant->familyInfo) {
                     $employee->familyInfo()->create($applicant->familyInfo->toArray());
                 }
-    
+
                 // Transfer 1:N relationships
                 foreach ($applicant->education as $education) {
                     $employee->education()->create($education->toArray());
@@ -316,7 +323,7 @@ class JobController extends Controller
                 foreach ($applicant->otherInformations as $info) {
                     $employee->otherInformations()->create($info->toArray());
                 }
-    
+
                 // Transfer the department_id and position_id to EmployeeJobDetails
                 $employeeJobDetail = EmployeeJobDetail::create([
                     'emp_id' => $employee->emp_id,
@@ -325,19 +332,19 @@ class JobController extends Controller
                     'is_head' => false, // Default value, adjust as necessary
                     'is_designation' => false, // Default value, adjust as necessary
                 ]);
-    
+
                 // Transfer the employment status and date_hired to EmployeeEmployment
                 $employeeEmployment = EmployeeEmployment::create([
                     'emp_id' => $employee->emp_id,
                     'employment_status' => $employment->employment_status,
                     'date_hired' => now()->format('d M, Y'),
                 ]);
-    
+
                 // Optional: Associate emp_id to ApplicantEmployment
 
                 $randomPassword = Str::random(8);
                 $hashedPassword = Hash::make($randomPassword);
-    
+
                 // Optional: Create user account (adjust as needed)
                 User::create([
                     'user_id' => $employee->emp_id,
@@ -345,8 +352,8 @@ class JobController extends Controller
                     'email' => $employee->email,
                     'avatar' => $employee->photo,
                     'join_date' => now()->format('D, M d, Y g:i A'),
-                    'status' => 'Active', 
-                    'role_name' => 'Employee', 
+                    'status' => 'Active',
+                    'role_name' => 'Employee',
                     'password' => $hashedPassword, // Change or randomize
                 ]);
 
@@ -476,7 +483,7 @@ class JobController extends Controller
             'department_id'      => 'required|integer',
             'no_of_vacancies' => 'required|integer',
             'experience'      => 'required|string|max:255',
-            'age'             => 'required|integer',
+            'age'             => 'required|string',
             'salary_from'     => 'required|numeric',
             'salary_to'       => 'required|numeric',
             'job_type'        => 'required|string|max:255',
@@ -2036,17 +2043,14 @@ class JobController extends Controller
         }
     }
 
-
-
-
-
-
-
-
-
     /** Aptitude Result */
     public function aptituderesultIndex()
     {
         return view('job.aptituderesult');
+    }
+
+    public function careersIndex()
+    {
+        return view('job.careerslist');
     }
 }

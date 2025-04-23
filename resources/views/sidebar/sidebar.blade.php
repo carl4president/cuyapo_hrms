@@ -42,8 +42,8 @@
                 </li>
                 @elseif (Auth::user()->role_name == 'Employee')
                 <li class="menu-title"><span>Leaves</span></li>
-                <li class="{{set_active(['form/leaves/employee/new', 'form/leaves/calendar'])}}">
-                    <a class="{{set_active(['form/leaves/employee/new', 'form/leaves/calendar'])}}" href="{{ route('form/leaves/calendar') }}">
+                <li class="{{set_active(['form/leaves/employee/new', 'form/leaves/calendar', 'form/leaves/new'])}}">
+                    <a class="{{set_active(['form/leaves/employee/new', 'form/leaves/calendar', 'form/leaves/new'])}}" href="{{ route('form/leaves/calendar') }}">
                         <i class="la la-calendar-check-o"></i> <span>Leaves</span></a>
                 </li>
                 @endif

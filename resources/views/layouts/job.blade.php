@@ -7,7 +7,7 @@
 		<meta name="keywords" content="admin, estimates, bootstrap, business, corporate, creative, management, minimal, modern, accounts, invoice, html5, responsive, CRM, Projects">
         <meta name="author" content="Dreamguys - Bootstrap Admin Template">
         <meta name="robots" content="noindex, nofollow">
-        <title>Jobs - HRMS admin dashboard</title>
+        <title>Jobs - Local Government Unit of Cuyapo</title>
 		<!-- Favicon -->
         <link rel="shortcut icon" type="image/x-icon" href="{{ URL::to('assets/img/favicon.png') }}">
 		<!-- Bootstrap CSS -->

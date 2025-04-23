@@ -18,51 +18,38 @@ class SettingController extends Controller
 
     /** Save Record Company Settings */
     public function saveRecord(Request $request)
-    {
-        // validate form
-        $request->validate([
-            'company_name'   =>'required',
-            'contact_person' =>'required',
-            'address'        =>'required',
-            'country'        =>'required',
-            'city'           =>'required',
-            'state_province' =>'required',
-            'postal_code'    =>'required',
-            'email'          =>'required',
-            'phone_number'   =>'required',
-            'mobile_number'  =>'required',
-            'fax'            =>'required',
-            'website_url'    =>'required',
-        ]);
+{
+    $request->validate([
+        'company_name'     => 'required|string|max:255',
+        'municipal_mayor'  => 'required|string|max:255',
+        'logo'             => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+    ]);
 
-        try {
-            
-            // save or update to databases CompanySettings table
-            $saveRecord = CompanySettings::updateOrCreate(['id' => $request->id]);
-            $saveRecord->company_name   = $request->company_name;
-            $saveRecord->contact_person = $request->contact_person;
-            $saveRecord->address        = $request->address;
-            $saveRecord->country        = $request->country;
-            $saveRecord->city           = $request->city;
-            $saveRecord->state_province = $request->state_province;
-            $saveRecord->postal_code    = $request->postal_code;
-            $saveRecord->email          = $request->email;
-            $saveRecord->phone_number   = $request->phone_number;
-            $saveRecord->mobile_number  = $request->mobile_number;
-            $saveRecord->fax            = $request->fax;
-            $saveRecord->website_url    = $request->website_url;
-            $saveRecord->save();
-            
-            DB::commit();
-            flash()->success('Save CompanySettings successfully :)');
-            return redirect()->back();
-        } catch(\Exception $e) {
-            \Log::info($e);
-            DB::rollback();
-            flash()->error('Save CompanySettings fail :)');
-            return redirect()->back();
+    try {
+        $logoName = null;
+        if ($request->hasFile('logo')) {
+            $logo = $request->file('logo');
+            $logoName = time() . '.' . $logo->extension();
+            $logo->move(public_path('assets/images'), $logoName);
         }
+
+        $settings = CompanySettings::updateOrCreate(
+            ['id' => $request->id],
+            [
+                'company_name'    => $request->company_name,
+                'municipal_mayor' => $request->municipal_mayor,
+                'logo'            => $logoName ?? CompanySettings::find($request->id)?->logo,
+            ]
+        );
+
+        flash()->success('Company settings saved successfully!');
+        return redirect()->back();
+    } catch (\Exception $e) {
+        \Log::error($e);
+        flash()->error('Failed to save company settings.');
+        return redirect()->back();
     }
+}
     
     /** Roles & Permissions  */
     public function rolesPermissions()

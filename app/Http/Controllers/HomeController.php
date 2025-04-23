@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AddJob;
+use App\Models\Applicant;
+use App\Models\department;
 use App\Models\Employee;
+use App\Models\EmployeeEmployment;
+use App\Models\EmployeeJobDetail;
 use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\LeaveBalance;
 use App\Models\LeaveInformation;
-use App\Models\PositionHistory;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Carbon\Carbon;
@@ -41,84 +46,53 @@ class HomeController extends Controller
         $serviceMonthsInPosition = 0;
         $serviceDaysInPosition = 0;
         $serviceHoursInPosition = 0;
-        $latestPosition = null;
-
-        // Retrieve the employee's position history records, ordered by start date
-        $positionHistories = PositionHistory::where('emp_id', $employee->emp_id)
-            ->orderBy('start_date', 'desc') // Sort by start date to process the latest position first
-            ->get();
-
-        foreach ($positionHistories as $history) {
-            // Parse the start and end dates from each history record
-            $start = Carbon::parse($history->start_date);
-            $end = $history->end_date ? Carbon::parse($history->end_date) : Carbon::now();
-
-            // Track the latest position with no end date (i.e., ongoing position)
-            if ($history->end_date === null) {
-                $latestPosition = $history; // Latest position with no end date is ongoing
-            }
-
-            // Calculate the years, months, days, and hours served in this position
-            $timeDifference = $this->calculateTimeDifference($start, $end);
-            $yearsInPosition = $timeDifference['years'];
-            $monthsInPosition = $timeDifference['months'];
-            $daysInPosition = $timeDifference['days'];
-            $hoursInPosition = $timeDifference['hours'];
-
-            // Accumulate total years worked (for step increment purposes)
-            $totalYears += $yearsInPosition + ($monthsInPosition / 12);
-
-            // Calculate service years in the latest ongoing position
-            if ($history == $latestPosition) {
-                $serviceYearsInPosition = $yearsInPosition;
-                $serviceMonthsInPosition = $monthsInPosition;
-                $serviceDaysInPosition = $daysInPosition;
-                $serviceHoursInPosition = $hoursInPosition;
-            }
-        }
-
-        // If there’s no ongoing position (no null end_date), no step increment is awarded
-        if ($latestPosition === null) {
-            return [0, 0, 0, 0, 0, 0, 0, 'N/A']; // Now returns 8 elements
-        }
-
-
-        $currentPositionName = $latestPosition?->position?->position_name ?? 'N/A';
-
-
-        // Calculate total years worked in the latest ongoing position with no end date
-        $latestStartDate = Carbon::parse($latestPosition->start_date);
-        $timeInOngoingPosition = $this->calculateTimeDifference($latestStartDate, Carbon::now());
-        $yearsInOngoingPosition = $timeInOngoingPosition['years'];
-        $monthsInOngoingPosition = $timeInOngoingPosition['months'];
-        $daysInOngoingPosition = $timeInOngoingPosition['days'];
-        $hoursInOngoingPosition = $timeInOngoingPosition['hours'];
-
-        // Calculate total months worked in the ongoing position
-        $totalMonthsInPosition = ($yearsInOngoingPosition * 12) + $monthsInOngoingPosition;
-
-        // Adjust the progress percentage based on specific rules:
+        $currentPositionName = 'N/A';
         $progressPercentageIncrement = 0;
 
-        if ($yearsInOngoingPosition == 16 && $monthsInOngoingPosition == 0 && $daysInOngoingPosition == 26) {
-            $progressPercentageIncrement = 0.90; // Special case for 16 years and 26 days
-        } elseif ($yearsInOngoingPosition == 9 && $monthsInOngoingPosition == 6 && $daysInOngoingPosition == 11) {
-            $progressPercentageIncrement = 10; // Special case for 9 years, 6 months, and 11 days
-        } else {
-            // Calculate the progress towards the next increment as a percentage
-            $remainingMonths = ($yearsInOngoingPosition * 12 + $monthsInOngoingPosition) % 36; // Remaining months to reach the next step
-            $progressPercentageIncrement = ($remainingMonths / 36) * 100;
+        // Get the first job detail (assumes latest if ordered properly)
+        $jobDetail = EmployeeJobDetail::where('emp_id', $employee->emp_id)
+            ->where('is_designation', 0)
+            ->orderBy('appointment_date', 'asc')
+            ->first();
+
+        if (!$jobDetail || !$jobDetail->appointment_date) {
+            return [0, 0, 0, 0, 0, 0, 0, 'N/A', 'N/A'];
         }
 
-        // Ensure the progress is capped at 100% (just in case)
+        // Parse appointment date
+        $appointmentDate = Carbon::createFromFormat('d M, Y', $jobDetail->appointment_date);
+        $now = Carbon::now();
+
+        // Calculate difference from appointment to now
+        $timeDiff = $this->calculateTimeDifference($appointmentDate, $now);
+
+        $serviceYearsInPosition = $timeDiff['years'];
+        $serviceMonthsInPosition = $timeDiff['months'];
+        $serviceDaysInPosition = $timeDiff['days'];
+        $serviceHoursInPosition = $timeDiff['hours'];
+
+        $totalYears = $serviceYearsInPosition + ($serviceMonthsInPosition / 12);
+
+        // Get current position name
+        $currentPositionName = $jobDetail->position?->position_name ?? 'N/A';
+
+        // Calculate step increment (every 3 years)
+        $currentStep = floor($totalYears / 3);
+        $currentStep = min($currentStep, 8); // Cap at 8
+
+        // Only compute next step if not maxed out
+        $nextStepIncrement = $currentStep >= 8 ? 'N/A' : $currentStep + 1;
+
+        // Progress toward next step (only if not at step 8)
+        if ($currentStep < 8) {
+            $monthsInCurrentCycle = (($totalYears * 12) % 36); // months left in 3-year cycle
+            $progressPercentageIncrement = ($monthsInCurrentCycle / 36) * 100;
+        } else {
+            $progressPercentageIncrement = 100;
+        }
+
         $progressPercentageIncrement = min($progressPercentageIncrement, 100);
 
-        // Calculate the step increment
-        $currentStep = floor($yearsInOngoingPosition / 3); // Each step happens after every 3 years
-
-        $nextStepIncrement = $currentStep + 1;
-
-        // Return the step increment, service time, and progress towards the next increment
         return [
             $currentStep,
             $nextStepIncrement,
@@ -127,43 +101,282 @@ class HomeController extends Controller
             $serviceDaysInPosition,
             $serviceHoursInPosition,
             $progressPercentageIncrement,
-            $currentPositionName
+            $currentPositionName,
+            $appointmentDate->format('d M, Y') // formatted appointment date
         ];
     }
 
 
+
+
     public function index()
     {
-        $employees = Employee::with('employment')->get();
+        $currentDate = Carbon::now();
+        $employees = Employee::with('employment', 'user', 'jobDetails')->get();
+        $available_jobs = AddJob::all();
+        $applicants = Applicant::all();
+        $leave = Leave::all();
+
+        $leaveStatistics = $this->getLeaveStatistics();
+        $departmentOverview = $this->getDepartmentOverviewData();
+        $thisWeekLeaves = $this->getThisWeekLeaves();
+        $employmentStatusCount = $this->getEmploymentStatusCount();
+
+        $departmentGenderChartData = $this->getDepartmentGenderChartData();
+        $hiringChartData = $this->getHiringChartData($employees);
+        $this->enrichEmployeesData($employees, $currentDate);
+
+        return view('dashboard.dashboard', array_merge([
+            'employees' => $employees,
+            'leave' => $leave,
+            'available_jobs' => $available_jobs,
+            'applicants' => $applicants,
+            'departmentGenderChartData' => $departmentGenderChartData,
+            'hiringChartData' => $hiringChartData,
+            'leaveStatistics' => $leaveStatistics,
+            'thisWeekLeaves' => $thisWeekLeaves,
+            'employmentStatusCount' => $employmentStatusCount
+        ], $departmentOverview));
+    }
+
+    private function getEmploymentStatusCount()
+    {
+        return DB::table('employee_employment')
+            ->select('employment_status', DB::raw('count(*) as total'))
+            ->groupBy('employment_status')
+            ->pluck('total', 'employment_status');
+    }
+
+
+    private function getThisWeekLeaves()
+    {
         $currentDate = Carbon::now();
 
+        // Start and end of the current week
+        $startOfWeek = $currentDate->startOfWeek()->toDateString();
+        $endOfWeek = $currentDate->endOfWeek()->toDateString();
+
+        // Get the leaves for this week by parsing the string dates to Carbon objects for comparison
+        $leaves = DB::table('leaves')
+            ->join('users', 'users.user_id', '=', 'leaves.staff_id')
+            ->select(
+                'leaves.*',
+                'users.name as user_name',
+                'users.avatar as user_avatar'
+            )
+            ->whereBetween(DB::raw('STR_TO_DATE(leaves.date_from, "%d %b, %Y")'), [
+                $startOfWeek,
+                $endOfWeek
+            ])
+            ->orderBy('leaves.date_from', 'desc')
+            ->get();
+
+        return $leaves;
+    }
+
+
+    private function getDepartmentOverviewData()
+    {
+        $totalDepartments = Department::count();
+        $totalDesignations = Position::count();
+
+        $departmentStaff = Department::withCount(['employeeJobDetails as staff_count'])->get();
+        $totalStaff = $departmentStaff->sum('staff_count');
+
+        $departmentProgress = $departmentStaff->map(function ($dept) use ($totalStaff) {
+            return [
+                'name' => $dept->department,
+                'staff_count' => $dept->staff_count,
+                'percentage' => $totalStaff > 0 ? round(($dept->staff_count / $totalStaff) * 100, 2) : 0
+            ];
+        });
+
+        return [
+            'totalDepartments' => $totalDepartments,
+            'totalDesignations' => $totalDesignations,
+            'departmentProgress' => $departmentProgress
+        ];
+    }
+
+    private function getLeaveStatistics()
+    {
+        // All leaves count
+        $allLeavesCount = Leave::count();
+
+        // Get current month and year
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        // Get last month and next month details
+        $lastMonth = Carbon::now()->subMonth();
+        $nextMonth = Carbon::now()->addMonth();
+
+        // Define leave status counts for different statuses
+        $newLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
+            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
+            ->where('status', 'New')  // New status filter
+            ->count();
+
+        // Get leave status counts for Pending, Approved, and Declined for this month
+        $pendingLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
+            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
+            ->where('status', 'Pending')
+            ->count();
+
+        $approvedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
+            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
+            ->where('status', 'Approved')
+            ->count();
+
+        $declinedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
+            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
+            ->where('status', 'Declined')
+            ->count();
+
+        $lastMonthApprovedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$lastMonth->month])
+            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$lastMonth->year])
+            ->where('status', 'Approved')
+            ->count();
+
+        $lastMonthDeclinedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$lastMonth->month])
+            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$lastMonth->year])
+            ->where('status', 'Declined')
+            ->count();
+
+        // Percentage calculations for leave types (relative to total leaves count)
+        $newLeavesPercentage = $newLeavesCount > 0 && $allLeavesCount > 0
+            ? round(($newLeavesCount / $allLeavesCount) * 100, 2)
+            : 0;
+
+        // Adding percentage for pending, approved, and declined
+        $pendingLeavePercentage = $pendingLeavesCount > 0 && $allLeavesCount > 0
+            ? round(($pendingLeavesCount / $allLeavesCount) * 100, 2)
+            : 0;
+
+        $approvedLeavePercentage = $approvedLeavesCount > 0 && $allLeavesCount > 0
+            ? round(($approvedLeavesCount / $allLeavesCount) * 100, 2)
+            : 0;
+
+        $declinedLeavePercentage = $declinedLeavesCount > 0 && $allLeavesCount > 0
+            ? round(($declinedLeavesCount / $allLeavesCount) * 100, 2)
+            : 0;
+
+        // Percentage change calculations (for pending vs all-time)
+        $newPercentageChange = $allLeavesCount > 0
+            ? round(($newLeavesCount / $allLeavesCount) * 100, 2)
+            : 0;
+
+        $pendingPercentageChange = $allLeavesCount > 0
+            ? round(($pendingLeavesCount / $allLeavesCount) * 100, 2)
+            : 0;
+
+        $approvedPercentageChange = $lastMonthApprovedLeavesCount > 0
+            ? round((($approvedLeavesCount - $lastMonthApprovedLeavesCount) / $lastMonthApprovedLeavesCount) * 100, 2)
+            : 0;
+
+        $declinedPercentageChange = $lastMonthDeclinedLeavesCount > 0
+            ? round((($declinedLeavesCount - $lastMonthDeclinedLeavesCount) / $lastMonthDeclinedLeavesCount) * 100, 2)
+            : 0;
+
+        return [
+            'allLeavesCount' => $allLeavesCount,
+            'newLeavesCount' => $newLeavesCount,
+            'pendingLeavesCount' => $pendingLeavesCount,
+            'approvedLeavesCount' => $approvedLeavesCount,
+            'declinedLeavesCount' => $declinedLeavesCount,
+            'lastMonthApprovedLeavesCount' => $lastMonthApprovedLeavesCount,
+            'lastMonthDeclinedLeavesCount' => $lastMonthDeclinedLeavesCount,
+            'newLeavesPercentage' => $newLeavesPercentage,
+            'pendingLeavePercentage' => $pendingLeavePercentage,
+            'approvedLeavePercentage' => $approvedLeavePercentage,
+            'declinedLeavePercentage' => $declinedLeavePercentage,
+            'newPercentageChange'     => $newPercentageChange,
+            'pendingPercentageChange' => $pendingPercentageChange,
+            'approvedPercentageChange' => $approvedPercentageChange,
+            'declinedPercentageChange' => $declinedPercentageChange,
+        ];
+    }
+
+    private function getDepartmentGenderChartData()
+    {
+        return EmployeeJobDetail::select('department_id', DB::raw('count(*) as total'))
+            ->join('employees', 'employee_job_details.emp_id', '=', 'employees.emp_id')
+            ->groupBy('department_id')
+            ->get()
+            ->map(function ($department) {
+                $departmentName = Department::find($department->department_id)?->department ?? 'Unknown';
+
+                $maleCount = Employee::where('gender', 'male')
+                    ->whereHas('jobDetails', fn($q) => $q->where('department_id', $department->department_id))
+                    ->count();
+
+                $femaleCount = Employee::where('gender', 'female')
+                    ->whereHas('jobDetails', fn($q) => $q->where('department_id', $department->department_id))
+                    ->count();
+
+                return [
+                    'department' => $departmentName,
+                    'male_count' => $maleCount,
+                    'female_count' => $femaleCount
+                ];
+            });
+    }
+
+    private function getHiringChartData($employees)
+    {
+        return $employees->filter(fn($e) => $e->employment && $e->employment->date_hired)
+            ->filter(fn($e) => Carbon::parse($this->formatDate($e->employment->date_hired))->year <= now()->year)
+            ->groupBy(function ($employee) {
+                $year = Carbon::parse($this->formatDate($employee->employment->date_hired))->year;
+
+                // Calculate the start of the 5-year range (e.g., 1970, 1976, 1981, ...)
+                $startRange = floor(($year - 1) / 5) * 5 + 1;  // Start the range from the first year of the range (e.g., 1970, 1976)
+                $endRange = $startRange + 4;  // The end of the 5-year range (e.g., 1975, 1980)
+
+                return "$startRange-$endRange";
+            })
+            ->map(function ($group, $range) {
+                return [
+                    'y' => $range,
+                    'male' => $group->where('gender', 'Male')->count(),
+                    'female' => $group->where('gender', 'Female')->count()
+                ];
+            })
+            ->sortKeys()
+            ->values();
+    }
+
+
+
+    private function formatDate($date)
+    {
+        try {
+            return Carbon::parse($date);
+        } catch (\Exception $e) {
+            return Carbon::createFromFormat('d M, Y', $date);
+        }
+    }
+
+
+    private function enrichEmployeesData($employees, $currentDate)
+    {
         foreach ($employees as $employee) {
+            $position = EmployeeJobDetail::where('emp_id', $employee->emp_id)
+                ->where('is_designation', 0)
+                ->orderBy('appointment_date', 'asc')
+                ->first();
 
-            $positionHistories = PositionHistory::where('emp_id', $employee->emp_id)
-                ->whereNull('end_date')
-                ->orderBy('start_date', 'desc')
-                ->get();
-
-
-            if ($positionHistories->isNotEmpty()) {
-                $employee->latest_position_start_date = Carbon::parse($positionHistories->first()->start_date)->format('d M, Y');
-            } else {
-                $employee->latest_position_start_date = 'N/A';
-            }
+            $employee->latest_position_start_date = $position
+                ? Carbon::createFromFormat('d M, Y', $position->appointment_date)->format('d M, Y')
+                : 'N/A';
 
 
             $this->calculateEmployeeServiceYears($employee, $currentDate);
             $this->calculateEmployeeAwards($employee, $currentDate);
             $this->calculateStepIncrementAndPosition($employee);
         }
-
-        $leave = Leave::all();
-
-        return view('dashboard.dashboard', [
-            'employees' => $employees,
-            'leave' => $leave
-        ]);
     }
+
 
     private function calculateStepIncrementAndPosition($employee)
     {
@@ -184,7 +397,7 @@ class HomeController extends Controller
     public function calculateEmployeeServiceYears($employee, $currentDate)
     {
         if (isset($employee->employment->date_hired)) {
-            $dateHired = Carbon::parse($employee->employment->date_hired);
+            $dateHired = Carbon::createFromFormat('d M, Y', $employee->employment->date_hired);
             $currentDate = Carbon::parse($currentDate); // Ensure currentDate is a Carbon instance
 
             // Get the difference between the two dates in years, months, and days
@@ -207,47 +420,47 @@ class HomeController extends Controller
     }
 
 
-
-
     private function calculateEmployeeAwards($employee, $currentDate)
     {
         if (isset($employee->employment) && isset($employee->employment->date_hired)) {
-            $years = $employee->serviceYears;
+            $dateHired = Carbon::createFromFormat('d M, Y', $employee->employment->date_hired);
+            $current = Carbon::parse($currentDate);
 
+            $years = $employee->serviceYears;
             $earnedAwards = [];
             $nextAwardInYears = 0;
             $progressPercentage = 0;
             $timeUntilNextAward = null;
-            $nextAwardYear = 0;  // This will hold the next award year
+            $nextAwardYear = 0;
 
+            // Case for employees with less than 10 years of service
             if ($years < 10) {
-                // Not yet eligible for any Loyalty Award
                 $nextAwardInYears = 10 - $years;
                 $progressPercentage = ($years / 10) * 100;
-                $timeUntilNextAward = $this->calculateTimeDifference($currentDate, Carbon::parse($employee->employment->date_hired)->addYears(10));
+                $timeUntilNextAward = $this->calculateTimeDifference($current, $dateHired->copy()->addYears(10));
                 $nextAwardYear = 10;
             } else {
-                // Calculate earned awards
+                // For employees with 10 years or more of service, calculate awards based on 5-year increments
                 for ($i = 10; $i <= $years; $i += 5) {
                     $earnedAwards[] = "{$i}-Year Loyalty Award";
                 }
 
-                // Determine next award milestone
-                $nextAwardYear = (floor($years / 5) + 1) * 5;
+                // Calculate next award based on 5-year increments
+                $nextAwardYear = floor($years / 5) * 5 + 5;
+
                 $nextAwardInYears = $nextAwardYear - $years;
                 $progressPercentage = (($years % 5) / 5) * 100;
-                $timeUntilNextAward = $this->calculateTimeDifference($currentDate, Carbon::parse($employee->employment->date_hired)->addYears($nextAwardYear));
+                $timeUntilNextAward = $this->calculateTimeDifference($current, $dateHired->copy()->addYears($nextAwardYear));
             }
 
-            // Assign calculated values to the employee object
+            // Assign values to the employee object
             $employee->earnedAwards = $earnedAwards;
             $employee->nextAwardInYears = $nextAwardInYears;
             $employee->progressPercentage = $progressPercentage;
             $employee->timeUntilNextAward = $timeUntilNextAward;
-            $employee->nextaward = $nextAwardYear;  // Add the next award year to the employee object
-
+            $employee->nextaward = $nextAwardYear;
         } else {
-            // Handle the case when employment or date_hired is missing
+            // If no employment date is available, reset all values
             $employee->earnedAwards = [];
             $employee->nextAwardInYears = 0;
             $employee->progressPercentage = 0;
@@ -255,6 +468,7 @@ class HomeController extends Controller
             $employee->nextaward = 0;
         }
     }
+
 
     private function calculateTimeDifference($startDate, $endDate)
     {
@@ -288,15 +502,11 @@ class HomeController extends Controller
 
         // Get the start and end of the current week (Monday to Sunday)
         $currentWeekStart = $dt->copy()->startOfWeek(Carbon::MONDAY);
-        $currentWeekEnd = $dt->copy()->endOfWeek();    
-
+        $currentWeekEnd = $dt->copy()->endOfWeek();
 
         // Get the start and end of the next week (Monday to Sunday)
         $nextWeekStart = $dt->copy()->addWeek()->startOfWeek(Carbon::MONDAY);
-        $nextWeekEnd = $dt->copy()->addWeek()->endOfWeek();     
-
-
-
+        $nextWeekEnd = $dt->copy()->addWeek()->endOfWeek();
 
         // Get leaves for the current week (only Pending)
         $currentWeekLeaves = Leave::where('status', 'Pending')
@@ -315,15 +525,13 @@ class HomeController extends Controller
             ->get()
             ->filter(function ($leave) use ($nextWeekStart, $nextWeekEnd) {
                 $leaveDate = Carbon::createFromFormat('d M, Y', $leave->date_from);
-
                 return $leaveDate->between($nextWeekStart, $nextWeekEnd);
             });
 
         // Monitor the current user's leave status
         $userId = auth()->user()->user_id;
 
-        $leaveBalance = LeaveBalance::where('staff_id', $userId)
-            ->first();
+        $leaveBalance = LeaveBalance::where('staff_id', $userId)->first();
 
         $pendingLeavesCount = Leave::where('staff_id', $userId)
             ->where('status', 'Pending')
@@ -337,44 +545,43 @@ class HomeController extends Controller
             ->where('status', 'Declined')
             ->count();
 
-
         $leaveInformation = LeaveInformation::whereJsonContains('staff_id', $userId)->get();
 
         // Calculate total leave days by summing all leave types
         $totalLeaveDays = $leaveInformation->sum('leave_days');
 
-
         // Calculate the total leave taken (used_leave_days) and remaining leave
         $leaveTaken = $leaveBalance ? $leaveBalance->used_leave_days : 0;
-        $remainingLeave = $totalLeaveDays -  $leaveTaken;
-
+        $remainingLeave = $totalLeaveDays - $leaveTaken;
 
         $employeeId = auth()->user()->user_id;
 
-        // Get all position history records where employee is still in the position (end_date is null or empty)
-        $positions = PositionHistory::where('emp_id', $employeeId)
-            ->whereNull('end_date')  // Filters for records where end_date is NULL
-            ->get();
-
+        // Get the first job detail record (by earliest appointment_date)
+        $firstJobDetail = EmployeeJobDetail::where('emp_id', $employeeId)
+             ->where('is_designation', 0)
+            ->orderBy('appointment_date', 'asc')
+            ->first();
 
         $totalStepIncrement = 0;
 
-        foreach ($positions as $position) {
-            // Ensure start_date is parsed correctly
-            $startDate = Carbon::createFromFormat('Y-m-d', $position->start_date);
-            $endDate = $position->end_date ? Carbon::createFromFormat('Y-m-d', $position->end_date) : Carbon::now(); // Use current date if end_date is null
+        if ($firstJobDetail && $firstJobDetail->appointment_date) {
+            try {
+                // Parse the appointment date from the formatted string
+                $startDate = Carbon::createFromFormat('d M, Y', $firstJobDetail->appointment_date);
+                $endDate = Carbon::now();
 
-            // Calculate the years in this position
-            $yearsInPosition = $startDate->diffInYears($endDate);
+                // Calculate the years in position
+                $yearsInPosition = $startDate->diffInYears($endDate);
 
-            // Calculate step increment for this position (every 3 years)
-            $stepIncrementForPosition = floor($yearsInPosition / 3);
-
-            // Add to total step increment
-            $totalStepIncrement += $stepIncrementForPosition;
+                // Step increment every 3 years
+                $totalStepIncrement = floor($yearsInPosition / 3);
+            } catch (\Exception $e) {
+                // Handle invalid date format
+                $totalStepIncrement = 0;
+            }
         }
 
-        // Ensure step increment does not exceed 8 (maximum of 24 years in total service)
+        // Ensure it does not exceed 8 steps
         $totalStepIncrement = min($totalStepIncrement, 8);
 
         // Get years of service
@@ -390,18 +597,26 @@ class HomeController extends Controller
 
         // Loyalty award calculation based on years of service
         if ($yearsOfService >= 10) {
-            // Calculate the number of 5-year blocks after 10 years
             $loyaltyAward = floor(($yearsOfService - 10) / 5) * 5 + 10;
         } else {
             $loyaltyAward = 0;
         }
 
-
-        return view('dashboard.emdashboard', compact('todayDate', 'holidays', 'currentWeekLeaves', 'nextWeekLeaves', 'userId', 'leaveTaken', 'remainingLeave', 'pendingLeavesCount', 'approvedLeavesCount', 'declinedLeavesCount', 'totalStepIncrement', 'loyaltyAward'));
+        return view('dashboard.emdashboard', compact(
+            'todayDate',
+            'holidays',
+            'currentWeekLeaves',
+            'nextWeekLeaves',
+            'userId',
+            'leaveTaken',
+            'remainingLeave',
+            'pendingLeavesCount',
+            'approvedLeavesCount',
+            'declinedLeavesCount',
+            'totalStepIncrement',
+            'loyaltyAward'
+        ));
     }
-
-
-
 
 
     /** Generate PDF */

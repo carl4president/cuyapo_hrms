@@ -8,9 +8,9 @@ use App\Models\ProfileInformation;
 use App\Rules\MatchOldPassword;
 use App\Models\BankInformation;
 use App\Models\department;
-use App\Models\Designation;
 use Illuminate\Http\Request;
 use App\Models\Employee;
+use App\Models\EmployeeContact;
 use App\Models\Form;
 use App\Models\Position;
 use App\Models\TypeJob;
@@ -46,28 +46,28 @@ class UserManagementController extends Controller
         $columnName_arr  = $request->get('columns');
         $order_arr       = $request->get('order');
         $search_arr      = $request->get('search');
-    
+
         $columnIndex     = $columnIndex_arr[0]['column']; // Column index
         $columnName      = $columnName_arr[$columnIndex]['data']; // Column name
         $columnSortOrder = $order_arr[0]['dir']; // asc or desc
         $searchValue     = $search_arr['value']; // Search value
-    
-        $users = User::with(['employee.employment.department']);
+
+        $users = User::with(['employee.jobDetails.department']);
         $totalRecords = $users->count();
-    
+
         // Search filters
         $filters = [
             'name'      => $request->user_name,
             'role_name' => $request->type_role,
             'status'    => $request->type_status,
         ];
-    
+
         foreach ($filters as $field => $value) {
             if (!empty($value)) {
                 $users->where($field, 'like', "%$value%");
             }
         }
-    
+
         // Search columns
         $searchColumns = [
             'name',
@@ -80,7 +80,7 @@ class UserManagementController extends Controller
             'status',
             'department'
         ];
-    
+
         // Apply search filter and get the total records with filter
         $totalRecordsWithFilter = $users->where(function ($query) use ($searchValue) {
             $query->orWhere('name', 'like', "%{$searchValue}%")
@@ -91,11 +91,11 @@ class UserManagementController extends Controller
                 ->orWhere('join_date', 'like', "%{$searchValue}%")
                 ->orWhere('role_name', 'like', "%{$searchValue}%")
                 ->orWhere('status', 'like', "%{$searchValue}%")
-                ->orWhereHas('employee.employment.department', function ($q) use ($searchValue) {
+                ->orWhereHas('employee.jobDetails.department', function ($q) use ($searchValue) {
                     $q->where('department', 'like', "%{$searchValue}%");
                 });
         })->count();
-    
+
         $records = $users->orderBy($columnName, $columnSortOrder)
             ->where(function ($query) use ($searchValue) {
                 $query->orWhere('name', 'like', "%{$searchValue}%")
@@ -106,14 +106,14 @@ class UserManagementController extends Controller
                     ->orWhere('join_date', 'like', "%{$searchValue}%")
                     ->orWhere('role_name', 'like', "%{$searchValue}%")
                     ->orWhere('status', 'like', "%{$searchValue}%")
-                    ->orWhereHas('employee.employment.department', function ($q) use ($searchValue) {
+                    ->orWhereHas('employee.jobDetails.department', function ($q) use ($searchValue) {
                         $q->where('department', 'like', "%{$searchValue}%");
                     });
             })
             ->skip($start)
             ->take($rowPerPage)
             ->get();
-    
+
         $data_arr = [];
         $roleBadges = [
             'Admin'       => 'bg-inverse-danger',
@@ -122,31 +122,53 @@ class UserManagementController extends Controller
             'Client'      => 'bg-inverse-success',
             'Employee'    => 'bg-inverse-dark',
         ];
-    
+
         $statusBadges = [
             'Active'   => 'text-success',
             'Inactive' => 'text-info',
             'Disable'  => 'text-danger',
         ];
-    
+
         foreach ($records as $key => $record) {
-            // Safe access to employee, employment, and department
-            $departmentName = optional(optional(optional($record->employee)->employment)->department)->department ?? 'N/A';
-            $position = optional(optional($record->employee)->employment)->position->position_name ?? 'N/A';
-    
+            $jobDetails = optional($record->employee)->jobDetails;
+            $jobDetail = $jobDetails ? $jobDetails->first() : null;
+
+            if ($jobDetail) {
+                $department = optional($jobDetail->department);
+                $positionObj = optional($jobDetail->position);
+                $departmentName = $department->department ?? 'N/A';
+                $departmentId = $department->id ?? 0;
+                $position = $positionObj->position_name ?? 'N/A';
+                $positionId = $positionObj->id ?? 0;
+            } else {
+                // 👇 Fallback to user's direct department and position
+                $department = department::find($record->department);
+                $positionObj = Position::find($record->position);
+                $departmentName = $department->department ?? 'N/A';
+                $departmentId = $department->id ?? 0;
+                $position = $positionObj->position_name ?? 'N/A';
+                $positionId = $positionObj->id ?? 0;
+            }
+
+
             // Format the name
+            $link = '#';
+            if ($record->role_name === 'Employee') {
+                $link = url('all/employee/view/edit/' . $record->user_id);
+            }
+
             $record->name = '
                 <h2 class="table-avatar">
-                    <a href="' . url('employee/profile/' . $record->user_id) . '">
+                    <a href="' . $link . '">
                         <img class="avatar" data-avatar="' . $record->avatar . '" src="' . url('/assets/images/' . $record->avatar) . '">
                         ' . $record->name . '
                          <span class="name" hidden>' . $record->name . '</span>
                     </a>
                 </h2>';
-    
+
             // Role badge
             $role_name = isset($roleBadges[$record->role_name]) ? '<span class="badge ' . $roleBadges[$record->role_name] . ' role_name">' . $record->role_name . '</span>' : 'NULL';
-    
+
             // Status dropdown
             $full_status = '
                 <div class="dropdown-menu dropdown-menu-right">
@@ -154,14 +176,14 @@ class UserManagementController extends Controller
                     <a class="dropdown-item"><i class="fa fa-dot-circle-o text-warning"></i> Inactive </a>
                     <a class="dropdown-item"><i class="fa fa-dot-circle-o text-danger"></i> Disable </a>
                 </div>';
-    
+
             $status = '
                 <a class="btn btn-white btn-sm btn-rounded dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="false">
                     <i class="fa fa-dot-circle-o ' . ($statusBadges[$record->status] ?? 'text-dark') . '"></i>
                     <span class="status_s">' . $record->status . '</span>
                 </a>
                 ' . $full_status;
-    
+
             // Action buttons
             $action = '
                 <div class="dropdown dropdown-action">
@@ -171,38 +193,38 @@ class UserManagementController extends Controller
                         <a href="#" class="dropdown-item userDelete" data-toggle="modal" data-id="' . $record->id . '" data-target="#delete_user"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                     </div>
                 </div>';
-    
+
             $last_login = Carbon::parse($record->last_login)->diffForHumans();
-    
+
             $data_arr[] = [
                 "no"           => '<span class="id" data-id="' . $record->id . '">' . ($start + $key + 1) . '</span>',
-                "name"         => $record->name,
+                "name" => '<span class="name" data-first-name="' . $record->first_name . '" data-middle-name="' . $record->middle_name . '" data-last-name="' . $record->last_name . '">' . $record->name . '</span>',
                 "user_id"      => '<span class="user_id">' . $record->user_id . '</span>',
                 "email"        => '<span class="email">' . $record->email . '</span>',
-                "position"     => '<span class="position">' . $position . '</span>',
+                "position"     => '<span class="position" data-id="' . $positionId . '">' . $position . '</span>',
                 "phone_number" => '<span class="phone_number">' . $record->phone_number . '</span>',
                 "join_date"    => $record->join_date,
                 "last_login"   => $last_login,
                 "role_name"    => $role_name,
                 "status"       => $status,
-                "department"   => '<span class="department">' . $departmentName . '</span>',
+                "department"   => '<span class="department" data-id="' . $departmentId . '">' . $departmentName . '</span>',
                 "action"       => $action,
             ];
         }
-    
+
         $response = [
             "draw"                 => intval($draw),
             "iTotalRecords"        => $totalRecords,
             "iTotalDisplayRecords" => $totalRecordsWithFilter,
             "aaData"               => $data_arr
         ];
-    
+
         return response()->json($response);
     }
-    
-    
-    
-    
+
+
+
+
     /** Profile User */
     public function profile()
     {
@@ -228,7 +250,6 @@ class UserManagementController extends Controller
 
             $departments = department::all();
             $positions = Position::all();
-            $designations = Designation::all();
             $typeJobs = TypeJob::all();
 
             // Return the employee data to the view
@@ -247,7 +268,6 @@ class UserManagementController extends Controller
                 'otherInformations'     => $otherInformations,
                 'departments'            => $departments,
                 'positions'              => $positions,
-                'designations'           => $designations,
                 'typeJobs'               => $typeJobs,
             ]);
         } else {
@@ -266,6 +286,8 @@ class UserManagementController extends Controller
     public function profileInformation(Request $request)
     {
         try {
+            $fullName = $request->fname . ' ' . $request->mname . ' ' . $request->lname;
+
             if (!empty($request->images)) {
                 $image_name = $request->hidden_image;
                 $image = $request->file('images');
@@ -281,9 +303,13 @@ class UserManagementController extends Controller
                         unlink('assets/images/' . Auth::user()->avatar);
                     }
                 }
+
                 $update = [
                     'user_id' => $request->user_id,
-                    'name'    => $request->name,
+                    'name'    => $fullName,
+                    'first_name'    => $request->fname,
+                    'middle_name'    => $request->mname,
+                    'last_name'    => $request->lname,
                     'avatar'  => $image_name,
                 ];
                 User::where('user_id', $request->user_id)->update($update);
@@ -292,7 +318,10 @@ class UserManagementController extends Controller
 
             $employee = Employee::where('emp_id', $request->user_id)->first();
             if ($employee) {
-                $employee->name         = $request->name;
+                $employee->name         = $fullName;
+                $employee->first_name   = $request->fname;
+                $employee->middle_name  = $request->mname;
+                $employee->last_name         = $request->lname;
                 $employee->email        = $request->email;
                 $employee->save();
             }
@@ -300,7 +329,10 @@ class UserManagementController extends Controller
             User::updateOrCreate(
                 ['user_id' => $request->user_id],
                 [
-                    'name'         => $request->name,
+                    'name'         => $fullName,
+                    'first_name'    => $request->fname,
+                    'middle_name'    => $request->mname,
+                    'last_name'    => $request->lname,
                     'email'        => $request->email,
                     'phone_number'        => $request->phone_number,
                 ]
@@ -328,7 +360,9 @@ class UserManagementController extends Controller
     public function addNewUserSave(Request $request)
     {
         $request->validate([
-            'name'      => 'required|string|max:255',
+            'fname'      => 'required|string|max:255',
+            'lname'      => 'required|string|max:255',
+            'mname'      => 'required|string|max:255',
             'email'     => 'required|string|email|max:255|unique:users',
             'phone'     => 'required|min:11|numeric',
             'role_name' => 'required|string|max:255',
@@ -347,8 +381,13 @@ class UserManagementController extends Controller
             $imageName = time() . '.' . $request->image->extension();
             $request->image->move(public_path('assets/images'), $imageName);
 
+            $fullName = trim($request->fname . ' ' . $request->mname . ' ' . $request->lname);
+
             $user = new User;
-            $user->name         = $request->name;
+            $user->name         = $fullName;
+            $user->first_name   = $request->fname;
+            $user->middle_name  = $request->mname;
+            $user->last_name    = $request->lname;
             $user->email        = $request->email;
             $user->join_date    = $todayDate;
             $user->last_login   = $todayDate;
@@ -361,14 +400,120 @@ class UserManagementController extends Controller
             $user->password     = Hash::make($request->password);
             $user->save();
 
+            if (strtolower($request->role_name) === 'employee') {
+                // Create the Employee record
+                $employee = Employee::create([
+                    'name'            => $fullName,
+                    'first_name'      => $request->fname,
+                    'middle_name'     => $request->mname,
+                    'last_name'       => $request->lname,
+                    'email'           => $request->email,
+                    'birth_date'      => 'N/A',
+                    'place_of_birth'  => 'N/A',
+                    'height'          => 'N/A',
+                    'weight'          => 'N/A',
+                    'blood_type'      => 'N/A',
+                    'gender'          => 'N/A',
+                    'civil_status'    => 'N/A',
+                    'nationality'     => 'N/A',
+                ]);
+
+                // Insert into employee_family_info
+                $employee->familyInfo()->create([
+                    'father_name'            => 'N/A',
+                    'mother_name'            => 'N/A',
+                    'spouse_name'            => 'N/A',
+                    'spouse_occupation'      => 'N/A',
+                    'spouse_employer'        => 'N/A',
+                    'spouse_business_address' => 'N/A',
+                    'spouse_tel_no'          => 'N/A',
+                ]);
+
+                // Get department_id and position_id with fallback to default 1
+                $department_id = DB::table('departments')->where('id', $request->department)->value('id') ?? 1;
+                $position_id   = DB::table('positions')->where('id', $request->position)->value('id') ?? 1;
+
+                // Insert into employee_job_details
+                $employee->jobDetails()->create([
+                    'department_id' => $department_id,
+                    'position_id'   => $position_id,
+                    'is_head'       => false,
+                    'is_designation' => false,
+                    'appointment_date' => now()->format('d M, Y'),
+                ]);
+
+                // Insert into employee_government_ids
+                $employee->governmentIds()->create([
+                    'agency_employee_no' => 'N/A',
+                    'sss_no'             => 'N/A',
+                    'gsis_id_no'         => 'N/A',
+                    'pagibig_no'         => 'N/A',
+                    'philhealth_no'      => 'N/A',
+                    'tin_no'             => 'N/A',
+                ]);
+
+                // Insert into employee_contacts
+                $employee->contact()->create([
+                    'residential_address' => 'N/A',
+                    'residential_zip'     => '0000',
+                    'permanent_address'   => 'N/A',
+                    'permanent_zip'       => '0000',
+                    'phone_number'        => $request->phone,
+                    'mobile_number'       => $request->phone,
+                ]);
+
+                $employee->employment()->create([
+                    'employment_status' => 'Full Time',
+                    'date_hired'        => now()->format('d M, Y'),
+                ]);
+
+                // Education levels and their defaults
+                $education_levels = [
+                    'Elementary' => ['year_from' => 'N/A', 'year_to' => 'N/A'],
+                    'Secondary' => ['year_from' => 'N/A', 'year_to' => 'N/A'],
+                    'Vocational/Trade Course' => ['year_from' => 'N/A', 'year_to' => 'N/A'],
+                    'College' => ['year_from' => 'N/A', 'year_to' => 'N/A'],
+                    'Graduate Studies' => ['year_from' => 'N/A', 'year_to' => 'N/A'],
+                ];
+
+                foreach ($education_levels as $level => $years) {
+                    // Set defaults for education
+                    $degree = 'N/A';
+                    $school_name = 'N/A';
+                    $highest_units_earned = 'N/A';
+                    $year_graduated = 'N/A';
+                    $scholarship_honors = 'N/A';
+
+                    if (in_array($level, ['Elementary', 'Secondary'])) {
+                        $degree = null;
+                        $highest_units_earned = null;
+                        $year_graduated = 'N/A';
+                    } elseif ($level === 'Graduate Studies') {
+                        $highest_units_earned = null;
+                    }
+
+                    $employee->education()->create([
+                        'education_level'      => $level,
+                        'degree'               => $degree,
+                        'school_name'          => $school_name,
+                        'year_from'            => $years['year_from'],
+                        'year_to'              => $years['year_to'],
+                        'highest_units_earned' => $highest_units_earned,
+                        'year_graduated'       => $year_graduated,
+                        'scholarship_honors'   => $scholarship_honors,
+                    ]);
+                }
+            }
+
+
             DB::commit();
 
-            Toastr::success('Created new account successfully!', 'Success');
+            flash()->success('Created new account successfully!');
             return redirect()->route('userManagement');
         } catch (\Exception $e) {
             DB::rollback();
             \Log::error('Failed to create new account', ['error' => $e->getMessage()]);
-            Toastr::error('Failed to create new account. Please try again.', 'Error');
+            flash()->error('Failed to create new account. Please try again.');
             return redirect()->back()->withInput();
         }
     }
@@ -377,9 +522,10 @@ class UserManagementController extends Controller
     public function update(Request $request)
     {
         DB::beginTransaction();
+
         try {
             $user_id   = $request->user_id;
-            $name      = $request->name;
+            $fullName  = trim($request->fname . ' ' . $request->mname . ' ' . $request->lname);
             $email     = $request->email;
             $role_name = $request->role_name;
             $position  = $request->position;
@@ -388,24 +534,25 @@ class UserManagementController extends Controller
             $status    = $request->status;
             $image_name = $request->hidden_image;
 
-            $dt = Carbon::now();
-            $todayDate = $dt->toDayDateTimeString();
-
             $image = $request->file('images');
             if ($image) {
-                // Delete old image if not the default one
                 if ($image_name && $image_name != 'photo_defaults.jpg') {
-                    // Delete the old image if it exists
-                    unlink('assets/images/' . $image_name);
+                    @unlink('assets/images/' . $image_name);
                 }
-
                 $image_name = time() . '.' . $image->getClientOriginalExtension();
                 $image->move(public_path('assets/images'), $image_name);
             }
 
+            // Get current role
+            $current_role = User::where('user_id', $user_id)->value('role_name');
+
+            // Update User table
             $update = [
                 'user_id'       => $user_id,
-                'name'          => $name,
+                'name'          => $fullName,
+                'first_name'    => $request->fname,
+                'middle_name'   => $request->mname,
+                'last_name'     => $request->lname,
                 'role_name'     => $role_name,
                 'email'         => $email,
                 'position'      => $position,
@@ -414,31 +561,133 @@ class UserManagementController extends Controller
                 'status'        => $status,
                 'avatar'        => $image_name,
             ];
-
-            $activityLog = [
-                'user_name'    => $name,
-                'email'        => $email,
-                'phone_number' => $phone,
-                'status'       => $status,
-                'role_name'    => $role_name,
-                'modify_user'  => 'Update',
-                'date_time'    => $todayDate,
-            ];
-
-            DB::table('user_activity_logs')->insert($activityLog);
             User::where('user_id', $user_id)->update($update);
 
-            DB::commit();
+            // Role has changed logic
+            if (strtolower($current_role) !== strtolower($role_name)) {
+                if (strtolower($role_name) === 'employee') {
+                    $employee = Employee::create([
+                        'emp_id'          => $user_id,
+                        'name'            => $fullName,
+                        'first_name'      => $request->fname,
+                        'middle_name'     => $request->mname,
+                        'last_name'       => $request->lname,
+                        'email'           => $email,
+                        'birth_date'      => 'N/A',
+                        'place_of_birth'  => 'N/A',
+                        'height'          => 'N/A',
+                        'weight'          => 'N/A',
+                        'blood_type'      => 'N/A',
+                        'gender'          => 'N/A',
+                        'civil_status'    => 'N/A',
+                        'nationality'     => 'N/A',
+                    ]);
 
+                    $employee->familyInfo()->create([
+                        'father_name'             => 'N/A',
+                        'mother_name'             => 'N/A',
+                        'spouse_name'             => 'N/A',
+                        'spouse_occupation'       => 'N/A',
+                        'spouse_employer'         => 'N/A',
+                        'spouse_business_address' => 'N/A',
+                        'spouse_tel_no'           => 'N/A',
+                    ]);
+
+                    $employee->jobDetails()->create([
+                        'department_id'  => $department ?? 1,
+                        'position_id'    => $position ?? 1,
+                        'is_head'        => false,
+                        'is_designation' => false,
+                        'appointment_date' => now()->format('d M, Y'),
+                    ]);
+
+                    $employee->governmentIds()->create([
+                        'agency_employee_no' => 'N/A',
+                        'sss_no'             => 'N/A',
+                        'gsis_id_no'         => 'N/A',
+                        'pagibig_no'         => 'N/A',
+                        'philhealth_no'      => 'N/A',
+                        'tin_no'             => 'N/A',
+                    ]);
+
+                    $employee->contact()->create([
+                        'residential_address' => 'N/A',
+                        'residential_zip'     => '0000',
+                        'permanent_address'   => 'N/A',
+                        'permanent_zip'       => '0000',
+                        'phone_number'        => $phone,
+                        'mobile_number'       => $phone,
+                    ]);
+
+                    $employee->employment()->create([
+                        'employment_status' => 'Full Time',
+                        'date_hired'        => now()->format('d M, Y'),
+                    ]);
+
+                    $education_levels = [
+                        'Elementary',
+                        'Secondary',
+                        'Vocational/Trade Course',
+                        'College',
+                        'Graduate Studies'
+                    ];
+
+                    foreach ($education_levels as $level) {
+                        $employee->education()->create([
+                            'education_level'      => $level,
+                            'degree'               => in_array($level, ['Elementary', 'Secondary']) ? null : 'N/A',
+                            'school_name'          => 'N/A',
+                            'year_from'            => 'N/A',
+                            'year_to'              => 'N/A',
+                            'highest_units_earned' => in_array($level, ['Elementary', 'Secondary', 'Graduate Studies']) ? null : 'N/A',
+                            'year_graduated'       => 'N/A',
+                            'scholarship_honors'   => 'N/A',
+                        ]);
+                    }
+                } elseif (strtolower($role_name) === 'admin') {
+                    // Delete all related employee records if user was an employee before
+                    $employee = Employee::where('emp_id', $user_id)->first();
+                    if ($employee) {
+                        $employee->familyInfo()->delete();
+                        $employee->jobDetails()->delete();
+                        $employee->governmentIds()->delete();
+                        $employee->contact()->delete();
+                        $employee->employment()->delete();
+                        $employee->education()->delete();
+                        $employee->delete();
+                    }
+                }
+            } else {
+                // Just update existing Employee and Contact data if not changing role
+                Employee::where('emp_id', $user_id)->update([
+                    'name'        => $fullName,
+                    'first_name'  => $request->fname,
+                    'middle_name' => $request->mname,
+                    'last_name'   => $request->lname,
+                    'email'       => $email,
+                ]);
+                EmployeeContact::where('emp_id', $user_id)->update([
+                    'phone_number' => $phone,
+                ]);
+                DB::table('employee_job_details')
+                    ->where('emp_id', $user_id)
+                    ->update([
+                        'department_id' => $department,
+                        'position_id'   => $position,
+                    ]);
+            }
+
+            DB::commit();
             flash()->success('User updated successfully :)');
             return redirect()->route('userManagement');
         } catch (\Exception $e) {
-            DB::rollback();
+            DB::rollBack();
             \Log::error('User update failed', ['error' => $e->getMessage()]);
-            flash()->success('User update failed :)');
+            flash()->error('User update failed :(');
             return redirect()->back()->withInput();
         }
     }
+
 
     /** Delete Record */
     public function delete(Request $request)
@@ -448,18 +697,6 @@ class UserManagementController extends Controller
             $dt = Carbon::now();
             $todayDate = $dt->toDayDateTimeString();
 
-            // Log the deletion activity
-            $activityLog = [
-                'user_name'    => Session::get('name'),
-                'email'        => Session::get('email'),
-                'phone_number' => Session::get('phone_number'),
-                'status'       => Session::get('status'),
-                'role_name'    => Session::get('role_name'),
-                'modify_user'  => 'Delete',
-                'date_time'    => $todayDate,
-            ];
-
-            DB::table('user_activity_logs')->insert($activityLog);
 
             // Handle the deletion of user-related information
             $userId = $request->id;

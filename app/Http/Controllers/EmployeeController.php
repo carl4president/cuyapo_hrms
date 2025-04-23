@@ -16,6 +16,8 @@ use App\Models\EmployeeEducation;
 use App\Models\EmployeeEmployment;
 use App\Models\EmployeeJobDetail;
 use App\Models\GraphData;
+use App\Models\Leave;
+use App\Models\LeaveBalance;
 use App\Models\Position;
 use App\Models\TypeJob;
 use App\Models\User;
@@ -72,6 +74,7 @@ class EmployeeController extends Controller
 
         return view('employees.employeelist', compact('employee', 'userList', 'departments', 'typeJobs'));
     }
+
 
     /** Get Data Employee Position */
     public function getInformationEmppos(Request $request)
@@ -141,13 +144,13 @@ class EmployeeController extends Controller
                 'school_name'           => 'nullable|array',
                 'school_name.*'         => 'nullable|string|max:255',
                 'year_from'             => 'nullable|array',
-                'year_from.*'           => 'nullable|integer|min:1900|max:' . date('Y'),
+                'year_from.*'           => 'nullable|string|max:255',
                 'year_to'               => 'nullable|array',
-                'year_to.*'             => 'nullable|integer|min:1900|max:' . date('Y'),
+                'year_to.*'             => 'nullable|string|max:255',
                 'highest_units_earned'  => 'nullable|array',
                 'highest_units_earned.*' => 'nullable|string|max:255',
                 'year_graduated'        => 'nullable|array',
-                'year_graduated.*'      => 'nullable|integer|min:1900|max:' . date('Y'),
+                'year_graduated.*'      => 'nullable|string|max:255',
                 'scholarship_honors'    => 'nullable|array',
                 'scholarship_honors.*'  => 'nullable|string|max:255',
 
@@ -298,6 +301,7 @@ class EmployeeController extends Controller
                 'position_id'             => $validatedData['position_id'],
                 'is_head'                 => 0,
                 'is_designation'          => 0,
+                'appointment_date'        => $validatedData['date_hired'],
             ]);
 
             $image = $request->file('image');
@@ -311,6 +315,9 @@ class EmployeeController extends Controller
 
             User::create([
                 'name'     => $fullName,
+                'first_name'     => $validatedData['fname'],
+                'middle_name'     => $validatedData['mname'],
+                'last_name'     => $validatedData['lname'],
                 'email'    => $validatedData['email'],
                 'password' => $hashedPassword,
                 'avatar' => isset($imageName) ? $imageName : null,
@@ -546,6 +553,9 @@ class EmployeeController extends Controller
 
             $employee->user()->update([
                 'name'          => $fullName,
+                'first_name'     => $validatedData['fname'],
+                'middle_name'     => $validatedData['mname'],
+                'last_name'     => $validatedData['lname'],
                 'email'      => $validatedData['email'],
             ]);
 
@@ -1181,13 +1191,13 @@ class EmployeeController extends Controller
             'school_name'           => 'nullable|array',
             'school_name.*'         => 'nullable|string|max:255',
             'year_from'             => 'nullable|array',
-            'year_from.*'           => 'nullable|integer|min:1900|max:' . date('Y'),
+            'year_from.*'           => 'nullable|string|max:255',
             'year_to'               => 'nullable|array',
-            'year_to.*'             => 'nullable|integer|min:1900|max:' . date('Y'),
+            'year_to.*'             => 'nullable|string|max:255',
             'highest_units_earned'  => 'nullable|array',
             'highest_units_earned.*' => 'nullable|string|max:255',
             'year_graduated'        => 'nullable|array',
-            'year_graduated.*'      => 'nullable|integer|min:1900|max:' . date('Y'),
+            'year_graduated.*'      => 'nullable|string|max:255',
             'scholarship_honors'    => 'nullable|array',
             'scholarship_honors.*'  => 'nullable|string|max:255',
         ]);
@@ -1280,7 +1290,12 @@ class EmployeeController extends Controller
             $employee->voluntaryWorks()->delete();
             $employee->trainings()->delete();
             $employee->otherInformations()->delete();
-            $employee->user()->delete(); // Be careful if User should be deleted
+            $employee->user()->delete();
+            $employee->positionHistory()->delete();
+            $employee->jobDetails()->delete();
+
+            Leave::where('staff_id', $emp_id)->delete();
+            LeaveBalance::where('staff_id', $emp_id)->delete();
 
             // Delete employee record
             $employee->delete();
@@ -1395,6 +1410,7 @@ class EmployeeController extends Controller
     public function employeeDepartments($department)
     {
         $dept = Department::where('department', $department)->first();
+        $departments = Department::all();
 
         // Eager load relationships with job details and department
         $employee = Employee::with([
@@ -1455,7 +1471,7 @@ class EmployeeController extends Controller
         $positions = $dept ? $dept->positions : collect();
 
         // Return view with all necessary data
-        return view('employees.employeedepartments', compact('heads', 'staff', 'employee', 'userList', 'department', 'allemployees', 'dept', 'positions'));
+        return view('employees.employeedepartments', compact('heads', 'staff', 'employee', 'userList', 'department', 'allemployees', 'dept', 'positions', 'departments'));
     }
 
     public function assignHead($emp_id, Request $request)
@@ -1507,6 +1523,7 @@ class EmployeeController extends Controller
             'position_id' => 'required|exists:positions,id', // Ensure the position exists
             'department_id' => 'required|exists:departments,id', // Ensure the department exists
             'is_designation' => 'required|boolean', // Validate if the position is a designation
+            'appointment_date'  => 'required|string|max:255',
         ]);
 
         // Get the employee's job details for the department
@@ -1528,6 +1545,7 @@ class EmployeeController extends Controller
                 'department_id' => $request->department_id,
                 'is_head' => false, // Set this to true if it’s the primary position
                 'is_designation' => $request->is_designation, // Ensure this is passed
+                'appointment_date' => $request->appointment_date,
             ]);
         }
 
@@ -1545,6 +1563,7 @@ class EmployeeController extends Controller
             'department_id' => 'required|exists:departments,id',
             'position_id' => 'required|exists:positions,id',
             'is_designation' => 'required|boolean',
+            'appointment_date'  => 'required|string|max:255',
         ]);
 
         // Retrieve the employee's job details for the given department
@@ -1560,19 +1579,49 @@ class EmployeeController extends Controller
         // Check if the employee's last job entry has is_designation == 0
         $lastJobDetail = EmployeeJobDetail::where('emp_id', $request->emp_id)->orderBy('created_at', 'desc')->first();
 
-        if ($lastJobDetail && $lastJobDetail->is_designation == 0) {
+        if ($lastJobDetail && $lastJobDetail->is_designation == 0 && $request->is_designation == 1) {
             // Prevent update if the last job has is_designation == 0
             return redirect()->back()->with('error', 'The employee must have a position, not just a designation. Update cannot be made.');
         }
 
         // Update the job details with the new position and designation status
         $jobDetail->position_id = $request->position_id;
-        $jobDetail->is_designation = $request->is_designation;  // Update the 'is_designation' field
+        $jobDetail->is_designation = $request->is_designation;
+        $jobDetail->appointment_date = $request->appointment_date;  // Update the 'is_designation' field
         $jobDetail->save();  // Save the updated job details
 
         // Return a success message after updating
         return redirect()->back()->with('success', 'Position updated successfully.');
     }
+
+    public function changeDepartment(Request $request)
+    {
+        $request->validate([
+            'emp_id' => 'required',
+            'current_dept_id' => 'required',
+            'new_department_id' => 'required|different:current_dept_id',
+            'position_id' => 'required',
+        ]);
+
+        // Remove from current department
+        DB::table('employee_job_details')
+            ->where('emp_id', $request->emp_id)
+            ->where('department_id', $request->current_dept_id)
+            ->delete();
+
+        // Assign to new department
+        DB::table('employee_job_details')->insert([
+            'emp_id' => $request->emp_id,
+            'department_id' => $request->new_department_id,
+            'position_id' => $request->position_id,
+            'is_head' => 0,
+            'is_designation' => 0,
+            'appointment_date' => now()->format('d M, Y'),
+        ]);
+
+        return redirect()->back()->with('success', 'Department changed successfully.');
+    }
+
 
 
 

@@ -33,9 +33,9 @@ class JobController extends Controller
     public function jobList()
     {
         $job_list = AddJob::with('position', 'department')
-        ->where('status', '!=', 'Cancelled') // Exclude cancelled jobs
-        ->get();
-        
+            ->where('status', '!=', 'Cancelled') // Exclude cancelled jobs
+            ->get();
+
         return view('job.joblist', compact('job_list'));
     }
 
@@ -51,8 +51,24 @@ class JobController extends Controller
             $job->save();
         }
 
+
         return view('job.jobview', compact('job_view'));
     }
+
+    public function jobListSearch(Request $request)
+    {
+        $job_list = AddJob::with(['position', 'department'])
+            ->where('status', '!=', 'Cancelled')
+            ->when($request->position, function ($query) use ($request) {
+                $query->whereHas('position', function ($q) use ($request) {
+                    $q->where('position_name', 'LIKE', '%' . $request->position . '%');
+                });
+            })
+            ->get();
+
+        return view('job.joblist', compact('job_list'));
+    }
+
 
 
 
@@ -331,6 +347,7 @@ class JobController extends Controller
                     'position_id' => $employment->position_id,
                     'is_head' => false, // Default value, adjust as necessary
                     'is_designation' => false, // Default value, adjust as necessary
+                    'appointment_date' => now()->format('d M, Y'),
                 ]);
 
                 // Transfer the employment status and date_hired to EmployeeEmployment
@@ -349,6 +366,9 @@ class JobController extends Controller
                 User::create([
                     'user_id' => $employee->emp_id,
                     'name' => $employee->name,
+                    'first_name' => $employee->first_name,
+                    'middle_name' => $employee->middle_name,
+                    'last_name' => $employee->last_name,
                     'email' => $employee->email,
                     'avatar' => $employee->photo,
                     'join_date' => now()->format('D, M d, Y g:i A'),
@@ -358,6 +378,12 @@ class JobController extends Controller
                 ]);
 
                 Mail::to($employee->email)->send(new Mailer($employee->name, $employee->email, $randomPassword));
+
+                $job = AddJob::where('position_id', $employment->position_id)->first();
+                if ($job && $job->no_of_vacancies > 0) {
+                    $job->no_of_vacancies -= 1; // Deduct one vacancy
+                    $job->save(); // Save the updated job data
+                }
             }
         }
 
@@ -438,38 +464,353 @@ class JobController extends Controller
     /** apply Job SaveRecord */
     public function applyJobSaveRecord(Request $request)
     {
-        $validatedData = $request->validate([
-            'job_title' => 'required|string|max:255',
-            'name'      => 'required|string|max:255',
-            'phone'     => 'required|string|max:255',
-            'email'     => 'required|string|email|max:255',
-            'message'   => 'required|string|max:255',
-            'cv_upload' => 'required|file|mimes:pdf,doc,docx|max:2048', // Validate file type and size
-        ]);
+        $existingApplicant = Applicant::where('email', $request->email)->first();
 
-        DB::beginTransaction();
+        if ($existingApplicant) {
+            $applicantEmployment = ApplicantEmployment::where('app_id', $existingApplicant->app_id)->first();
+
+            if ($applicantEmployment) {
+                $position = Position::where('id', $applicantEmployment->position_id)->first();
+                $positionName = $position ? $position->position_name : 'Unknown Position';
+                return redirect()->back()->with('error', 'Your application for the ' . $positionName . ' position has been submitted. Please wait for HR to update you on your status.');
+            }
+
+            return redirect()->back()->with('error', 'Position not found for your application.');
+        }
 
         try {
-            // Upload file
-            $cv_uploads = time() . '.' . $request->file('cv_upload')->extension();
-            $request->file('cv_upload')->move(public_path('assets/images'), $cv_uploads);
+            $validatedData = $request->validate([
+                'fname'               => 'required|string|max:255',
+                'mname'               => 'required|string|max:255',
+                'lname'               => 'required|string|max:255',
+                'email'              => 'required|string|email|unique:applicants,email',
+                'birth_date'         => 'required|string|max:255',
+                'place_of_birth'     => 'required|string|max:255',
+                'height'             => 'required|string|max:20',
+                'weight'             => 'required|string|max:20',
+                'blood_type'         => 'required|string|max:20',
+                'gender'             => 'required|string|max:20',
+                'civil_status'       => 'required|string|max:50',
+                'nationality'        => 'required|string|max:100',
+                'image'                 => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
 
-            // Save application
-            ApplyForJob::create([
-                'job_title' => $validatedData['job_title'],
-                'name'      => $validatedData['name'],
-                'phone'     => $validatedData['phone'],
-                'email'     => $validatedData['email'],
-                'message'   => $validatedData['message'],
-                'cv_upload' => $cv_uploads,
+                // Contact
+                'residential_address' => 'required|string',
+                'residential_zip'    => 'required|string|max:10',
+                'permanent_address'  => 'required|string',
+                'permanent_zip'      => 'required|string|max:10',
+                'phone_number'       => 'nullable|string|max:20',
+                'mobile_number'      => 'required|string|max:20',
+
+                // Government IDs
+                'sss_no'             => 'nullable|string|max:50',
+                'gsis_id_no'         => 'nullable|string|max:50',
+                'pagibig_no'         => 'nullable|string|max:50',
+                'philhealth_no'      => 'nullable|string|max:50',
+                'tin_no'             => 'nullable|string|max:50',
+                'agency_employee_no' => 'nullable|string|max:50',
+
+                // Family Info
+                'father_name'                 => 'nullable|string|max:255',
+                'mother_name'                 => 'nullable|string|max:255',
+                'spouse_name'                 => 'nullable|string|max:255',
+                'spouse_occupation'           => 'nullable|string|max:255',
+                'spouse_employer'             => 'nullable|string|max:255',
+                'spouse_business_address'     => 'nullable|string|max:255',
+                'spouse_tel_no'             => 'nullable|string|max:255',
+
+                // Education (Now an array)
+                'education_level'       => 'nullable|array',
+                'education_level.*'     => 'nullable|string|max:255',
+                'degree'                => 'nullable|array',
+                'degree.*'              => 'nullable|string|max:255',
+                'school_name'           => 'nullable|array',
+                'school_name.*'         => 'nullable|string|max:255',
+                'year_from'             => 'nullable|array',
+                'year_from.*'           => 'nullable|string|max:255',
+                'year_to'               => 'nullable|array',
+                'year_to.*'             => 'nullable|string|max:255',
+                'highest_units_earned'  => 'nullable|array',
+                'highest_units_earned.*' => 'nullable|string|max:255',
+                'year_graduated'        => 'nullable|array',
+                'year_graduated.*'      => 'nullable|string|max:255',
+                'scholarship_honors'    => 'nullable|array',
+                'scholarship_honors.*'  => 'nullable|string|max:255',
+
+                // Employment
+                'department_id'         => 'required|integer',
+                'position_id'           => 'required|integer',
+                'employment_status'     => 'required|string|max:255',
+
+                //children
+                'child_name'         => 'nullable|array',
+                'child_name.*'       => 'nullable|string|max:255',
+                'child_birthdate'    => 'nullable|array',
+                'child_birthdate.*'  => 'nullable|string|max:255',
+
+                // Eligibility
+                'eligibility_type'   => 'nullable|array',
+                'eligibility_type.*' => 'nullable|string|max:255',
+                'rating'            => 'nullable|array',
+                'rating.*'          => 'nullable|string|max:255',
+                'exam_date'         => 'nullable|array',
+                'exam_date.*'       => 'nullable|string|max:255',
+                'exam_place'        => 'nullable|array',
+                'exam_place.*'      => 'nullable|string|max:255',
+                'license_number'    => 'nullable|array',
+                'license_number.*'  => 'nullable|string|max:255',
+                'license_validity'  => 'nullable|array',
+                'license_validity.*' => 'nullable|string|max:255',
+
+                // Work Experience
+                'department_agency_office_company'   => 'nullable|array',
+                'department_agency_office_company.*' => 'nullable|string|max:255',
+                'position_title'                     => 'nullable|array',
+                'position_title.*'                   => 'nullable|string|max:255',
+                'from_date'                           => 'nullable|array',
+                'from_date.*'                         => 'nullable|string|max:255',
+                'to_date'                             => 'nullable|array',
+                'to_date.*'                           => 'nullable|string|max:255|after_or_equal:from_date.*',
+                'monthly_salary'                      => 'nullable|array',
+                'monthly_salary.*'                    => 'nullable|numeric|min:0',
+                'salary_grade'                        => 'nullable|array',
+                'salary_grade.*'                      => 'nullable|string|max:255',
+                'status_of_appointment'               => 'nullable|array',
+                'status_of_appointment.*'             => 'nullable|string|max:255',
+                'govt_service'                        => 'nullable|array',
+                'govt_service.*'                      => 'nullable|in:0,1',
+
+
+                // Voluntary Work
+                'organization_name'       => 'nullable|array',
+                'organization_name.*'     => 'nullable|string|max:255',
+                'voluntary_from_date'             => 'nullable|array',
+                'voluntary_from_date.*'           => 'nullable|string|max:255',
+                'voluntary_to_date'               => 'nullable|array',
+                'voluntary_to_date.*'             => 'nullable|string|max:255|after_or_equal:voluntary_from_date.*',
+                'voluntary_hours'                 => 'nullable|array',
+                'voluntary_hours.*'               => 'nullable|numeric|min:0',
+                'position_nature_of_work'         => 'nullable|array',
+                'position_nature_of_work.*'       => 'nullable|string|max:255',
+
+
+                // Training Program
+                'training_title'       => 'nullable|array',
+                'training_title.*'     => 'nullable|string|max:255',
+                'training_from_date'   => 'nullable|array',
+                'training_from_date.*' => 'nullable|string|max:255',
+                'training_to_date'     => 'nullable|array',
+                'training_to_date.*'   => 'nullable|string|max:255|after_or_equal:training_from_date.*',
+                'training_hours'       => 'nullable|array',
+                'training_hours.*'     => 'nullable|numeric|min:0',
+                'type_of_ld'          => 'nullable|array',
+                'type_of_ld.*'        => 'nullable|string|max:255',
+                'conducted_by'        => 'nullable|array',
+                'conducted_by.*'      => 'nullable|string|max:255',
+
+
+                // Other Information
+                'special_skills_hobbies'      => 'nullable|array',
+                'special_skills_hobbies.*'    => 'nullable|string|max:255',
+                'non_academic_distinctions'   => 'nullable|array',
+                'non_academic_distinctions.*' => 'nullable|string|max:255',
+                'membership_associations'     => 'nullable|array',
+                'membership_associations.*'   => 'nullable|string|max:255',
+
             ]);
 
+            DB::beginTransaction();
+
+            $randomPassword = Str::random(8);
+            $hashedPassword = Hash::make($randomPassword);
+
+            $fullName = $validatedData['fname'] . ' ' . $validatedData['mname'] . ' ' . $validatedData['lname'];
+
+            $image = $request->file('image');
+            if ($image) {
+                // Generate a unique name for the image
+                $imageName = time() . '.' . $image->extension(); // Get the file extension dynamically
+                // Move the uploaded image to the 'assets/images' folder
+                $image->move(public_path('assets/images'), $imageName);
+            }
+
+
+            // Create employee record
+            $applicant = Applicant::create([
+                'name'          => $fullName,
+                'first_name'    => $validatedData['fname'],
+                'middle_name'   => $validatedData['mname'],
+                'last_name'     => $validatedData['lname'],
+                'email'        => $validatedData['email'],
+                'birth_date'   => $validatedData['birth_date'],
+                'place_of_birth' => $validatedData['place_of_birth'],
+                'height'       => $validatedData['height'],
+                'weight'       => $validatedData['weight'],
+                'blood_type'       => $validatedData['blood_type'],
+                'gender'       => $validatedData['gender'],
+                'civil_status' => $validatedData['civil_status'],
+                'nationality'  => $validatedData['nationality'],
+                'photo'  => isset($imageName) ? $imageName : null,
+            ]);
+
+            // Save related records
+            $applicant->contact()->create([
+                'residential_address' => $validatedData['residential_address'],
+                'residential_zip'     => $validatedData['residential_zip'],
+                'permanent_address'   => $validatedData['permanent_address'],
+                'permanent_zip'       => $validatedData['permanent_zip'],
+                'phone_number'        => $validatedData['phone_number'],
+                'mobile_number'       => $validatedData['mobile_number'],
+            ]);
+
+            $applicant->governmentIds()->create([
+                'sss_no'               => $validatedData['sss_no'],
+                'gsis_id_no'           => $validatedData['gsis_id_no'],
+                'pagibig_no'           => $validatedData['pagibig_no'],
+                'philhealth_no'        => $validatedData['philhealth_no'],
+                'tin_no'               => $validatedData['tin_no'],
+                'agency_employee_no'   => $validatedData['agency_employee_no'],
+            ]);
+
+            $applicant->familyInfo()->create([
+                'father_name'                => $validatedData['father_name'],
+                'mother_name'                => $validatedData['mother_name'],
+                'spouse_name'                => $validatedData['spouse_name'],
+                'spouse_occupation'          => $validatedData['spouse_occupation'],
+                'spouse_employer'            => $validatedData['spouse_employer'],
+                'spouse_business_address'    => $validatedData['spouse_business_address'],
+                'spouse_tel_no'              => $validatedData['spouse_tel_no'],
+            ]);
+
+            $applicant->employment()->create([
+                'department_id'           => $validatedData['department_id'],
+                'position_id'             => $validatedData['position_id'],
+                'employment_status'       => $validatedData['employment_status'],
+                'status'                  => 'New',
+            ]);
+
+
+            if (!empty($validatedData['child_name'])) {
+                foreach ($validatedData['child_name'] as $index => $name) {
+                    if ($name) {
+                        $applicant->children()->create([
+                            'child_name' => $name,  // This must match the column name
+                            'child_birthdate' => $validatedData['child_birthdate'][$index] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            // Insert education (Looping to handle multiple entries)
+            if (!empty($validatedData['education_level'])) {
+                foreach ($validatedData['education_level'] as $index => $level) {
+                    if ($level) {
+                        $applicant->education()->create([
+                            'education_level'      => $level,
+                            'degree'               => $validatedData['degree'][$index] ?? null,
+                            'school_name'          => $validatedData['school_name'][$index] ?? null,
+                            'year_from'            => $validatedData['year_from'][$index] ?? null,
+                            'year_to'              => $validatedData['year_to'][$index] ?? null,
+                            'highest_units_earned' => $validatedData['highest_units_earned'][$index] ?? null,
+                            'year_graduated'       => $validatedData['year_graduated'][$index] ?? null,
+                            'scholarship_honors'   => $validatedData['scholarship_honors'][$index] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            if (!empty($validatedData['eligibility_type'])) {
+                foreach ($validatedData['eligibility_type'] as $index => $type) {
+                    if ($type) {
+                        $applicant->civilServiceEligibility()->create([
+                            'eligibility_type'  => $type,
+                            'rating'            => $validatedData['rating'][$index] ?? null,
+                            'exam_date'         => $validatedData['exam_date'][$index] ?? null,
+                            'exam_place'        => $validatedData['exam_place'][$index] ?? null,
+                            'license_number'    => $validatedData['license_number'][$index] ?? null,
+                            'license_validity'  => $validatedData['license_validity'][$index] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            // Insert Work Experience
+            if (!empty($validatedData['department_agency_office_company'])) {
+                foreach ($validatedData['department_agency_office_company'] as $index => $company) {
+                    if ($company) {
+                        $applicant->workExperiences()->create([
+                            'department_agency_office_company' => $company,
+                            'position_title'                   => $validatedData['position_title'][$index] ?? null,
+                            'from_date'                         => $validatedData['from_date'][$index] ?? null,
+                            'to_date'                           => $validatedData['to_date'][$index] ?? null,
+                            'monthly_salary'                    => $validatedData['monthly_salary'][$index] ?? null,
+                            'salary_grade'                      => $validatedData['salary_grade'][$index] ?? null,
+                            'status_of_appointment'             => $validatedData['status_of_appointment'][$index] ?? null,
+                            'govt_service'                      => $validatedData['govt_service'][$index] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            // Insert Voluntary Work
+            if (!empty($validatedData['organization_name'])) {
+                foreach ($validatedData['organization_name'] as $index => $organization) {
+                    if ($organization) {
+                        $applicant->voluntaryWorks()->create([
+                            'organization_name' => $organization,
+                            'from_date'       => $validatedData['voluntary_from_date'][$index] ?? null,
+                            'to_date'         => $validatedData['voluntary_to_date'][$index] ?? null,
+                            'number_of_hours'           => $validatedData['voluntary_hours'][$index] ?? null,
+                            'position_nature_of_work'   => $validatedData['position_nature_of_work'][$index] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            // Insert Training Program
+            if (!empty($validatedData['training_title'])) {
+                foreach ($validatedData['training_title'] as $index => $title) {
+                    if ($title) {
+                        $applicant->trainings()->create([
+                            'title'     => $title,
+                            'date_from' => $validatedData['training_from_date'][$index] ?? null,
+                            'date_to'   => $validatedData['training_to_date'][$index] ?? null,
+                            'number_of_hours'     => $validatedData['training_hours'][$index] ?? null,
+                            'type_of_ld'         => $validatedData['type_of_ld'][$index] ?? null,
+                            'conducted_by'       => $validatedData['conducted_by'][$index] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            // Insert Other Information
+            if (!empty($validatedData['special_skills_hobbies'])) {
+                foreach ($validatedData['special_skills_hobbies'] as $index => $skill) {
+                    if ($skill) {
+                        $applicant->otherInformations()->create([
+                            'special_skills_hobbies'      => $skill,
+                            'non_academic_distinctions'   => $validatedData['non_academic_distinctions'][$index] ?? null,
+                            'membership_associations'     => $validatedData['membership_associations'][$index] ?? null,
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
-            flash()->success('Job application submitted successfully :)');
-            return redirect()->back();
-        } catch (\Exception $e) {
+
+            \Log::info('You Applied successfully', ['app_id' => $applicant->id]);
+
+            flash()->success('You Applied successfully!');
+            return redirect()->back()->withInput();
+        } catch (\Throwable $e) {
             DB::rollback();
-            flash()->error('Job application submission failed :)');
+
+            \Log::error('Failed to apply', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+
+            flash()->error('Failed to apply. Error: ' . $e->getMessage());
             return redirect()->back()->withInput();
         }
     }
@@ -840,13 +1181,13 @@ class JobController extends Controller
                 'school_name'           => 'nullable|array',
                 'school_name.*'         => 'nullable|string|max:255',
                 'year_from'             => 'nullable|array',
-                'year_from.*'           => 'nullable|integer|min:1900|max:' . date('Y'),
+                'year_from.*'           => 'nullable|string|max:255',
                 'year_to'               => 'nullable|array',
-                'year_to.*'             => 'nullable|integer|min:1900|max:' . date('Y'),
+                'year_to.*'             => 'nullable|string|max:255',
                 'highest_units_earned'  => 'nullable|array',
                 'highest_units_earned.*' => 'nullable|string|max:255',
                 'year_graduated'        => 'nullable|array',
-                'year_graduated.*'      => 'nullable|integer|min:1900|max:' . date('Y'),
+                'year_graduated.*'      => 'nullable|string|max:255',
                 'scholarship_honors'    => 'nullable|array',
                 'scholarship_honors.*'  => 'nullable|string|max:255',
 
@@ -1858,13 +2199,13 @@ class JobController extends Controller
             'school_name'           => 'nullable|array',
             'school_name.*'         => 'nullable|string|max:255',
             'year_from'             => 'nullable|array',
-            'year_from.*'           => 'nullable|integer|min:1900|max:' . date('Y'),
+            'year_from.*'           => 'nullable|string|max:255',
             'year_to'               => 'nullable|array',
-            'year_to.*'             => 'nullable|integer|min:1900|max:' . date('Y'),
+            'year_to.*'             => 'nullable|string|max:255',
             'highest_units_earned'  => 'nullable|array',
             'highest_units_earned.*' => 'nullable|string|max:255',
             'year_graduated'        => 'nullable|array',
-            'year_graduated.*'      => 'nullable|integer|min:1900|max:' . date('Y'),
+            'year_graduated.*'      => 'nullable|string|max:255',
             'scholarship_honors'    => 'nullable|array',
             'scholarship_honors.*'  => 'nullable|string|max:255',
         ]);
@@ -2047,10 +2388,5 @@ class JobController extends Controller
     public function aptituderesultIndex()
     {
         return view('job.aptituderesult');
-    }
-
-    public function careersIndex()
-    {
-        return view('job.careerslist');
     }
 }

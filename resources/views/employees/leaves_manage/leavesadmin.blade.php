@@ -23,6 +23,12 @@
         /* Remove default outline */
     }
 
+    #edit_loader {
+        text-align: center;
+        font-weight: bold;
+        color: #2a52be;
+    }
+
 </style>
 <!-- Page Wrapper -->
 <div class="page-wrapper">
@@ -194,13 +200,10 @@
                                 <td hidden class="to_date">{{$items->date_to}}</td>
                                 <td>{{date('d F, Y',strtotime($items->date_to)) }}</td>
                                 <td class="no_of_day">
-                                    @if($items->number_of_day == 0.5)
-                                    Half Day
+                                    @if($items->number_of_day > 1)
+                                    {{ floor($items->number_of_day) }} Days
                                     @else
-                                    {{ floor($items->number_of_day) }} Day{{ floor($items->number_of_day) > 1 ? 's' : '' }}
-                                    @if(fmod($items->number_of_day, 1) === 0.5)
-                                    and Half
-                                    @endif
+                                    {{ floor($items->number_of_day) }} Day
                                     @endif
                                 </td>
                                 <td class="leave_reason">{{ \Illuminate\Support\Str::limit($items->reason, 20, '...') }}</td>
@@ -279,13 +282,10 @@
                                 <td hidden class="to_date">{{ $items->date_to }}</td>
                                 <td>{{ date('d F, Y', strtotime($items->date_to)) }}</td>
                                 <td class="no_of_day">
-                                    @if($items->number_of_day == 0.5)
-                                    Half Day
+                                    @if($items->number_of_day > 1)
+                                    {{ floor($items->number_of_day) }} Days
                                     @else
-                                    {{ floor($items->number_of_day) }} Day{{ floor($items->number_of_day) > 1 ? 's' : '' }}
-                                    @if(fmod($items->number_of_day, 1) === 0.5)
-                                    and Half
-                                    @endif
+                                    {{ floor($items->number_of_day) }} Day
                                     @endif
                                 </td>
                                 <td class="leave_reason">{{ \Illuminate\Support\Str::limit($items->reason, 20, '...') }}</td>
@@ -412,8 +412,6 @@
                                     <label>Leave Day <span class="text-danger">*</span></label>
                                     <select class="select" name="select_leave_day[]" id="leave_day">
                                         <option value="Full-Day Leave">Full-Day Leave</option>
-                                        <option value="Half-Day Morning Leave">Half-Day Morning Leave</option>
-                                        <option value="Half-Day Afternoon Leave">Half-Day Afternoon Leave</option>
                                         <option value="Public Holiday">Public Holiday</option>
                                         <option value="Off Schedule">Off Schedule</option>
                                     </select>
@@ -489,6 +487,12 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                <div id="edit_loader" style="display: none; text-align: center; padding: 20px;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p>Loading leave details...</p>
+                    </div>
                     <form id="editLeaveForm" action="{{ route('form/leaves/edit') }}" method="POST">
                         @csrf
                         <div class="row">
@@ -731,7 +735,7 @@
                             <input type="hidden" name="id" class="e_id">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                    <button type="submit" id="delete_leave" class="btn btn-primary continue-btn submit-btn">Delete</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -748,6 +752,36 @@
 </div>
 <!-- /Page Wrapper -->
 @section('script')
+
+<script>
+    $(document).ready(function () {
+        $('form').on('submit', function () {
+            // General button finder inside the submitting form
+            var $submitBtn = $(this).find('button[type="submit"].submit-btn');
+
+            if ($submitBtn.length) {
+                let originalText = $submitBtn.text().trim().toLowerCase();
+
+                if (originalText.includes('apply') || originalText.includes('edit') || originalText.includes('submit')) {
+                    $submitBtn.prop('disabled', true).text('Submitting...');
+                } else if (originalText.includes('delete')) {
+                    $submitBtn.prop('disabled', true).text('Deleting...');
+                } else if (originalText.includes('approve')) {
+                    $submitBtn.prop('disabled', true).text('Approving...');
+                } else if (originalText.includes('decline')) {
+                    $submitBtn.prop('disabled', true).text('Declining...');
+                } else if (originalText.includes('pending')) {
+                    $submitBtn.prop('disabled', true).text('Marking...');
+                } else {
+                    // fallback
+                    $submitBtn.prop('disabled', true).text('Processing...');
+                }
+            }
+        });
+    });
+</script>
+
+
 <script>
     $('#add_leave').on('hidden.bs.modal', function() {
         $(this).find('form')[0].reset(); // Reset the form
@@ -1019,6 +1053,9 @@
     $(document).on("click", ".leaveUpdate", function() {
         var leave_id = $(this).data('id');
 
+        $('#edit_loader').show();
+        $('#editLeaveForm').hide();
+
         $.post("{{ route('hr/get/information/leaveOptions') }}", {
                 leave_id: leave_id
                 , _token: $('meta[name="csrf-token"]').attr('content')
@@ -1074,8 +1111,6 @@
                             <label class="text-danger">Leave Day ${index + 1}</label>
                             <select class="form-control leave-day-select" name="edit_select_leave_day[]">
                                 <option value="Full-Day Leave" ${leaveDay === "Full-Day Leave" ? "selected" : ""}>Full-Day Leave</option>
-                                <option value="Half-Day Morning Leave" ${leaveDay === "Half-Day Morning Leave" ? "selected" : ""}>Half-Day Morning Leave</option>
-                                <option value="Half-Day Afternoon Leave" ${leaveDay === "Half-Day Afternoon Leave" ? "selected" : ""}>Half-Day Afternoon Leave</option>
                                 <option value="Public Holiday" ${leaveDay === "Public Holiday" ? "selected" : ""}>Public Holiday</option>
                                 <option value="Off Schedule" ${leaveDay === "Off Schedule" ? "selected" : ""}>Off Schedule</option>
                             </select>
@@ -1106,6 +1141,12 @@
             .fail(function(jqXHR, textStatus, errorThrown) {
                 console.error("AJAX Error:", textStatus, errorThrown);
                 toastr.error("Error loading leave data.");
+            })
+            .always(function() {
+                setTimeout(function() {
+                    $('#edit_loader').hide();
+                    $('#editLeaveForm').show();
+                }, 1200);
             });
     });
 
@@ -1231,8 +1272,6 @@
                     <label class="text-danger">Leave Day ${d + 1}</label>
                     <select class="form-control leave-day-select" name="edit_select_leave_day[]">
                         <option value="Full-Day Leave" ${previousSelection === "Full-Day Leave" ? "selected" : ""}>Full-Day Leave</option>
-                        <option value="Half-Day Morning Leave" ${previousSelection === "Half-Day Morning Leave" ? "selected" : ""}>Half-Day Morning Leave</option>
-                        <option value="Half-Day Afternoon Leave" ${previousSelection === "Half-Day Afternoon Leave" ? "selected" : ""}>Half-Day Afternoon Leave</option>
                         <option value="Public Holiday" ${previousSelection === "Public Holiday" ? "selected" : ""}>Public Holiday</option>
                         <option value="Off Schedule" ${previousSelection === "Off Schedule" ? "selected" : ""}>Off Schedule</option>
                     </select>
@@ -1250,8 +1289,6 @@
 
                     if (leaveType === "Full-Day Leave") {
                         updatedLeaveCount += 1;
-                    } else if (leaveType === "Half-Day Morning Leave" || leaveType === "Half-Day Afternoon Leave") {
-                        updatedLeaveCount += 0.5;
                     } else {
                         updatedLeaveCount += 0;
                     }
@@ -1428,7 +1465,6 @@
 
         if (!isNaN(dateFrom) && !isNaN(dateTo)) {
             var numDays = Math.ceil((dateTo - dateFrom) / (1000 * 3600 * 24)) + 1;
-            if (leaveDay.includes('Half-Day')) numDays -= 0.5;
             $('#number_of_day').val(numDays);
             updateRemainingLeave(numDays);
 
@@ -1486,8 +1522,6 @@
                                             <label><span class="text-danger">Leave Day ${d+1}</span></label>
                                             <select class="select" name="select_leave_day[]" id="${leaveDayId}">
                                                 <option value="Full-Day Leave">Full-Day Leave</option>
-                                                <option value="Half-Day Morning Leave">Half-Day Morning Leave</option>
-                                                <option value="Half-Day Afternoon Leave">Half-Day Afternoon Leave</option>
                                                 <option value="Public Holiday">Public Holiday</option>
                                                 <option value="Off Schedule">Off Schedule</option>
                                             </select>
@@ -1506,13 +1540,7 @@
                             for (let d = 0; d < numDays; d++) {
                                 let leaveType = $(`#leave_day_${d}`).val(); // Get the selected leave type
 
-                                // If the leave type is a Half-Day, reduce the total days by 0.5
-                                if (leaveType && leaveType.includes('Half-Day')) {
-                                    totalDays -= 0.5;
-                                }
-
-                                // If the leave type is Public Holiday or Off Schedule, don't add to the total days
-                                else if (leaveType && (leaveType.includes('Public Holiday') || leaveType.includes('Off Schedule'))) {
+                                if (leaveType && (leaveType.includes('Public Holiday') || leaveType.includes('Off Schedule'))) {
                                     totalDays -= 1; // No change to total days
                                 }
                             }

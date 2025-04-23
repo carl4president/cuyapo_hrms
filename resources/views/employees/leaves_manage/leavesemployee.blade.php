@@ -23,6 +23,12 @@
         /* Remove default outline */
     }
 
+    #edit_loader {
+        text-align: center;
+        font-weight: bold;
+        color: #2a52be;
+    }
+
 </style>
 <!-- Page Wrapper -->
 <div class="page-wrapper">
@@ -113,8 +119,8 @@
                                 <th hidden>Leave Date</th>
                                 <th hidden>Leave Day</th>
                                 <th>Decline Reason</th>
-                                <th class="text-center">Status</th>
                                 <th>Dis/Approved by</th>
+                                <th class="text-center">Status</th>
                                 <th class="text-right">Actions</th>
                             </tr>
                         </thead>
@@ -137,14 +143,6 @@
                                 <td hidden class="number_of_day">{{ $leave->number_of_day }}</td>
                                 <td hidden class="leave_date">{{ $leave->leave_date }}</td>
                                 <td hidden class="leave_day">{{ $leave->leave_day }}</td>
-                                <td class="leave_reason">{{ \Illuminate\Support\Str::limit($leave->reason, 20, '...') }}</td>
-                                <td class="text-center">
-                                    <div class="action-label">
-                                        <a class="btn btn-white btn-sm btn-rounded" href="javascript:void(0);" style="pointer-events: none; opacity: 0.5;">
-                                            <i class="fa fa-dot-circle-o text-danger"></i> Declined
-                                        </a>
-                                    </div>
-                                </td>
                                 <td>
                                     @foreach($profiles as $profile)
                                     <h2 class="table-avatar">
@@ -155,11 +153,20 @@
                                     </h2>
                                     @endforeach
                                 </td>
+                                <td class="leave_reason">{{ \Illuminate\Support\Str::limit($leave->reason, 20, '...') }}</td>
+                                <td class="text-center">
+                                    <div class="action-label">
+                                        <a class="btn btn-white btn-sm btn-rounded" href="javascript:void(0);" style="pointer-events: none; opacity: 0.5;">
+                                            <i class="fa fa-dot-circle-o text-danger"></i> Declined
+                                        </a>
+                                    </div>
+                                </td>
                                 <td class="text-right">
                                     @if($leave->status != 'Approved')
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
+                                            <a class="dropdown-item" href="{{ url('leave/details/'.$leave->id) }}"><i class="fa fa-eye"></i> View</a>
                                             <a class="dropdown-item printLeave" href="#" data-id="{{ $leave->id }}" data-emp-id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}">
                                                 <i class="fa fa-print m-r-5"></i> Print
                                             </a>
@@ -189,8 +196,17 @@
                                 <td hidden class="number_of_day">{{ $leave->number_of_day }}</td>
                                 <td hidden class="leave_date">{{ $leave->leave_date }}</td>
                                 <td hidden class="leave_day">{{ $leave->leave_day }}</td>
+                                <td>
+                                    @foreach($profiles as $key => $profile)
+                                    <h2 class="table-avatar">
+                                        <a href="profile.html" class="avatar avatar-xs">
+                                            <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
+                                        </a>
+                                        <a href="#">{{ $leave->approved_by }}</a>
+                                    </h2>
+                                    @endforeach
+                                </td>
                                 <td class="leave_reason">{{ \Illuminate\Support\Str::limit($leave->reason, 20, '...') }}</td>
-
                                 <td class="text-center">
                                     <div class="action-label">
                                         @php
@@ -207,21 +223,12 @@
                                         </a>
                                     </div>
                                 </td>
-                                <td>
-                                    @foreach($profiles as $key => $profile)
-                                    <h2 class="table-avatar">
-                                        <a href="profile.html" class="avatar avatar-xs">
-                                            <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
-                                        </a>
-                                        <a href="#">{{ $leave->approved_by }}</a>
-                                    </h2>
-                                    @endforeach
-                                </td>
                                 <td class="text-right">
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
                                             @if($leave->status != 'Approved')
+                                            <a class="dropdown-item" href="{{ url('leave/details/'.$leave->id) }}"><i class="fa fa-eye"></i> View</a>
                                             <a class="dropdown-item leaveUpdate" data-toggle="modal" data-id="{{ $leave->id }}" data-employee_name="{{ $leave->employee_name }}" data-employee_id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-remaining_leave="" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}" data-number_of_day="{{ $leave->number_of_day }}" data-leave_day="{{ $leave->leave_day }}" data-reason="{{ $leave->reason }}" data-target="#edit_leave">
                                                 <i class="fa fa-pencil m-r-5"></i> Edit
                                             </a>
@@ -230,6 +237,7 @@
                                             </a>
                                             <a class="dropdown-item delete_leave" href="#" data-toggle="modal" data-target="#delete_approve"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
                                             @else
+                                            <a class="dropdown-item" href="{{ url('leave/details/'.$leave->id) }}"><i class="fa fa-eye"></i> View</a>
                                             <a class="dropdown-item printLeave" href="#" data-id="{{ $leave->id }}" data-emp-id="{{ $leave->staff_id }}" data-leave_type="{{ $leave->leave_type }}" data-date_from="{{ $leave->date_from }}" data-date_to="{{ $leave->date_to }}">
                                                 <i class="fa fa-print m-r-5"></i> Print
                                             </a>
@@ -322,8 +330,6 @@
                                     <label>Leave Day <span class="text-danger">*</span></label>
                                     <select class="select" name="select_leave_day[]" id="leave_day">
                                         <option value="Full-Day Leave">Full-Day Leave</option>
-                                        <option value="Half-Day Morning Leave">Half-Day Morning Leave</option>
-                                        <option value="Half-Day Afternoon Leave">Half-Day Afternoon Leave</option>
                                         <option value="Public Holiday">Public Holiday</option>
                                         <option value="Off Schedule">Off Schedule</option>
                                     </select>
@@ -401,6 +407,12 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <div id="edit_loader" style="display: none; text-align: center; padding: 20px;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p>Loading leave details...</p>
+                    </div>
                     <form id="editLeaveForm" action="{{ route('form/leaves/edit') }}" method="POST">
                         @csrf
                         <div class="row">
@@ -520,7 +532,7 @@
                             <input type="hidden" class="form-control" id="d_id_record" name="id" readonly>
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                    <button type="submit" id="delete_leave" class="btn btn-primary continue-btn submit-btn">Delete</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -534,9 +546,31 @@
     </div>
     <!-- /Delete Leave Modal -->
 
+
 </div>
 <!-- /Page Wrapper -->
 @section('script')
+<script>
+    $(document).ready(function () {
+        $('form').on('submit', function () {
+            var $applyOrEditBtn = $(this).find('#apply_leave, #editleave');
+            var $deleteBtn = $(this).find('#delete_leave');
+
+            if ($applyOrEditBtn.length) {
+                $applyOrEditBtn.prop('disabled', true);
+                $applyOrEditBtn.text('Submitting...');
+            }
+
+            if ($deleteBtn.length) {
+                $deleteBtn.prop('disabled', true);
+                $deleteBtn.text('Deleting...');
+            }
+        });
+    });
+</script>
+
+
+
 <script>
     $('#add_leave').on('hidden.bs.modal', function() {
         $(this).find('form')[0].reset(); // Reset the form
@@ -701,12 +735,6 @@
         var dateTo = $(this).data('date_to');
 
         // Debugging: Log the data being sent
-        console.log('Sending Data:', {
-            id: id
-            , leave_type: leaveType
-            , date_from: dateFrom
-            , date_to: dateTo
-        });
 
         // Send request to generate PDF with selected data
         $.ajax({
@@ -866,7 +894,6 @@
 
         if (!isNaN(dateFrom) && !isNaN(dateTo)) {
             var numDays = Math.ceil((dateTo - dateFrom) / (1000 * 3600 * 24)) + 1;
-            if (leaveDay.includes('Half-Day')) numDays -= 0.5;
             $('#number_of_day').val(numDays);
             updateRemainingLeave(numDays);
 
@@ -924,8 +951,6 @@
                                             <label><span class="text-danger">Leave Day ${d+1}</span></label>
                                             <select class="select" name="select_leave_day[]" id="${leaveDayId}">
                                                 <option value="Full-Day Leave">Full-Day Leave</option>
-                                                <option value="Half-Day Morning Leave">Half-Day Morning Leave</option>
-                                                <option value="Half-Day Afternoon Leave">Half-Day Afternoon Leave</option>
                                                 <option value="Public Holiday">Public Holiday</option>
                                                 <option value="Off Schedule">Off Schedule</option>
                                             </select>
@@ -944,13 +969,7 @@
                             for (let d = 0; d < numDays; d++) {
                                 let leaveType = $(`#leave_day_${d}`).val(); // Get the selected leave type
 
-                                // If the leave type is a Half-Day, reduce the total days by 0.5
-                                if (leaveType && leaveType.includes('Half-Day')) {
-                                    totalDays -= 0.5;
-                                }
-
-                                // If the leave type is Public Holiday or Off Schedule, don't add to the total days
-                                else if (leaveType && (leaveType.includes('Public Holiday') || leaveType.includes('Off Schedule'))) {
+                                if (leaveType && (leaveType.includes('Public Holiday') || leaveType.includes('Off Schedule'))) {
                                     totalDays -= 1; // No change to total days
                                 }
                             }
@@ -1080,6 +1099,9 @@
     $(document).on("click", ".leaveUpdate", function() {
         var leave_id = $(this).data('id');
 
+        $('#edit_loader').show();
+        $('#editLeaveForm').hide();
+
         $.post("{{ route('hr/get/information/leaveOptions') }}", {
                 leave_id: leave_id
                 , _token: $('meta[name="csrf-token"]').attr('content')
@@ -1133,8 +1155,6 @@
                             <label class="text-danger">Leave Day ${index + 1}</label>
                             <select class="form-control leave-day-select" name="edit_select_leave_day[]">
                                 <option value="Full-Day Leave" ${leaveDay === "Full-Day Leave" ? "selected" : ""}>Full-Day Leave</option>
-                                <option value="Half-Day Morning Leave" ${leaveDay === "Half-Day Morning Leave" ? "selected" : ""}>Half-Day Morning Leave</option>
-                                <option value="Half-Day Afternoon Leave" ${leaveDay === "Half-Day Afternoon Leave" ? "selected" : ""}>Half-Day Afternoon Leave</option>
                                 <option value="Public Holiday" ${leaveDay === "Public Holiday" ? "selected" : ""}>Public Holiday</option>
                                 <option value="Off Schedule" ${leaveDay === "Off Schedule" ? "selected" : ""}>Off Schedule</option>
                             </select>
@@ -1165,16 +1185,19 @@
             .fail(function(jqXHR, textStatus, errorThrown) {
                 console.error("AJAX Error:", textStatus, errorThrown);
                 toastr.error("Error loading leave data.");
+            })
+            .always(function() {
+                setTimeout(function() {
+                    $('#edit_loader').hide();
+                    $('#editLeaveForm').show();
+                }, 1200);
             });
     });
 
     function renderLeaveDetails(leave) {
-        console.log("Rendering Leave Details for:", leave);
-        console.log("Rendering Leave types for:", leave.leave_type);
 
         // Vacation/Special Privilege Leave
         if (leave.leave_type === 'Vacation Leave' || leave.leave_type === 'Special Privilege Leave') {
-            console.log("Showing vacation/special leave details");
             $('#e_vacation_special_leave').show();
             $('input[name="e_vacation_location"][value="' + leave.vacation_location + '"]').prop('checked', true);
 
@@ -1189,7 +1212,6 @@
 
         // Sick Leave
         if (leave.leave_type === 'Sick Leave') {
-            console.log("Showing sick leave details");
             $('#e_sick_leave_details').show();
             $('input[name="e_sick_location"][value="' + leave.sick_location + '"]').prop('checked', true);
             $('input[name="e_illness_specify"]').val(leave.illness_specify);
@@ -1199,7 +1221,6 @@
 
         // Special Leave Benefits for Women
         if (leave.leave_type === 'Special Leave Benefits for Women') {
-            console.log("Showing special leave benefits for women");
             $('#e_special_leave_women').show();
             $('input[name="e_women_illness"]').val(leave.women_illness);
         } else {
@@ -1207,7 +1228,6 @@
         }
 
         if (leave.leave_type === 'Study Leave') {
-            console.log("Showing study leave details");
             $('#e_study_leave').show();
 
             const studyReasons = JSON.parse(leave.study_reason || "[]");
@@ -1234,7 +1254,6 @@
             if (data.response_code == 200) {
                 e_existingLeaveDates = data.existing_leave_dates || [];
                 e_disableExistingLeaveDates();
-                console.log(data.existing_leave_dates);
             }
         }, 'json');
     }
@@ -1296,8 +1315,6 @@
                     <label class="text-danger">Leave Day ${d + 1}</label>
                     <select class="form-control leave-day-select" name="edit_select_leave_day[]">
                         <option value="Full-Day Leave" ${previousSelection === "Full-Day Leave" ? "selected" : ""}>Full-Day Leave</option>
-                        <option value="Half-Day Morning Leave" ${previousSelection === "Half-Day Morning Leave" ? "selected" : ""}>Half-Day Morning Leave</option>
-                        <option value="Half-Day Afternoon Leave" ${previousSelection === "Half-Day Afternoon Leave" ? "selected" : ""}>Half-Day Afternoon Leave</option>
                         <option value="Public Holiday" ${previousSelection === "Public Holiday" ? "selected" : ""}>Public Holiday</option>
                         <option value="Off Schedule" ${previousSelection === "Off Schedule" ? "selected" : ""}>Off Schedule</option>
                     </select>
@@ -1315,8 +1332,6 @@
 
                     if (leaveType === "Full-Day Leave") {
                         updatedLeaveCount += 1;
-                    } else if (leaveType === "Half-Day Morning Leave" || leaveType === "Half-Day Afternoon Leave") {
-                        updatedLeaveCount += 0.5;
                     } else {
                         updatedLeaveCount += 0;
                     }

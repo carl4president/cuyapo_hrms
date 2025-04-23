@@ -96,11 +96,23 @@
                                         <input type="hidden" name="hidden_image" id="e_image" value="{{ Auth::user()->avatar }}">
                                     </div>
                                 </div>
+                            </div>
+                            <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Full Name</label>
-                                    <input type="text" class="form-control" name="name" value="{{ Auth::user()->name }}">
+                                    <label>Surname</label>
+                                    <input type="text" class="form-control" name="lname" value="{{ Auth::user()->last_name }}">
+                                </div>
+                                <div class="form-group">
+                                    <label>First name</label>
+                                    <input type="text" class="form-control" name="fname" value="{{ Auth::user()->first_name }}">
                                     <input type="hidden" class="form-control" id="user_id" name="user_id" value="{{ Auth::user()->user_id }}">
                                     <input type="hidden" name="email" value="{{ Auth::user()->email }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Middle name</label>
+                                    <input type="text" class="form-control" name="mname" value="{{ Auth::user()->middle_name }}">
                                 </div>
                                 <div class="form-group">
                                     <label>Phone Number</label>
@@ -123,11 +135,44 @@
 
     @else
 
-    <x-layouts.edit-app-emp-page :$employee :$departments :$designations :$positions :avatarUrl="URL::to('/assets/images/'.$employee->user->avatar)" :avatarName="$employee->name" :profileFormUrl="route('all/employee/save/profileInfo')" :Id="$employee->emp_id" :personalFormUrl="route('all/employee/save/personalInfo')" :governmentIdsFormUrl="route('all/employee/save/govIds')" :childrenFormUrl="route('all/employee/save/childrenInfo')" :familyFormUrl="route('all/employee/save/familyInfo')" :educationFormUrl="route('all/employee/save/educationInfo')" :experienceFormUrl="route('all/employee/save/experienceInfo')" :eligibilityFormUrl="route('all/employee/save/eligibilitiesInfo')" :voluntaryFormUrl="route('all/employee/save/voluntaryInfo')" :trainingFormUrl="route('all/employee/save/trainingInfo')" :otherFormUrl="route('all/employee/save/otherInfo')">
+    <x-layouts.edit-app-emp-page :$employee :$departments :$positions :avatarUrl="URL::to('/assets/images/'.$employee->user->avatar)" :avatarName="$employee->name" :profileFormUrl="route('all/employee/save/profileInfo')" :Id="$employee->emp_id" :personalFormUrl="route('all/employee/save/personalInfo')" :governmentIdsFormUrl="route('all/employee/save/govIds')" :childrenFormUrl="route('all/employee/save/childrenInfo')" :familyFormUrl="route('all/employee/save/familyInfo')" :educationFormUrl="route('all/employee/save/educationInfo')" :experienceFormUrl="route('all/employee/save/experienceInfo')" :eligibilityFormUrl="route('all/employee/save/eligibilitiesInfo')" :voluntaryFormUrl="route('all/employee/save/voluntaryInfo')" :trainingFormUrl="route('all/employee/save/trainingInfo')" :otherFormUrl="route('all/employee/save/otherInfo')">
 
         <x-slot:id>
             <div class="staff-id">Employee ID : {{ $employee->emp_id }}</div>
         </x-slot:id>
+
+        <x-slot:department_position>
+            @php
+            $jobDetails = $employee->jobDetails;
+
+            // Filter main job(s) (is_designation == 0)
+            $mainJobs = $jobDetails->where('is_designation', 0);
+
+            // Filter other job(s) (is_designation == 1)
+            $otherJobs = $jobDetails->where('is_designation', 1);
+            @endphp
+
+            @foreach ($mainJobs as $mainJob)
+            <h6 class="m-t-10 mb-0 text-ellipsis">
+                {{ $mainJob->department->department ?? 'N/A' }}
+            </h6>
+            <div class="small text-muted">
+                {{ $mainJob->position->position_name ?? 'N/A' }}
+            </div>
+            @endforeach
+
+            {{-- Show other designations --}}
+            @if($otherJobs->isNotEmpty())
+            <div class="small text-muted mt-2">
+                <i><strong>Designation:</strong></i>
+            </div>
+            @foreach ($otherJobs as $otherJob)
+            <div class="small text-muted">
+                <i>{{ $otherJob->position->position_name ?? 'Other Responsibility' }} - {{ $otherJob->department->department ?? 'No Department' }}</i>
+            </div>
+            @endforeach
+            @endif
+        </x-slot:department_position>
 
         <x-slot:date_hired>
             <div class="small doj text-muted">Date of Hired : {{ $employee->employment->date_hired }}</div>

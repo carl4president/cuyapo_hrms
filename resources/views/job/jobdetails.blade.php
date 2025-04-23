@@ -27,7 +27,7 @@
                         <li><i class="fa fa-calendar"></i> Post Date: <span class="text-blue start-date">{{ date('d F, Y', strtotime($job_view_detail[0]->start_date)) }}</span></li>
                         <li><i class="fa fa-calendar"></i> Last Date: <span class="text-blue expired-date">{{ date('d F, Y', strtotime($job_view_detail[0]->expired_date)) }}</span></li>
                         <li><i class="fa fa-user-o"></i> Applications: <span class="text-blue applications-count">{{ $job_view_detail[0]->applicants->count() }}</span></li>
-                        <li><i class="fa fa-eye"></i> Views: <span class="text-blue views-count">3806</span></li>
+                        <li><i class="fa fa-eye"></i> Views: <span class="text-blue views-count">{{ $job_view_detail[0]->count }}</span></li>
                     </ul>
                 </div>
                 <div class="job-content job-widget">
@@ -151,11 +151,7 @@
 </script>
 
 <script>
-    const expireDate = {
-        {
-            $expire_date ? ? 'null'
-        }
-    };
+    const expireDate = {{ $expire_date ?? 'null' }};
 
 
     function startCountdown() {

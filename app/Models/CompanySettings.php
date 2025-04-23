@@ -10,16 +10,7 @@ class CompanySettings extends Model
     use HasFactory;
     protected $fillable = [
         'company_name',
-        'contact_person',
-        'address',
-        'country',
-        'city',
-        'state_province',
-        'postal_code',
-        'email',
-        'phone_number',
-        'mobile_number',
-        'fax',
-        'website_url',
+        'municipal_mayor',
+        'logo',
     ];
 }

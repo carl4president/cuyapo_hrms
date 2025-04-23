@@ -25,6 +25,9 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'email',  // ✅ Add this line
         'phone_number',
         'status',
@@ -85,7 +88,9 @@ class User extends Authenticatable
     public function saveNewuser(Request $request)
     {
         $request->validate([
-            'name'      => 'required|string|max:255',
+            'lname'      => 'required|string|max:255',
+            'fname'      => 'required|string|max:255',
+            'mname'      => 'required|string|max:255',
             'email'     => 'required|string|email|max:255|unique:users',
             'role_name' => 'required|string|max:255',
             'password'  => 'required|string|min:8|confirmed',
@@ -94,7 +99,10 @@ class User extends Authenticatable
         try {
             $todayDate = Carbon::now()->toDayDateTimeString();
             $save             = new User;
-            $save->name       = $request->name;
+            $save->name       = $request->fname . ' ' . $request->mname . ' ' . $request->lname;
+            $save->first_name = $request->fname;
+            $save->middle_name = $request->mname;
+            $save->last_name = $request->lname;
             $save->avatar     = $request->image;
             $save->email      = $request->email;
             $save->join_date  = $todayDate;

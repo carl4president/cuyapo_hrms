@@ -35,7 +35,7 @@
                     <select class="select floating" id="type_role">
                         <option selected disabled>-- Select Role Name --</option>
                         @php
-                        $roles = ['Admin', 'Applicant', 'Employee']; // Predefined role types
+                        $roles = ['Admin', 'Employee']; // Predefined role types
                         @endphp
 
                         @foreach ($roles as $role)
@@ -112,12 +112,24 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
-                                    <label>Full Name</label>
-                                    <input class="form-control @error('name') is-invalid @enderror" type="text" id="" name="name" value="{{ old('name') }}" placeholder="Enter Name">
+                                    <label>Surname</label>
+                                    <input class="form-control @error('lname') is-invalid @enderror" type="text" id="" name="lname" value="{{ old('name') }}" placeholder="Enter Surname">
                                 </div>
                             </div>
                             <div class="col-sm-6">
-                                <label>Emaill Address</label>
+                                <div class="form-group">
+                                    <label>First name</label>
+                                    <input class="form-control @error('fname') is-invalid @enderror" type="text" id="" name="fname" value="{{ old('name') }}" placeholder="Enter First Name">
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label>Middle name</label>
+                                    <input class="form-control @error('mname') is-invalid @enderror" type="text" id="" name="mname" value="{{ old('name') }}" placeholder="Enter Middle Name">
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label>Email Address</label>
                                 <input class="form-control" type="email" id="" name="email" placeholder="Enter Email">
                             </div>
                         </div>
@@ -127,7 +139,7 @@
                                 <select class="select" name="role_name" id="role_name">
                                     <option selected disabled>-- Select Role Name --</option>
                                     @php
-                                    $roles = ['Admin', 'Applicant', 'Employee']; // Predefined role types
+                                    $roles = ['Admin', 'Employee']; // Predefined role types
                                     @endphp
 
                                     @foreach ($roles as $role)
@@ -136,23 +148,13 @@
                                 </select>
                             </div>
                             <div class="col-sm-6">
-                                <label>Position</label>
-                                <select class="select" name="position" id="position">
-                                    <option selected disabled> --Select --</option>
-                                    @foreach ($position as $positions )
-                                    <option value="{{ $positions->id }}">{{ $positions->position_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="row">
-                            <div class="col-sm-6">
                                 <div class="form-group">
                                     <label>Phone</label>
                                     <input class="form-control" type="tel" id="" name="phone" placeholder="Enter Phone">
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-sm-6">
                                 <label>Department</label>
                                 <select class="select" name="department" id="department">
@@ -162,7 +164,14 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="col-sm-6">
+                                <label>Position</label>
+                                <select class="select" name="position" id="position">
+                                    <option selected disabled> --Select --</option>
+                                </select>
+                            </div>
                         </div>
+                        <br>
                         <div class="row">
                             <div class="col-sm-6">
                                 <label>Status</label>
@@ -224,8 +233,20 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
-                                    <label>Name</label>
-                                    <input class="form-control" type="text" name="name" id="e_name" value="" />
+                                    <label>Surname</label>
+                                    <input class="form-control" type="text" name="lname" id="e_lname" value="" />
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label>First name</label>
+                                    <input class="form-control" type="text" name="fname" id="e_fname" value="" />
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label>Middle name</label>
+                                    <input class="form-control" type="text" name="mname" id="e_mname" value="" />
                                 </div>
                             </div>
                             <div class="col-sm-6">
@@ -239,7 +260,7 @@
                                 <select class="select" name="role_name" id="e_role_name">
                                     <option selected disabled>-- Select Role Name --</option>
                                     @php
-                                    $roles = ['Admin', 'Applicant', 'Employee']; // Predefined role types
+                                    $roles = ['Admin', 'Employee']; // Predefined role types
                                     @endphp
 
                                     @foreach ($roles as $role)
@@ -249,28 +270,25 @@
                                 </select>
                             </div>
                             <div class="col-sm-6">
-                                <label>Position</label>
-                                <select class="select" name="position" id="e_position">
-                                    @foreach ($position as $positions )
-                                    <option value="{{ $positions->id }}">{{ $positions->position_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="row">
-                            <div class="col-sm-6">
                                 <div class="form-group">
                                     <label>Phone</label>
                                     <input class="form-control" type="text" id="e_phone_number" name="phone" placeholder="Enter Phone">
                                 </div>
                             </div>
+                        </div>
+                        <br>
+                        <div class="row">
                             <div class="col-sm-6">
                                 <label>Department</label>
                                 <select class="select" name="department" id="e_department">
                                     @foreach ($department as $departments )
                                     <option value="{{ $departments->id }}">{{ $departments->department }}</option>
                                     @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label>Position</label>
+                                <select class="select" name="position" id="e_position">
                                 </select>
                             </div>
                         </div>
@@ -410,26 +428,108 @@
 
 </script>
 <script>
-    $(document).on('click', '.userUpdate', function() {
-        const _this = $(this).closest('tr');
-        $('#e_id').val(_this.find('.user_id').text());
-        $('#e_name').val(_this.find('.name').text());
-        $('#e_email').val(_this.find('.email').text());
-        $('#e_role_name').val(_this.find('.role_name').text()).change();
-        $('#e_position').val(_this.find('.position').text()).change();
-        $('#e_phone_number').val(_this.find('.phone_number').text());
-        $('#e_department').val(_this.find('.department').text());
-        $('#e_status').val(_this.find('.status_s').text()).change();
-        $('#e_image').val(_this.find('.avatar').data('avatar'));
-    });
+    $(document).ready(function() {
+        var url = "{{ route('hr/get/information/emppos') }}";
 
-    $(document).on('click', '.userDelete', function() {
-        const _this = $(this).closest('tr');
-        $('.e_id').val(_this.find('.id').data('id'));
-        $('#e_avatar').val(_this.find('.avatar').data('avatar'));
+        // Reusable function to reset a dropdown
+        function resetDropdown(selector, placeholder) {
+            $(selector).html(`<option value="" disabled selected>${placeholder}</option>`);
+        }
+
+        // Reusable function to populate positions
+        function populatePositions(departmentId, selectId = '#position', preselectedPositionId = null) {
+            if (departmentId) {
+                $(selectId).html('<option disabled selected>Loading...</option>');
+                $.ajax({
+                    url: url
+                    , type: "POST"
+                    , data: {
+                        id: departmentId
+                        , _token: $('meta[name="csrf-token"]').attr("content")
+                    }
+                    , dataType: "json"
+                    , success: function(response) {
+
+                        if (response.positions) {
+                            $(selectId).html('<option value="" disabled selected>-- Select Position --</option>');
+                            response.positions.forEach((position) => {
+                                $(selectId).append(
+                                    `<option value="${position.id}" ${
+                                    preselectedPositionId == position.id ? "selected" : ""
+                                }>${position.position_name}</option>`
+                                );
+                            });
+                        }
+                    }
+                    , error: function(xhr, status, error) {
+                        console.error("Error fetching positions:", error);
+                    }
+                });
+            }
+        }
+
+        // Create form: when department changes
+        $('#department').change(function() {
+            const departmentId = $(this).val();
+            resetDropdown('#position', '-- Select Position --');
+            populatePositions(departmentId, '#position');
+        });
+
+        // Edit form: when department changes
+        $('#e_department').change(function() {
+            const departmentId = $(this).val();
+            populatePositions(departmentId, '#e_position');
+        });
+
+        // Handle userUpdate (Edit Button Click)
+        $(document).on('click', '.userUpdate', function() {
+            const _this = $(this).closest('tr');
+
+            const userId = _this.find('.user_id').text();
+            const nameSpan = _this.find('.name');
+            const fullName = nameSpan.text();
+            const firstname = nameSpan.data('first-name');
+            const middlename = nameSpan.data('middle-name');
+            const lastname = nameSpan.data('last-name');
+
+            const email = _this.find('.email').text();
+            const roleName = _this.find('.role_name').text();
+            const phoneNumber = _this.find('.phone_number').text();
+            const status = _this.find('.status_s').text();
+            const avatar = _this.find('.avatar').data('avatar');
+
+            const departmentId = _this.find('.department').data('id');
+            const departmentName = _this.find('.department').text();
+            const positionId = _this.find('.position').data('id');
+
+            console.log(departmentId);
+
+
+            $('#e_id').val(userId);
+            $('#e_fname').val(firstname);
+            $('#e_mname').val(middlename);
+            $('#e_lname').val(lastname);
+            $('#e_department').val(departmentId);
+            $('#e_email').val(email);
+            $('#e_role_name').val(roleName).change();
+            $('#e_phone_number').val(phoneNumber);
+            $('#e_status').val(status).change();
+            $('#e_image').val(avatar);
+
+
+            populatePositions(departmentId, '#e_position', positionId);
+        });
+
+        // Delete user
+        $(document).on('click', '.userDelete', function() {
+            const _this = $(this).closest('tr');
+            $('.e_id').val(_this.find('.id').data('id'));
+            $('#e_avatar').val(_this.find('.avatar').data('avatar'));
+        });
     });
 
 </script>
+
 
 @endsection
 @endsection

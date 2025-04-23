@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -33,8 +34,10 @@ class ForgotPasswordController extends Controller
             'created_at' => Carbon::now(),
         ]);
 
+        $user = User::where('email', $request->email)->first();
+
         // Send the reset email
-        Mail::send('auth.verify', ['token' => $token], function($message) use ($request) {
+        Mail::send('auth.verify', ['token' => $token, 'user' => $user], function($message) use ($request) {
             $message->from(config('mail.from.address'), config('mail.from.name'));
             $message->to($request->email)->subject('Reset Password Notification');
         });

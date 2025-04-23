@@ -1,5 +1,138 @@
 @extends('layouts.master')
 @section('content')
+<style>
+    .progressbar {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        margin: 1rem 0 2rem;
+        counter-reset: step;
+    }
+
+    .progressbar::before {
+        content: "";
+        position: absolute;
+        top: 25%;
+        left: 32px;
+        height: 4px;
+        width: calc(100% - 66px);
+        background-color: #e0e0e0;
+        z-index: 0;
+    }
+
+    .progress-line {
+        position: absolute;
+        top: 25%;
+        left: 34px;
+        height: 4px;
+        width: 0;
+        background-color: #007bff;
+        /* Progress line color */
+        z-index: 1;
+        transition: width 0.3s ease;
+    }
+
+    .progress-step {
+        position: relative;
+        text-align: center;
+        flex: 1;
+        z-index: 2;
+    }
+
+    .progress-step .circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #e0e0e0;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 6px;
+        font-weight: bold;
+        color: #999;
+        border: 2px solid #e0e0e0;
+        transition: 0.3s ease;
+    }
+
+    .progress-step.active .circle {
+        background-color: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .progress-step.completed .circle {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: transparent;
+        position: relative;
+    }
+
+    .progress-step.completed .circle::after {
+        content: "✓";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .progress-step .label {
+        font-size: 12px;
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        .progressbar {
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            flex: 1 1 20%;
+            margin-bottom: 10px;
+        }
+
+        .progress-step .label {
+            font-size: 10px;
+        }
+
+        .progress-step .circle {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .progress-step {
+            flex: 1 1 16%;
+        }
+
+        .progress-step .label,
+        .progress-line,
+        .progressbar::before {
+            display: none;
+            /* Hide labels for small screens if needed */
+        }
+
+        .progress-step {
+            margin-bottom: 5px;
+        }
+
+        .progress-step .circle {
+            width: 18px;
+            height: 18px;
+            font-size: 8px;
+        }
+
+        .progress-step.completed .circle::after {
+            font-size: 8px;
+        }
+    }
+
+</style>
+
 <!-- Page Wrapper -->
 <div class="page-wrapper">
     <!-- Page Content -->
@@ -79,7 +212,9 @@
                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="{{ url('all/employee/view/edit/'.$lists->emp_id) }}"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                            <a class="dropdown-item" href="{{url('all/employee/delete/'.$lists->emp_id)}}" onclick="return confirm('Are you sure to want to delete it?')"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                            <a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#delete_employee_modal" data-emp-id="{{ $lists->emp_id }}">
+                                <i class="fa fa-trash-o m-r-5"></i> Delete
+                            </a>
                         </div>
                     </div>
 
@@ -161,6 +296,51 @@
             </div>
         </div>
     </x-layouts.add-emp-modal>
+
+
+    <div class="modal custom-modal fade" id="delete_employee_modal" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="form-header">
+                        <h3>Delete Employee</h3>
+                        <p id="delete-message">Are you sure you want to delete this employee?</p>
+                    </div>
+                    <div class="modal-btn delete-action">
+                        <form action="{{ route('employee/delete', ['employee_id' => 'emp_id_placeholder']) }}" method="POST" id="delete-employee-form">
+                            @csrf
+                            <input type="hidden" name="emp_id" class="emp_id" value="">
+                            <div class="row">
+                                <div class="col-6">
+                                    <button style="width: 100%;" type="submit" class="btn btn-primary continue-btn">Delete</button>
+                                </div>
+                                <div class="col-6">
+                                    <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    $('#delete_employee_modal').on('show.bs.modal', function(e) {
+        // Get the emp_id from the data attribute of the clicked element
+        var empId = $(e.relatedTarget).data('emp-id');
+
+        // Set the emp_id value in the hidden input field inside the modal
+        $(this).find('.emp_id').val(empId);
+
+        // Update the form action to include the employee_id in the URL
+        var formAction = "{{ route('employee/delete', ['employee_id' => ':emp_id']) }}";
+        formAction = formAction.replace(':emp_id', empId);
+        $(this).find('form').attr('action', formAction);
+    });
+
+</script>
+
 @endsection
 @endsection

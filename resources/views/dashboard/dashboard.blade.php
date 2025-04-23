@@ -38,7 +38,7 @@
                 <div class="card dash-widget">
                     <div class="card-body"> <span class="dash-widget-icon"><i class="fa fa-users"></i></span>
                         <div class="dash-widget-info">
-                            <h3>112</h3> <span>Applicants</span>
+                            <h3>{{ $applicants->count() }}</h3> <span>Applicants</span>
                         </div>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
                 <div class="card dash-widget">
                     <div class="card-body"> <span class="dash-widget-icon"><i class="fa fa-user-md"></i></span>
                         <div class="dash-widget-info">
-                            <h3>44</h3> <span>Available Jobs</span>
+                            <h3>{{ $available_jobs->count() }}</h3> <span>Available Jobs</span>
                         </div>
                     </div>
                 </div>
@@ -78,16 +78,20 @@
                     <div class="col-md-6 text-center">
                         <div class="card">
                             <div class="card-body">
-                                <h3 class="card-title">Total Applicant</h3>
-                                <div id="bar-charts"></div>
+                                <h3 class="card-title">Gender Distribution of Employees Per Department</h3>
+                                <div id="gender-dep-bar-charts-container" style="overflow-x: auto;">
+                                    <div id="gender-dep-bar-charts" style="height: 300px;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6 text-center">
                         <div class="card">
                             <div class="card-body">
-                                <h3 class="card-title">Employees Overview</h3>
-                                <div id="line-charts"></div>
+                                <h3 class="card-title">Employees Hired Per Decade (by Gender)</h3>
+                                <div id="gender-date-hired-line-charts-container" style="overflow-x: auto;">
+                                    <div id="gender-date-hired-line-charts" style="height: 300px;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -95,59 +99,98 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-12">
-                <div class="card-group m-b-30">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-3">
-                                <div> <span class="d-block">New Employees</span> </div>
-                                <div> <span class="text-success">+10%</span> </div>
+            <!-- New Leaves vs All-Time Leaves -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 align-items-start">
+                            <div>
+                                <i class="fa fa-calendar text-primary me-1" data-bs-toggle="tooltip" title="New leave requests vs All-Time leave count"></i>
+                                <span class="d-block">New Leave Requests</span>
                             </div>
-                            <h3 class="mb-3">10</h3>
-                            <div class="progress mb-2" style="height: 5px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width: 70%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div>
+                                <span class="{{ $leaveStatistics['newPercentageChange'] >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $leaveStatistics['newPercentageChange'] >= 0 ? '+' : '' }}{{ $leaveStatistics['newPercentageChange'] }}%
+                                </span>
                             </div>
-                            <p class="mb-0">Overall Employees 218</p>
                         </div>
+                        <h3 class="mb-3">{{ $leaveStatistics['newLeavesCount'] }}</h3>
+                        <div class="progress mb-2" style="height: 5px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $leaveStatistics['newLeavesPercentage'] }}%;" aria-valuenow="{{ $leaveStatistics['newLeavesCount'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p class="mb-0">All-Time Leave Count: <span class="text-muted">{{ $leaveStatistics['allLeavesCount'] }}</span></p>
                     </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-3">
-                                <div> <span class="d-block">Applicants This Month</span> </div>
-                                <div> <span class="text-success">+12.5%</span> </div>
+                </div>
+            </div>
+
+            <!-- Pending Leaves vs All-Time -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 align-items-start">
+                            <div>
+                                <i class="fa fa-clock-o text-warning me-1" data-bs-toggle="tooltip" title="Pending leave requests vs all-time leave count"></i>
+                                <span class="d-block">Pending Leaves</span>
                             </div>
-                            <h3 class="mb-3">154</h3>
-                            <div class="progress mb-2" style="height: 5px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div>
+                                <span class="{{ $leaveStatistics['pendingPercentageChange'] >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $leaveStatistics['pendingPercentageChange'] >= 0 ? '+' : '' }}{{ $leaveStatistics['pendingPercentageChange'] }}%
+                                </span>
                             </div>
-                            <p class="mb-0">Previous Month <span class="text-muted">137</span></p>
                         </div>
+                        <h3 class="mb-3">{{ $leaveStatistics['pendingLeavesCount'] }}</h3>
+                        <div class="progress mb-2" style="height: 5px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $leaveStatistics['pendingLeavePercentage'] }}%;" aria-valuenow="{{ $leaveStatistics['pendingLeavesCount'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p class="mb-0">All-Time Leave Count: <span class="text-muted">{{ $leaveStatistics['allLeavesCount'] }}</span></p>
                     </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-3">
-                                <div> <span class="d-block">Available Job Positions</span> </div>
-                                <div> <span class="text-danger">-2.8%</span> </div>
+                </div>
+            </div>
+
+            <!-- Approved Leaves vs Last Month -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 align-items-start">
+                            <div>
+                                <i class="fa fa-check-square text-success me-1" data-bs-toggle="tooltip" title="Approved leave requests vs last month's approved leaves"></i>
+                                <span class="d-block">Approved Leaves</span>
                             </div>
-                            <h3 class="mb-3">22</h3>
-                            <div class="progress mb-2" style="height: 5px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div>
+                                <span class="{{ $leaveStatistics['approvedPercentageChange'] >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $leaveStatistics['approvedPercentageChange'] >= 0 ? '+' : '' }}{{ $leaveStatistics['approvedPercentageChange'] }}%
+                                </span>
                             </div>
-                            <p class="mb-0">Previously <span class="text-muted">25</span></p>
                         </div>
+                        <h3 class="mb-3">{{ $leaveStatistics['approvedLeavesCount'] }}</h3>
+                        <div class="progress mb-2" style="height: 5px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $leaveStatistics['approvedLeavePercentage'] }}%;" aria-valuenow="{{ $leaveStatistics['approvedLeavesCount'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p class="mb-0">Last Month: <span class="text-muted">{{ $leaveStatistics['lastMonthApprovedLeavesCount'] }}</span></p>
                     </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-3">
-                                <div> <span class="d-block">Pending Leave Requests</span> </div>
-                                <div> <span class="text-danger">-5%</span> </div>
+                </div>
+            </div>
+
+            <!-- Declined Leaves vs Last Month -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 align-items-start">
+                            <div>
+                                <i class="fa fa-times-circle text-danger me-1" data-bs-toggle="tooltip" title="Declined leave requests vs last month's declined leaves"></i>
+                                <span class="d-block">Declined Leaves</span>
                             </div>
-                            <h3 class="mb-3">12</h3>
-                            <div class="progress mb-2" style="height: 5px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div>
+                                <span class="{{ $leaveStatistics['declinedPercentageChange'] >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $leaveStatistics['declinedPercentageChange'] >= 0 ? '+' : '' }}{{ $leaveStatistics['declinedPercentageChange'] }}%
+                                </span>
                             </div>
-                            <p class="mb-0">Last Week <span class="text-muted">15</span></p>
                         </div>
+                        <h3 class="mb-3">{{ $leaveStatistics['declinedLeavesCount'] }}</h3>
+                        <div class="progress mb-2" style="height: 5px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $leaveStatistics['declinedLeavePercentage'] }}%;" aria-valuenow="{{ $leaveStatistics['declinedLeavesCount'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p class="mb-0">Last Month: <span class="text-muted">{{ $leaveStatistics['lastMonthDeclinedLeavesCount'] }}</span></p>
                     </div>
                 </div>
             </div>
@@ -160,114 +203,139 @@
                 <div class="card flex-fill dash-statistics">
                     <div class="card-body">
                         <h5 class="card-title">Employee Statistics</h5>
-                        <div class="stats-list">
+                        <div class="stats-list" style="max-height: 350px; overflow-y: auto;">
+                            @php
+                            $totalEmployment = array_sum($employmentStatusCount->toArray());
+                            // Add custom hex colors and gradient styles
+                            $colors = [ '#007bff', '#28a745', '#ffc107', '#17a2b8', '#6c757d', '#343a40', '#6f42c1', '#dc3545', 'linear-gradient(45deg, #ff7e5f, #feb47b)', 'linear-gradient(45deg, #00c6ff, #0072ff)', 'linear-gradient(45deg, #ff6a00, #ee0979)', 'linear-gradient(45deg, #00ff99, #66ff66)', ];
+                            $i = 0;
+                            @endphp
+
+                            @forelse ($employmentStatusCount as $status => $count)
+                            @php
+                            $percent = $totalEmployment > 0 ? round(($count / $totalEmployment) * 100) : 0;
+                            $color = $colors[$i % count($colors)];
+                            $i++;
+                            @endphp
                             <div class="stats-info">
-                                <p>Today on Leave <strong>4 <small>/ 65</small></strong></p>
+                                <p>{{ ucfirst($status) }} <strong>{{ $count }} <small>/ {{ $totalEmployment }}</small></strong></p>
                                 <div class="progress">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 31%" aria-valuenow="31" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div class="progress-bar" role="progressbar" style="width: {{ $percent }}%; background: {{ $color }};" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                             </div>
-                            <div class="stats-info">
-                                <p>Pending Leave Requests <strong>8</strong></p>
-                                <div class="progress">
-                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            <div class="stats-info">
-                                <p>Approved Leaves This Month <strong>20</strong></p>
-                                <div class="progress">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: 70%" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            <div class="stats-info">
-                                <p>Available Job Openings <strong>10</strong></p>
-                                <div class="progress">
-                                    <div class="progress-bar bg-info" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            <div class="stats-info">
-                                <p>Applicants Pending Review <strong>15</strong></p>
-                                <div class="progress">
-                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
+                            @empty
+                            <div class="text-center text-muted">No employment data available</div>
+                            @endforelse
                         </div>
                     </div>
                 </div>
             </div>
+
 
             <!-- Department & Designation Overview -->
             <div class="col-md-12 col-lg-6 col-xl-4 d-flex">
                 <div class="card flex-fill">
                     <div class="card-body">
                         <h4 class="card-title">Department Overview</h4>
+
                         <div class="statistics">
                             <div class="row">
-                                <div class="col-md-6 col-6 text-center">
+                                <div class="col-6 text-center">
                                     <div class="stats-box mb-4">
                                         <p>Total Departments</p>
-                                        <h3>8</h3>
+                                        <h3>{{ $totalDepartments }}</h3>
                                     </div>
                                 </div>
-                                <div class="col-md-6 col-6 text-center">
+                                <div class="col-6 text-center">
                                     <div class="stats-box mb-4">
-                                        <p>Available Designations</p>
-                                        <h3>24</h3>
+                                        <p>Available Positions</p>
+                                        <h3>{{ $totalDesignations }}</h3>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Scrollable progress section -->
                         <div class="progress mb-4">
-                            <div class="progress-bar bg-purple" role="progressbar" style="width: 45%" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+                            @foreach($departmentProgress as $dept)
+                            <div class="progress-bar 
+                        {{ $loop->iteration == 1 ? 'bg-purple' : ($loop->iteration == 2 ? 'bg-success' : 'bg-warning') }}" role="progressbar" style="width: {{ $dept['percentage'] }}%" aria-valuenow="{{ $dept['percentage'] }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ $dept['percentage'] }}%
+                            </div>
+                            @endforeach
                         </div>
-                        <div>
-                            <p><i class="fa fa-dot-circle-o text-purple mr-2"></i>HR Department <span class="float-right">12 Staff</span></p>
-                            <p><i class="fa fa-dot-circle-o text-success mr-2"></i>IT Department <span class="float-right">18 Staff</span></p>
-                            <p><i class="fa fa-dot-circle-o text-warning mr-2"></i>Marketing Department <span class="float-right">10 Staff</span></p>
+
+                        <!-- Scrollable department list -->
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            @foreach($departmentProgress as $dept)
+                            <p class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fa fa-dot-circle-o 
+                        {{ $loop->iteration == 1 ? 'text-purple' : ($loop->iteration == 2 ? 'text-success' : 'text-warning') }} me-2"></i>
+                                    {{ $dept['name'] }}
+                                </span>
+                                <span>{{ $dept['staff_count'] }} Staff</span>
+                            </p>
+                            @endforeach
                         </div>
+
                     </div>
                 </div>
             </div>
 
-            <!-- Today's Absentees -->
+
+
+            <!-- This week's leave -->
             <div class="col-md-12 col-lg-6 col-xl-4 d-flex">
                 <div class="card flex-fill">
                     <div class="card-body">
-                        <h4 class="card-title">Today Absent <span class="badge bg-inverse-danger ml-2">5</span></h4>
-                        <div class="leave-info-box">
-                            <div class="media align-items-center">
-                                <a href="profile.html" class="avatar"><img alt="" src="assets/img/user.jpg"></a>
-                                <div class="media-body">
-                                    <div class="text-sm my-0">Martin Lewis</div>
+                        <h4 class="card-title">
+                            This Week Leave
+                            <span class="badge bg-inverse-danger ml-2">{{ count($thisWeekLeaves) }}</span>
+                        </h4>
+
+                        <div id="leaveContainer" class="leave-scroll" style="max-height: none; overflow: hidden;">
+                            @forelse ($thisWeekLeaves as $index => $leave)
+                            <div class="leave-info-box mb-3 leave-item {{ $index >= 2 ? 'd-none' : '' }}">
+                                <div class="media align-items-center">
+                                    <a href="{{ url('all/employee/view/edit/'.$leave->staff_id) }}" class="avatar">
+                                        <img alt="{{ $leave->user_name }}" src="{{ $leave->user_avatar ? URL::to('/assets/images/'.$leave->user_avatar) : 'assets/img/user.jpg' }}">
+                                    </a>
+                                    <div class="media-body">
+                                        <div class="text-sm my-0">{{ $leave->user_name }}</div>
+                                    </div>
+                                </div>
+                                <div class="row align-items-center mt-3">
+                                    <div class="col-8">
+                                        <h6 class="mb-0">{{ \Carbon\Carbon::parse($leave->date_from)->format('d M Y') }} - {{ \Carbon\Carbon::parse($leave->date_to)->format('d M Y') }}</h6>
+                                        <span class="text-sm text-muted">Leave Date</span>
+                                    </div>
+                                    <div class="col-4 text-right">
+                                        <span class="badge 
+                                    {{ $leave->status === 'Approved' ? 'bg-inverse-success' : 
+                                    ($leave->status === 'Pending' ? 'bg-inverse-info' : 
+                                    ($leave->status === 'Declined' ? 'bg-inverse-warning' : 'bg-inverse-purple')) }}">
+                                            {{ ucfirst($leave->status) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row align-items-center mt-3">
-                                <div class="col-6">
-                                    <h6 class="mb-0">4 Sep 2019</h6> <span class="text-sm text-muted">Leave Date</span>
-                                </div>
-                                <div class="col-6 text-right"> <span class="badge bg-inverse-danger">Pending</span> </div>
-                            </div>
+                            @empty
+                            <div class="text-center text-muted">No leave records available for this week.</div>
+                            @endforelse
                         </div>
-                        <div class="leave-info-box">
-                            <div class="media align-items-center">
-                                <a href="profile.html" class="avatar"><img alt="" src="assets/img/user.jpg"></a>
-                                <div class="media-body">
-                                    <div class="text-sm my-0">Anna Smith</div>
-                                </div>
-                            </div>
-                            <div class="row align-items-center mt-3">
-                                <div class="col-6">
-                                    <h6 class="mb-0">4 Sep 2019</h6> <span class="text-sm text-muted">Leave Date</span>
-                                </div>
-                                <div class="col-6 text-right"> <span class="badge bg-inverse-success">Approved</span> </div>
-                            </div>
+
+                        @if(count($thisWeekLeaves) > 2)
+                        <div class="load-more text-center mt-3">
+                            <a id="toggleLeaves" class="text-dark" href="javascript:void(0);" onclick="toggleLeaves()">Load More</a>
                         </div>
-                        <div class="load-more text-center"> <a class="text-dark" href="javascript:void(0);">Load More</a> </div>
+                        @endif
                     </div>
                 </div>
             </div>
+
+
+
         </div>
 
         <!-- /Statistics Widget -->
@@ -277,52 +345,53 @@
                     <div class="card-header">
                         <h3 class="card-title mb-0">Employee List</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
+                    <div class="card-body" style="height: 100%; overflow-y: auto;">
+                        <div class="table-responsive" style="max-height: 355px; overflow-y: auto;">
                             <table class="table table-nowrap custom-table mb-0">
                                 <thead>
                                     <tr>
                                         <th>Employee ID</th>
                                         <th>Name</th>
                                         <th>Department</th>
-                                        <th>Designation</th>
+                                        <th>Position</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @forelse($employees as $employee)
+                                    @php
+                                    $job = $employee->jobDetails->first();
+                                    $department = $job->department->department ?? 'N/A';
+                                    $position = $job->position->position_name ?? 'N/A';
+                                    $status = strtolower($employee->user->status ?? 'Unknown');
+
+                                    $badgeClass = match($status) {
+                                    'active' => 'bg-inverse-success',
+                                    'inactive' => 'bg-inverse-warning',
+                                    'disabled' => 'bg-inverse-danger',
+                                    default => 'bg-secondary',
+                                    };
+                                    @endphp
                                     <tr>
-                                        <td><a href="#">KH-0001</a></td>
+                                        <td><a href="{{ url('all/employee/view/edit/'.$employee->emp_id) }}">{{ $employee->emp_id }}</a></td>
                                         <td>
-                                            <h2><a href="#">Juan Dela Cruz</a></h2>
+                                            <h2><a href="{{ url('all/employee/view/edit/'.$employee->emp_id) }}">{{ $employee->name }}</a></h2>
                                         </td>
-                                        <td>IT</td>
-                                        <td>Web Developer</td>
-                                        <td><span class="badge bg-inverse-success">Active</span></td>
+                                        <td>{{ $department }}</td>
+                                        <td>{{ $position }}</td>
+                                        <td><span class="badge {{ $badgeClass }}">{{ ucfirst($status) }}</span></td>
                                     </tr>
+                                    @empty
                                     <tr>
-                                        <td><a href="#">KH-0002</a></td>
-                                        <td>
-                                            <h2><a href="#">Maria Clara</a></h2>
-                                        </td>
-                                        <td>HR</td>
-                                        <td>Recruiter</td>
-                                        <td><span class="badge bg-inverse-warning">On Leave</span></td>
+                                        <td colspan="5" class="text-center">No employees found</td>
                                     </tr>
-                                    <tr>
-                                        <td><a href="#">KH-0003</a></td>
-                                        <td>
-                                            <h2><a href="#">Andres Bonifacio</a></h2>
-                                        </td>
-                                        <td>Finance</td>
-                                        <td>Accountant</td>
-                                        <td><span class="badge bg-inverse-danger">Resigned</span></td>
-                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="employees.html">View all employees</a>
+                        <a href="{{ route('all/employee/card') }}">View all employees</a>
                     </div>
                 </div>
             </div>
@@ -330,10 +399,10 @@
             <div class="col-md-6 d-flex">
                 <div class="card card-table flex-fill">
                     <div class="card-header">
-                        <h3 class="card-title mb-0">Leave Requests</h3>
+                        <h3 class="card-title mb-0">This Month Leave Requests</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
+                    <div class="card-body" style="height: 100%; overflow-y: auto;">
+                        <div class="table-responsive" style="max-height: 355px; overflow-y: auto;">
                             <table class="table custom-table table-nowrap mb-0">
                                 <thead>
                                     <tr>
@@ -341,43 +410,54 @@
                                         <th>Name</th>
                                         <th>Leave Type</th>
                                         <th>From</th>
+                                        <th>To</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @php
+                                    use App\Models\Leave;
+                                    use Carbon\Carbon;
+
+                                    $this_month_leaves = Leave::all()->filter(function ($leave) {
+                                    $date = Carbon::createFromFormat('d M, Y', $leave->date_from);
+                                    return $date->month === Carbon::now()->month && $date->year === Carbon::now()->year;
+                                    });
+                                    @endphp
+                                    @forelse($this_month_leaves as $item)
+                                    @php
+                                    $status = strtolower($item->status);
+                                    $badgeClass = match($status) {
+                                    'approved' => 'bg-inverse-success',
+                                    'pending' => 'bg-inverse-warning',
+                                    'rejected' => 'bg-inverse-danger',
+                                    default => 'bg-secondary',
+                                    };
+
+                                    $formattedDateDateFrom = \Carbon\Carbon::parse($item->date_from)->format('d M, Y');
+                                    $formattedDateDateTo = \Carbon\Carbon::parse($item->date_to)->format('d M, Y');
+                                    @endphp
                                     <tr>
-                                        <td><a href="#">KH-0002</a></td>
+                                        <td><a href="#">{{ $item->staff_id }}</a></td>
                                         <td>
-                                            <h2><a href="#">Maria Clara</a></h2>
+                                            <h2><a href="#">{{ $item->employee_name }}</a></h2>
                                         </td>
-                                        <td>Sick Leave</td>
-                                        <td>10 Apr 2025</td>
-                                        <td><span class="badge bg-inverse-warning">Pending</span></td>
+                                        <td>{{ $item->leave_type }}</td>
+                                        <td>{{ $formattedDateDateFrom }}</td>
+                                        <td>{{ $formattedDateDateTo }}</td>
+                                        <td><span class="badge {{ $badgeClass }}">{{ ucfirst($status) }}</span></td>
                                     </tr>
+                                    @empty
                                     <tr>
-                                        <td><a href="#">KH-0004</a></td>
-                                        <td>
-                                            <h2><a href="#">Jose Rizal</a></h2>
-                                        </td>
-                                        <td>Vacation Leave</td>
-                                        <td>5 Apr 2025</td>
-                                        <td><span class="badge bg-inverse-success">Approved</span></td>
+                                        <td colspan="6" class="text-center">No leaves found for this month</td>
                                     </tr>
-                                    <tr>
-                                        <td><a href="#">KH-0005</a></td>
-                                        <td>
-                                            <h2><a href="#">Antonio Luna</a></h2>
-                                        </td>
-                                        <td>Emergency Leave</td>
-                                        <td>3 Apr 2025</td>
-                                        <td><span class="badge bg-inverse-danger">Rejected</span></td>
-                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="leaves.html">View all leave requests</a>
+                        <a href="{{ route('form/leaves/new') }}">View all leave requests</a>
                     </div>
                 </div>
             </div>
@@ -395,14 +475,14 @@
                                 <thead>
                                     <tr>
                                         <th>Employee</th>
-                                        <th>Date Hired</th>
+                                        <th>Appointment Date</th>
                                         <th>Position</th>
                                         <th>Service Years</th>
                                         <th>Step Increment</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($employees as $employee)
+                                    @forelse($employees as $employee)
                                     <tr>
                                         <td>
                                             <h2>{{ $employee->name ?? 'N/A' }}</h2>
@@ -458,7 +538,11 @@
                                             @endif
                                         </td>
                                     </tr>
-                                    @endforeach
+                                    @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center">No employees found</td>
+                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
@@ -486,7 +570,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($employees as $employee)
+                                    @forelse($employees as $employee)
                                     <tr>
                                         <td>
                                             <h2>{{ $employee->name ?? 'N/A' }}</h2>
@@ -502,7 +586,7 @@
                                                 @endif
                                             </small>
                                         </td>
-                                        <td>{{ optional($employee->employment)->date_hired ? \Carbon\Carbon::parse($employee->employment->date_hired)->format('d M, Y') : 'N/A' }}</td>
+                                        <td>{{ optional($employee->employment)->date_hired ?? 'N/A' }}</td>
 
                                         <td>
                                             @if($employee->serviceYears || $employee->serviceMonths || $employee->serviceDays)
@@ -546,7 +630,11 @@
                                             @endif
                                         </td>
                                     </tr>
-                                    @endforeach
+                                    @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center">No employees found</td>
+                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
@@ -560,4 +648,96 @@
     </div>
     <!-- /Page Content -->
 </div>
+@section('script')
+
+<script>
+    let expanded = false;
+
+    function toggleLeaves() {
+        const leaves = document.querySelectorAll('.leave-item');
+        const toggleButton = document.getElementById('toggleLeaves');
+        const container = document.getElementById('leaveContainer');
+
+        leaves.forEach((item, index) => {
+            if (index >= 2) {
+                item.classList.toggle('d-none');
+            }
+        });
+
+        if (!expanded) {
+            container.style.maxHeight = '280px'; // adjust as needed
+            container.style.overflowY = 'auto';
+            toggleButton.textContent = 'Load Less';
+        } else {
+            container.style.maxHeight = 'none';
+            container.style.overflow = 'hidden';
+            toggleButton.textContent = 'Load More';
+        }
+
+        expanded = !expanded;
+    }
+
+</script>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+
+</script>
+
+<script>
+    $(document).ready(function() {
+        const departmentGenderData = @json($departmentGenderChartData);
+
+        if (Array.isArray(departmentGenderData) && departmentGenderData.length > 0) {
+            Morris.Bar({
+                element: 'gender-dep-bar-charts'
+                , data: departmentGenderData.map(dep => ({
+                    y: dep.department, // Department Name
+                    a: dep.male_count, // Male count
+                    b: dep.female_count // Female count
+                }))
+                , xkey: 'y', // X-axis field (Department)
+                ykeys: ['a', 'b'], // Y-axis fields (Male and Female counts)
+                labels: ['Male Employees', 'Female Employees'], // Labels for Y-axis
+                barColors: ['#f43b48', '#2a52be'], // Bar colors for Male and Female
+                resize: true, // Resize the chart on window resize
+                redraw: true, // Redraw the chart if necessary
+                xLabelAngle: 45, // Rotate x-axis labels for readability
+                hideHover: 'auto', // Hide hover effect on mobile screens
+            });
+        } else {
+            console.error("Invalid or empty departmentGenderChartData:", departmentGenderData);
+        }
+
+        const hiringData = @json($hiringChartData);
+
+        Morris.Line({
+            element: 'gender-date-hired-line-charts'
+            , data: hiringData.map(item => ({
+                y: item.y
+                , a: item.male
+                , b: item.female
+            }))
+            , xkey: 'y'
+            , ykeys: ['a', 'b']
+            , labels: ['Male Hires', 'Female Hires']
+            , lineColors: ['#007bff', '#e83e8c']
+            , lineWidth: 3
+            , resize: true
+            , redraw: true
+            , hideHover: 'auto'
+        , });
+
+    });
+
+</script>
+
+@endsection
 @endsection

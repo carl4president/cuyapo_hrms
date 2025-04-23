@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\department;
+use App\Models\Employee;
+use App\Models\TypeJob;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
@@ -27,6 +30,27 @@ class LoginController extends Controller
     public function login()
     {
         return view('auth.login');
+    }
+
+    public function loginemployee()
+    {
+        $employee = Employee::with(
+            'contact',
+            'governmentIds',
+            'familyInfo',
+            'education',
+            'employment',
+            'children',
+            'user',
+            'jobDetails.department',
+            'jobDetails.position' // Load both department and position through jobDetails
+        )->get();
+
+        $userList = User::all();
+        $departments = department::all();
+        $typeJobs = TypeJob::all();
+
+        return view('auth.loginemployee', compact('employee', 'userList', 'departments', 'typeJobs'));
     }
 
     /** Authenticate user and redirect */
@@ -58,13 +82,50 @@ class LoginController extends Controller
             }
 
             flash()->error('Wrong Username or Password');
-            return redirect('login');
+            return redirect()->back();
         } catch (\Exception $e) {
             \Log::info($e);
             flash()->error('Login failed. Please try again.');
             return redirect()->back();
         }
     }
+
+    public function authenticateEmployee(Request $request)
+    {
+        $request->validate([
+            'email'    => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        try {
+            $credentials = $request->only('email', 'password') + ['status' => 'Active'];
+
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
+                Session::put($this->getUserSessionData($user));
+
+                // Update last login
+                $user->update(['last_login' => Carbon::now()]);
+
+                flash()->success('Login successfully :)');
+                if ($user->role_name == 'Employee') {
+                    return redirect()->route('em/dashboard'); // Redirect to employee dashboard
+                } elseif ($user->role_name == 'Admin') {
+                    return redirect()->route('home'); // Redirect to admin home
+                } else {
+                    return redirect()->intended('home'); // Default fallback
+                };
+            }
+
+            flash()->error('Wrong Username or Password');
+            return redirect()->back();
+        } catch (\Exception $e) {
+            \Log::info($e);
+            flash()->error('Login failed. Please try again.');
+            return redirect()->back();
+        }
+    }
+    
 
     /** Prepare User Session Data */
     private function getUserSessionData($user)
@@ -88,9 +149,14 @@ class LoginController extends Controller
     /** Logout and clear session */
     public function logout(Request $request)
     {
+        $user = Auth::user();
         $request->session()->flush();
         Auth::logout();
         flash()->success('Logout successfully :)');
-        return redirect('login');
+        if ($user && $user->role_name === 'Admin') {
+            return redirect()->route('login'); // admin login route
+        } else {
+            return redirect()->route('login/employee'); // employee login route
+        }
     }
 }

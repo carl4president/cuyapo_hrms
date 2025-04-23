@@ -16,6 +16,11 @@ class ResetPasswordController extends Controller
         return view('auth.passwords.reset', ['token' => $token]);
     }
 
+    public function getEmployeePassword($token)
+    {
+        return view('auth.passwords.resetemployee', ['token' => $token]);
+    }
+
     /** Update the user's password */
     public function updatePassword(Request $request)
     {

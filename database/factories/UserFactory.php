@@ -33,9 +33,12 @@ class UserFactory extends Factory
         // Ensure there's a fallback if no employees exist
         return [
             'user_id' => $employee ? $employee->emp_id : 'KH-0002', // Using emp_id from the Employee table
-            'name' => $employee ? $employee->name : $this->faker->name, // Using the employee's name or generating a fake one
+            'name' => $employee ? $employee->name : $this->faker->name,
+            'first_name' => $employee->first_name,
+            'middle_name' => $employee->middle_name,
+            'last_name' => $employee->last_name,
             'email' => $employee ? $employee->email : $this->faker->unique()->safeEmail, // Using the employee's email or generating a fake one
-            'avatar' => $this->faker->imageUrl(640, 480, 'people', true), // Random avatar
+            'avatar' => 'photo_defaults.jpg', // Random avatar
             'role_name' => 'Employee', // Default role
             'join_date' => now()->toDateString(), // Current date
             'status' => 'Active', // Default status

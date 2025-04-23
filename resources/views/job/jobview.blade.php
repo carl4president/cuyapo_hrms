@@ -1,5 +1,137 @@
 @extends('layouts.job')
 @section('content')
+<style>
+    .progressbar {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        margin: 1rem 0 2rem;
+        counter-reset: step;
+    }
+
+    .progressbar::before {
+        content: "";
+        position: absolute;
+        top: 25%;
+        left: 32px;
+        height: 4px;
+        width: calc(100% - 66px);
+        background-color: #e0e0e0;
+        z-index: 0;
+    }
+
+    .progress-line {
+        position: absolute;
+        top: 25%;
+        left: 34px;
+        height: 4px;
+        width: 0;
+        background-color: #007bff;
+        /* Progress line color */
+        z-index: 1;
+        transition: width 0.3s ease;
+    }
+
+    .progress-step {
+        position: relative;
+        text-align: center;
+        flex: 1;
+        z-index: 2;
+    }
+
+    .progress-step .circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #e0e0e0;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 6px;
+        font-weight: bold;
+        color: #999;
+        border: 2px solid #e0e0e0;
+        transition: 0.3s ease;
+    }
+
+    .progress-step.active .circle {
+        background-color: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .progress-step.completed .circle {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: transparent;
+        position: relative;
+    }
+
+    .progress-step.completed .circle::after {
+        content: "✓";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .progress-step .label {
+        font-size: 12px;
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        .progressbar {
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            flex: 1 1 20%;
+            margin-bottom: 10px;
+        }
+
+        .progress-step .label {
+            font-size: 10px;
+        }
+
+        .progress-step .circle {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .progress-step {
+            flex: 1 1 16%;
+        }
+
+        .progress-step .label,
+        .progress-line,
+        .progressbar::before {
+            display: none;
+            /* Hide labels for small screens if needed */
+        }
+
+        .progress-step {
+            margin-bottom: 5px;
+        }
+
+        .progress-step .circle {
+            width: 18px;
+            height: 18px;
+            font-size: 8px;
+        }
+
+        .progress-step.completed .circle::after {
+            font-size: 8px;
+        }
+    }
+
+</style>
 {{-- message --}}
 
 <!-- Main Wrapper -->
@@ -9,13 +141,22 @@
         <!-- Logo -->
         <div class="header-left">
             <a href="{{ route('login') }}" class="logo">
-                <img src="{{ URL::to('assets/img/logo.png') }}" width="40" height="40" alt="">
+                @php
+                use App\Models\CompanySettings;
+                $company = CompanySettings::first();
+                @endphp
+
+                @if (!empty($company) && !empty($company->logo))
+                <img src="{{ asset('assets/images/' . $company->logo) }}" width="40" height="40" alt="">
+                @else
+                <img src="{{ asset('assets/img/logo2.png') }}" width="40" height="40" alt="">
+                @endif
             </a>
         </div>
         <!-- /Logo -->
         <!-- Header Title -->
         <div class="page-title-box float-left">
-            <h3>Local Government Unit of Cuyapo</h3>
+            <h3>{{ $company->company_name ?? 'Local Government Unit' }}</h3>
         </div>
         <!-- /Header Title -->
         <!-- Header Menu -->
@@ -85,11 +226,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="job-det-info job-widget">
-                        @if($job_view[0]->status == 'Open')
-                        <a class="btn job-btn" href="#" data-toggle="modal" data-target="#apply_job">Apply For This Job</a>
-                        @else
-                        <a class="btn job-btn disabled" href="javascript:void(0);" style="pointer-events: none; opacity: 0.6;">Apply For This Job</a>
-                        @endif
+                        <a id="applyBtn" class="btn job-btn disabled" href="javascript:void(0);" style="pointer-events: none; opacity: 0.6;">Apply For This Job</a>
                         <div class="info-list job-type-section">
                             <span class="job-id d-none">{{ $job_view[0]->id }}</span>
                             <span class="department-id d-none">{{ $job_view[0]->department_id }}</span>
@@ -147,94 +284,76 @@
         <!-- /Page Content -->
 
         <!-- Apply Job Modal -->
-        <div class="modal custom-modal fade" id="apply_job" role="dialog">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Your Details</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="apply_jobs" action="{{ route('form/apply/job/save') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            <div class="form-group">
-                                <label>Name</label>
-                                <input type="hidden" name="job_title" value="{{ $job_view[0]->job_title }}">
-                                <input class="form-control @error('name') is-invalid @enderror" type="text" name="name" value="{{ old('name') }}">
-                            </div>
-                            <div class="form-group">
-                                <label>Phone</label>
-                                <input class="form-control @error('phone') is-invalid @enderror" type="tel" name="phone" value="{{ old('phone') }}">
-                            </div>
-                            <div class="form-group">
-                                <label>Email Address</label>
-                                <input class="form-control @error('email') is-invalid @enderror" type="text" name="email" value="{{ old('email') }}">
-                            </div>
-                            <div class="form-group">
-                                <label>Message</label>
-                                <textarea class="form-control @error('message') is-invalid @enderror" name="message">{{ old('message') }}</textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Upload your CV</label>
-                                <div class="custom-file">
-                                    <input type="file" class="custom-file-input @error('cv_upload') is-invalid @enderror" id="cv_upload" name="cv_upload">
-                                    <label class="custom-file-label" for="cv_upload">Choose file</label>
-                                </div>
-                            </div>
-                            <div class="submit-section">
-                                <button type="submit" class="btn btn-primary submit-btn">Submit</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        <x-layouts.add-emp-modal modal_title='Add Your Details' :route="route('form/apply/job/save')" :routeUrl="route('hr/get/information/apppos')">
+            <div class="col-12">
+                <h4 class="text-primary">Applicant Photo</h4>
             </div>
-        </div>
+
+            <input type="hidden" class="form-control" id="department" name="department_id" value="{{ $job_view[0]->department_id }}">
+
+            <input type="hidden" class="form-control" id="position" name="position_id" value="{{ $job_view[0]->position_id }}">
+            <input type="hidden" type="text" class="form-control" name="employment_status" value="{{ $job_view[0]->job_type }}">
+        </x-layouts.add-emp-modal>
         <!-- /Apply Job Modal -->
 
     </div>
     <!-- /Page Wrapper -->
 </div>
-<!-- /Main Wrapper -->
-@section('script')
-<script>
-    const expireDate = {{ $expire_date ?? 'null' }};
 
+<script>
+    const expireDate = {!! $expire_date ? "'$expire_date'" : 'null' !!};
+    const jobStatus = "{{ $job_view[0]->status ?? '' }}"; // Ensure the status is passed correctly from the server
+    const applyBtn = document.getElementById('applyBtn');
+    const countdownElement = document.getElementById('countdown');
 
     function startCountdown() {
-        const countdownElement = document.getElementById('countdown');
-
-        // Check if `countdownElement` exists
-        if (!countdownElement) {
-            console.error('Countdown element not found!');
-            return;
-        }
+        if (!applyBtn || !countdownElement) return;
 
         const countdownInterval = setInterval(() => {
-            const currentTime = new Date().getTime(); // Get current time in milliseconds
-            const remainingTime = expireDate - currentTime; // Calculate remaining time
+            const currentTime = new Date().getTime();
+            const remainingTime = expireDate - currentTime;
 
             if (remainingTime <= 0) {
                 countdownElement.innerText = 'Application period has ended';
-                clearInterval(countdownInterval); // Stop the countdown
+                disableApplyButton();
+                clearInterval(countdownInterval);
             } else {
-                // Calculate days, hours, minutes, and seconds
                 const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
 
-                // Update the countdown text
                 countdownElement.innerText = `Application ends in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                enableApplyButton();
             }
         }, 1000);
     }
 
+    function enableApplyButton() {
+        if (jobStatus === 'Open') {
+            applyBtn.classList.remove('disabled');
+            applyBtn.href = "#";
+            applyBtn.setAttribute('data-toggle', 'modal');
+            applyBtn.setAttribute('data-target', '#add_employee');
+            applyBtn.style.pointerEvents = 'auto';
+            applyBtn.style.opacity = '1';
+        }
+    }
+
+    function disableApplyButton() {
+        applyBtn.classList.add('disabled');
+        applyBtn.href = "javascript:void(0);";
+        applyBtn.removeAttribute('data-toggle');
+        applyBtn.removeAttribute('data-target');
+        applyBtn.style.pointerEvents = 'none';
+        applyBtn.style.opacity = '0.6';
+    }
 
     startCountdown();
 
 </script>
+
+
 <script>
     $('#apply_jobs').validate({
         rules: {

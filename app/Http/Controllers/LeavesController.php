@@ -24,9 +24,44 @@ class LeavesController extends Controller
     /** Leaves Admin Page */
     public function leavesAdmin()
     {
-        $userList = DB::table('users')->get();
-        $leaveInformation = LeaveInformation::all();
-        $getLeave = Leave::all();
+        $user = Auth::user();
+
+        if ($user->role_name == 'Admin') {
+            // Admin can access all employees and all leave data
+            $userList = DB::table('users')
+                ->where('role_name', 'Employee')
+                ->get();
+
+            $leaveInformation = LeaveInformation::all();
+            $getLeave = Leave::all();
+        } elseif ($user->role_name == 'Employee') {
+            // Get job details (assume relation is jobdetails, and it's a hasMany)
+            $jobDetail = optional($user->employee->jobdetails->first());
+
+            if ($jobDetail && $jobDetail->is_head == 1) {
+                // Head of department — get employees under same department
+                $userList = DB::table('users')
+                    ->join('employees', 'users.user_id', '=', 'employees.emp_id')
+                    ->join('employee_job_details', 'employees.emp_id', '=', 'employee_job_details.emp_id')
+                    ->where('employee_job_details.department_id', $jobDetail->department_id)
+                    ->where('users.role_name', 'Employee')
+                    ->get();
+
+                $empIds = $userList->pluck('emp_id');
+
+                // Assuming staff_id is a JSON array in LeaveInformation model
+                $leaveInformation = LeaveInformation::all();
+
+                // Ensure the 'emp_id' is the correct column in 'leaves' table
+                $getLeave = Leave::whereIn('staff_id', $empIds)->get();  // Change 'emp_id' to 'employee_id' or the correct column name
+            } else {
+                // Not a department head — no access or only self
+                abort(403, 'Unauthorized access to leave management.');
+            }
+        } else {
+            // Not allowed
+            abort(403, 'Unauthorized role.');
+        }
         return view('employees.leaves_manage.leavesadmin', compact('leaveInformation', 'userList', 'getLeave'));
     }
 
@@ -339,7 +374,12 @@ class LeavesController extends Controller
     public function leaveDetails($id)
     {
         $leave = Leave::findOrFail($id);
-        return view('employees.leaves_manage.leavedetails', compact('leave'));
+
+        $leaveBalance = LeaveBalance::where('staff_id', $leave->staff_id)
+        ->where('leave_type', $leave->leave_type)
+        ->first();
+
+        return view('employees.leaves_manage.leavedetails', compact('leave', 'leaveBalance'));
     }
 
 
@@ -498,6 +538,24 @@ class LeavesController extends Controller
         return view('employees.leaves_manage.leavesadmin', compact('leaves', 'userList', 'leaveInformation', 'getLeave'));
     }
 
+    private function autoApprovePendingLeaves()
+    {
+        // Get the date 5 days ago
+        $fiveDaysAgo = now()->subDays(5);
+
+        // Find all leaves that are still pending and created more than 5 days ago
+        $leaves = Leave::where('status', 'Pending')
+            ->whereDate('created_at', '<=', $fiveDaysAgo)
+            ->get();
+
+        foreach ($leaves as $leave) {
+            $leave->status = 'Approved';
+            $leave->approved_by = 'System Auto-Approval';
+            $leave->save();
+        }
+    }
+
+
     private function syncUserIdWithEmpId()
     {
         $employees = Employee::all();
@@ -505,10 +563,37 @@ class LeavesController extends Controller
         foreach ($employees as $employee) {
             $user = User::where('email', $employee->email)->first();
 
-            if ($user && $user->user_id != $employee->emp_id) {
-                // Update user_id to match emp_id
-                $user->user_id = $employee->emp_id;
-                $user->save();
+            if ($user) {
+                // Ensure user_id matches emp_id
+                if ($user->user_id != $employee->emp_id) {
+                    $user->user_id = $employee->emp_id;
+                    $user->save();
+                }
+
+                // Now get first employee job detail entry
+                $jobDetail = DB::table('employee_job_details')
+                    ->where('emp_id', $employee->emp_id)
+                    ->first();
+
+                if ($jobDetail) {
+                    // Get department and position names
+                    $department = DB::table('departments')->where('id', $jobDetail->department_id)->value('department');
+                    $position   = DB::table('positions')->where('id', $jobDetail->position_id)->value('position_name');
+
+                    // Update the user's department and position fields
+                    User::where('user_id', $employee->emp_id)->update([
+                        'department' => $department,
+                        'position'   => $position,
+                    ]);
+                }
+                $employeeContact = DB::table('employee_contacts')->where('emp_id', $employee->emp_id)->first();
+
+                if ($employeeContact) {
+                    // Update phone_number in users table to match employee_contacts
+                    User::where('user_id', $employee->emp_id)->update([
+                        'phone_number' => $employeeContact->phone_number,
+                    ]);
+                }
             }
         }
     }
@@ -563,6 +648,8 @@ class LeavesController extends Controller
         $departments = Department::all();
 
         // Ensure remaining_leave_days are in sequence
+        $this->autoApprovePendingLeaves();
+
         $this->syncUserIdWithEmpId();
 
         $this->deleteHiredApplicantsAndRelations();

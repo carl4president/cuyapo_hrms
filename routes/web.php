@@ -17,9 +17,6 @@ use Illuminate\Support\Facades\Auth;
 */
 
 // ----------- Public Routes -------------- //
-Route::get('/', function () {
-    return view('auth.login');
-});
 
 // --------- Authenticated Routes ---------- //
 Route::middleware('auth')->group(function () {
@@ -33,8 +30,10 @@ Auth::routes();
 Route::group(['namespace' => 'App\Http\Controllers\Auth'], function () {
     // -----------------------------login--------------------------------------//
     Route::middleware([LeaveUpdateMiddleware::class])->controller(LoginController::class)->group(function () {
-        Route::get('/login', 'login')->name('login')->middleware(LeaveUpdateMiddleware::class);
-        Route::post('/login', 'authenticate');
+        Route::get('/login/hr/lgu/admins/cuyapo', 'login')->name('login')->middleware(LeaveUpdateMiddleware::class);
+        Route::get('/login/hr/employees/cuyapo', 'loginemployee')->name('login/employee')->middleware(LeaveUpdateMiddleware::class);
+        Route::post('/login/hr/lgu/admins/cuyapo', 'authenticate');
+        Route::post('/login/hr/employees/cuyapo', 'authenticateEmployee');
         Route::get('/logout', 'logout')->name('logout');
     });
 
@@ -53,6 +52,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Auth'], function () {
     // ---------------------------- Reset Password ----------------------------//
     Route::controller(ResetPasswordController::class)->group(function () {
         Route::get('reset-password/{token}', 'getPassword');
+        Route::get('reset-password/employee/{token}', 'getEmployeePassword');
         Route::post('reset-password', 'updatePassword');
     });
 });
@@ -112,8 +112,10 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
 
     // -------------------------------- Job ------------------------------//
     Route::middleware([LeaveUpdateMiddleware::class])->controller(JobController::class)->group(function () {
-        Route::get('form/job/list', 'jobList')->name('form/job/list');
+        Route::get('/', 'jobList')->name('form/job/list');
+        Route::get('job/list/search', 'jobListSearch')->name('job/list/search');
         Route::get('form/job/view/{id}', 'jobView');
+        Route::post('form/apply/job/save', 'applyJobSaveRecord')->name('form/apply/job/save');
         
         Route::middleware('auth')->group(function () {
             Route::get('user/dashboard/index', 'userDashboard')->name('user/dashboard/index');
@@ -136,7 +138,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::get('job/details/{id}', 'jobDetails');
             Route::get('cv/download/{id}', 'downloadCV');
             Route::post('form/jobs/save', 'JobsSaveRecord')->name('form/jobs/save');
-            Route::post('form/apply/job/save', 'applyJobSaveRecord')->name('form/apply/job/save');
             Route::post('form/apply/job/update', 'applyJobUpdateRecord')->name('form/apply/job/update');
             Route::post('form/apply/job/delete', 'applyJobDeleteRecord')->name('form/apply/job/delete');
             Route::get('page/shortlist/candidates', 'shortlistCandidatesIndex')->name('page/shortlist/candidates');
@@ -193,7 +194,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                 Route::post('/saveOther', 'updateOtherInfo')->name('all/employee/save/otherInfo');
                 Route::get('/view/edit/{employee_id}', 'viewRecord');
                 Route::post('/update', 'updateRecord')->name('all/employee/update');
-                Route::get('/delete/{employee_id}', 'deleteRecord');
+                Route::post('/delete/{employee_id}', 'deleteRecord')->name('employee/delete');
                 Route::post('/search', 'employeeSearch')->name('all/employee/search');
                 Route::post('/list/search', 'employeeListSearch')->name('all/employee/list/search');
                 Route::post('/employee-graph', 'getGraphData')->name('all/employee/graph/data');
@@ -211,6 +212,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                     Route::post('/add/employee', 'addEmployeeToDepartment')->name('employee/assignToDepartment');
                     Route::get('employee/departments/{department}', 'employeeDepartments');
                     Route::post('/employee/editPosition', 'editPosition')->name('employee/editPosition');
+                    Route::post('/employee/changeDepartment', 'changeDepartment')->name('employee/changeDepartment');
                     Route::delete('/employee/deleteFromDepartment/{emp_id}/{department_id}', 'deleteFromDepartment')->name('employee/deleteFromDepartment');
                 });
                 // ----------------------- Designations ------------------------
@@ -238,7 +240,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                 });
             });
             // ------------------------- Profile Employee --------------------------//
-            Route::get('employee/profile/{user_id}', 'profileEmployee');
         });
     });
 

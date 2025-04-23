@@ -50,7 +50,7 @@
                                 <td>{{ ++$key }}</td>
                                 <td>
                                     <h2 class="table-avatar">
-                                        <a href="{{ url('applicant/view/edit/'.$app->app_id) }}" class="avatar"><img alt="" src="assets/img/profiles/avatar-02.jpg"></a>
+                                        <a href="{{ url('applicant/view/edit/'.$app->app_id) }}" class="avatar"><img alt="" src="{{ $app->name ? URL::to('/assets/images/'.$app->photo) : '/assets/images/default-avatar.png' }}"></a>
                                         <a href="{{ url('applicant/view/edit/'.$app->app_id) }}">{{ $app->name }} </a>
                                     </h2>
                                 </td>

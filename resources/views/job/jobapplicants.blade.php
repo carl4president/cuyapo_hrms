@@ -83,7 +83,7 @@
                                     <div class="dropdown dropdown-action">
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="#"><i class="fa fa-clock-o m-r-5"></i> Schedule Interview</a>
+                                            <a class="dropdown-item" href="{{ url('applicant/view/edit/'.$apply->app_id) }}"><i class="fa fa-pencil m-r-5"></i> Edit</a>
                                         </div>
                                     </div>
                                 </td>

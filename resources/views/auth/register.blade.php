@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="main-wrapper" style="background-image: url('{{ asset('assets/img/banner.jpg') }}');">
+<div class="main-wrapper" style="background-image: url('{{ asset('assets/img/banner.jpg') }}'); background-repeat: no-repeat; background-size: cover; background-position: center center; min-height: 100vh; width: 100%; overflow-y: auto;">
     <div class="account-content">
         <a href="{{ route('form/job/list') }}" class="btn btn-primary apply-btn">Apply Job</a>
         <div class="container">
@@ -18,8 +18,26 @@
                     <form method="POST" action="{{ route('register') }}">
                         @csrf
                         <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" placeholder="Enter Your Name">
+                            <label>Surname</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" name="lname" value="{{ old('name') }}" placeholder="Enter Your Name">
+                            @error('name')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>First name</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" name="fname" value="{{ old('name') }}" placeholder="Enter Your Name">
+                            @error('name')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>Middle name</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" name="mname" value="{{ old('name') }}" placeholder="Enter Your Name">
                             @error('name')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>

@@ -58,10 +58,10 @@
                                                     <td>{{ ++$index }}</td>
                                                     <td>
                                                         <h2 class="table-avatar">
-                                                            <a href="profile.html" class="avatar">
-                                                                <img alt="" src="assets/img/profiles/avatar-02.jpg">
+                                                            <a href="{{ url('applicant/view/edit/'.$applicant->app_id) }}" class="avatar">
+                                                                <img alt="" src="{{ $applicant->name ? URL::to('/assets/images/'.$applicant->photo) : '/assets/images/default-avatar.png' }}">
                                                             </a>
-                                                            <a href="profile.html">{{ $applicant->name }} <span>{{ $applicant->job_title }}</span></a>
+                                                            <a href="{{ url('applicant/view/edit/'.$applicant->app_id) }}">{{ $applicant->name }} <span>{{ $applicant->job_title }}</span></a>
                                                         </h2>
                                                     </td>
                                                     <td>
@@ -127,10 +127,10 @@
                                                     <td>{{ ++$index }}</td>
                                                     <td>
                                                         <h2 class="table-avatar">
-                                                            <a href="profile.html" class="avatar">
-                                                                <img alt="" src="assets/img/profiles/avatar-02.jpg">
+                                                            <a href="{{ url('applicant/view/edit/'.$applicant->app_id) }}" class="avatar">
+                                                                <img alt="" src="{{ $applicant->name ? URL::to('/assets/images/'.$applicant->photo) : '/assets/images/default-avatar.png' }}">
                                                             </a>
-                                                            <a href="profile.html">{{ $applicant->name }} <span>{{ $applicant->job_title }}</span></a>
+                                                            <a href="{{ url('applicant/view/edit/'.$applicant->app_id) }}">{{ $applicant->name }} <span>{{ $applicant->job_title }}</span></a>
                                                         </h2>
                                                     </td>
                                                     <td>

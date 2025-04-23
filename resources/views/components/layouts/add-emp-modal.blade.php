@@ -11,16 +11,28 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-info">
+                <div class="alert alert-info mb-1">
                     <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong>.
                 </div>
-                <form id="employeeForm" action="{{ $route }}" method="POST" enctype="multipart/form-data">
-                    @csrf
+                <div class="px-4 pt-3">
+                    <div class="progressbar" id="wizardProgress">
+                        <div class="progress-line" id="progressLine"></div>
+                        @for ($i = 1; $i <= 12; $i++) <div class="progress-step {{ $i === 1 ? 'active' : '' }}" id="step-{{ $i }}">
+                            <div class="circle">{{ $i }}</div>
+                            <div class="label">Step {{ $i }}</div>
+                    </div>
+                    @endfor
+                </div>
+            </div>
+            <form id="employeeForm" action="{{ $route }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <!-- Personal Information -->
+                <div class="wizard-step col-12" id="step1">
+                    <div class="col-12">
+                        <h4 class="text-primary">Personal Information</h4>
+                    </div>
+
                     <div class="row">
-                        <!-- Personal Information -->
-                        <div class="col-12">
-                            <h4 class="text-primary">Personal Information</h4>
-                        </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Surname <span class="text-danger">*</span></label>
@@ -76,12 +88,16 @@
                                 <label>Blood Type <span class="text-danger">*</span></label>
                                 <select class="form-control" name="blood_type">
                                     <option value="" disabled selected>-- Select Blood Type --</option>
+                                    <option value="A">A</option>
                                     <option value="A+">A+</option>
                                     <option value="A-">A-</option>
+                                    <option value="B">B</option>
                                     <option value="B+">B+</option>
                                     <option value="B-">B-</option>
+                                    <option value="O">O</option>
                                     <option value="O+">O+</option>
                                     <option value="O-">O-</option>
+                                    <option value="AB">AB</option>
                                     <option value="AB+">AB+</option>
                                     <option value="AB-">AB-</option>
                                 </select>
@@ -117,16 +133,20 @@
                                 <input type="text" class="form-control" name="nationality" placeholder="Enter nationality">
                             </div>
                         </div>
+                    </div>
+
+                </div>
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
-                        <!-- Contact Information -->
-                        <div class="col-12">
-                            <h4 class="text-primary">Contact Information</h4>
-                        </div>
+
+                <!-- Contact Information -->
+                <div class="wizard-step d-none col-12" id="step2">
+                    <div class="col-12">
+                        <h4 class="text-primary">Contact Information</h4>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Residential Address <span class="text-danger">*</span></label>
@@ -163,17 +183,20 @@
                                 <input type="text" class="form-control" name="mobile_number">
                             </div>
                         </div>
+                    </div>
+
+                </div>
 
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
-                        <!-- Government Details -->
-                        <div class="col-12">
-                            <h4 class="text-primary">Government Details</h4>
-                        </div>
+                <!-- Government Details -->
+                <div class="wizard-step d-none col-12" id="step3">
+                    <div class="col-12">
+                        <h4 class="text-primary">Government Details</h4>
+                    </div>
+                    <div class="row">
+
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>SSS No.</label>
@@ -210,15 +233,19 @@
                                 <input type="text" class="form-control" name="agency_employee_no">
                             </div>
                         </div>
+                    </div>
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
+                </div>
 
-                        <!-- Family Information -->
-                        <div class="col-12">
-                            <h4 class="text-primary">Family Information</h4>
-                        </div>
+
+
+                <div class="wizard-step d-none col-12" id="step4">
+
+                    <!-- Family Information -->
+                    <div class="col-12">
+                        <h4 class="text-primary">Family Information</h4>
+                    </div>
+                    <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Spouse Name (if married)</label>
@@ -261,9 +288,15 @@
                                 <input type="text" class="form-control" name="mother_name">
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="wizard-step d-none col-12" id="step5">
 
 
-                        <!-- Children Information -->
+                    <!-- Children Information -->
+                    <div class="row">
+
                         <div class="col-12">
                             <span class="text-primary" style="font-size: 1.125rem;">Children Information (if applicable)</span>
                             <a href="javascript:void(0);" id="heading-add-child" class="add-child" style="display: none; margin-left: 1rem;">
@@ -345,14 +378,19 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                </div>
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
 
-                        <!-- Education Details -->
+                <div class="wizard-step d-none col-12" id="step6">
+
+
+                    <!-- Education Details -->
+                    <div class="row">
+
                         <div class="col-12">
                             <span class="text-primary" style="font-size: 1.125rem;">Employee Educational Background</span>
                         </div>
@@ -378,7 +416,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -391,7 +429,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -403,7 +441,7 @@
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -440,7 +478,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -453,7 +491,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -465,7 +503,7 @@
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -506,7 +544,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -519,7 +557,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -537,7 +575,7 @@
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -578,7 +616,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -591,7 +629,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -609,7 +647,7 @@
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -651,7 +689,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -664,7 +702,7 @@
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -676,7 +714,7 @@
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to_na[]" value="1">
+                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
                                                         <label class="form-check-label" for="year_to_na">
                                                             N/A
                                                         </label>
@@ -694,14 +732,16 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
 
-                        <!-- Civil Service Eligibility Information -->
+                <div class="wizard-step d-none col-12" id="step7">
+                    <!-- Civil Service Eligibility Information -->
+                    <div class="row">
+
                         <div class="col-12">
                             <span class="text-primary" style="font-size: 1.125rem;">Civil Service Eligibility</span>
                             <a href="javascript:void(0);" id="heading-add-eligibility" class="add-entry" style="display: none; margin-left: 1rem;">
@@ -840,13 +880,18 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                </div>
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
-                        <!-- Work Experience Information -->
+
+                <div class="wizard-step d-none col-12" id="step8">
+
+                    <!-- Work Experience Information -->
+                    <div class="row">
+
                         <div class="col-12">
                             <span class="text-primary" style="font-size: 1.125rem;">Work Experience</span>
                             <a href="javascript:void(0);" id="heading-add-experience" class="add-experience" style="display: none; margin-left: 1rem;">
@@ -1018,14 +1063,18 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                </div>
 
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
-                        <!-- Voluntary Work Information -->
+
+                <div class="wizard-step d-none col-12" id="step9">
+
+                    <!-- Voluntary Work Information -->
+                    <div class="row">
                         <div class="col-12">
                             <span class="text-primary" style="font-size: 1.125rem;">Voluntary Work</span>
                             <a href="javascript:void(0);" id="heading-add-voluntary-work" class="add-voluntary-work" style="display: none; margin-left: 1rem;">
@@ -1151,13 +1200,16 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
-                        <!-- Employee Learning and Development Training -->
+
+                <div class="wizard-step d-none col-12" id="step10">
+
+                    <!-- Employee Learning and Development Training -->
+                    <div class="row">
                         <div class="col-12">
                             <span class="text-primary" style="font-size: 1.125rem;">Learning & Development (L&D) Trainings</span>
                             <a href="javascript:void(0);" id="heading-add-training" class="add-training" style="display: none; margin-left: 1rem;">
@@ -1296,13 +1348,17 @@
                             </div>
                         </div>
 
+                    </div>
+                </div>
 
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
 
-                        <!-- Employee Other Information -->
+
+
+                <div class="wizard-step d-none col-12" id="step11">
+
+                    <!-- Employee Other Information -->
+                    <div class="row">
                         <div class="col-12">
                             <span class="text-primary" style="font-size: 1.125rem;">Employee Other Information</span>
                             <a href="javascript:void(0);" id="heading-add-other-info" class="add-other-info" style="display: none; margin-left: 1rem;">
@@ -1393,10 +1449,14 @@
                             </div>
                         </div>
 
+                    </div>
+                </div>
 
-                        <div class="col-12">
-                            <hr>
-                        </div>
+
+
+
+                <div class="wizard-step d-none col-12" id="step12">
+                    <div class="row">
 
                         {{ $slot }}
 
@@ -1407,11 +1467,15 @@
                         </div>
 
                     </div>
-                    <div class="submit-section">
-                        <button class="btn btn-primary submit-btn">Submit</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+
+                <div class="submit-section d-flex justify-content-between">
+                    <button type="button" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" class="btn btn-secondary" id="prevBtn" onclick="prevStep()">Previous</button>
+                    <button type="button" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" class="btn btn-primary ml-auto" id="nextBtn" onclick="nextStep()">Next</button>
+                    <button id="submitBtn" class="d-none btn btn-primary submit-btn">Submit</button>
+                </div>
+
+            </form>
         </div>
     </div>
 </div>
@@ -1423,6 +1487,113 @@
 <!-- /Add Employee Modal -->
 
 @section('script')
+
+<script>
+    let currentStep = 1;
+    const totalSteps = 12;
+
+    function showStep(step) {
+        // Show/Hide step panels
+        document.querySelectorAll('.wizard-step').forEach((stepDiv, index) => {
+            stepDiv.classList.toggle('d-none', index + 1 !== step);
+        });
+
+        // Update progress bar
+        updateProgressBar(step);
+
+        // Toggle buttons
+        document.getElementById('prevBtn').style.display = step === 1 ? 'none' : 'inline-block';
+        document.getElementById('nextBtn').classList.toggle('d-none', step === totalSteps);
+        document.getElementById('submitBtn').classList.toggle('d-none', step !== totalSteps);
+
+        // Optional: update nav tab if you have one
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        const currentTab = document.getElementById(`step${step}-link`);
+        if (currentTab) currentTab.classList.add('active');
+    }
+
+    function updateProgressBar(step) {
+        const steps = document.querySelectorAll('.progress-step');
+        const progressLine = document.getElementById('progressLine');
+
+        // Update classes
+        steps.forEach((el, idx) => {
+            el.classList.remove('active', 'completed');
+            if (idx < step - 1) {
+                el.classList.add('completed');
+            } else if (idx === step - 1) {
+                el.classList.add('active');
+            }
+        });
+
+        // Adjust width properly considering the gap at start (left: 32px) and end
+        const progressBarEl = document.querySelector('.progressbar');
+        const usableWidth = progressBarEl.offsetWidth - 66; // matches ::before width calc
+        const stepWidth = usableWidth / (steps.length - 1);
+        const progressWidth = (step - 1) * stepWidth;
+
+        progressLine.style.width = `${progressWidth}px`;
+    }
+
+    function nextStep() {
+        if (validateInputs()) {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    }
+
+    function validateInputs() {
+        const currentStepElement = document.querySelector(`.wizard-step:nth-of-type(${currentStep})`);
+        const inputs = currentStepElement.querySelectorAll('input, select, textarea');
+        let valid = true;
+
+        inputs.forEach(input => {
+            // Only validate visible fields
+            if (input.offsetParent !== null && !input.value.trim()) {
+                valid = false;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        return valid;
+    }
+
+    // Reset to step 1 when modal opens
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('addEmployeeModal');
+        const submitBtn = document.getElementById('submitBtn');
+        if (modal) {
+            modal.addEventListener('shown.bs.modal', () => {
+                currentStep = 1; // Set to step 1 when the modal opens
+                showStep(currentStep); // Trigger the progress bar update and show the first step
+            });
+        } else {
+            // If modal is not used, initialize manually
+            showStep(currentStep);
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(event) {
+                if (!validateInputs()) {
+                    event.preventDefault(); // Stop form submission
+                }
+            });
+        }
+    });
+
+</script>
+
 
 <script>
     $(document).ready(function() {
@@ -2329,6 +2500,7 @@
 
                 return valid;
             });
+
             $('.education-entry').each(function() {
                 var entry = $(this);
 

@@ -15,11 +15,6 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
         $this->call([
             PositionSeeder::class,
             EmployeeSeeder::class,
@@ -34,8 +29,6 @@ class DatabaseSeeder extends Seeder
             EmployeeLearningDevelopmentTrainingSeeder::class,
             EmployeeOtherInformationSeeder::class,
             EmployeeEmploymentSeeder::class,
-            EmployeeJobDetailSeeder::class,
-            PositionHistorySeeder::class,
             AddJobSeeder::class,
             ApplicantSeeder::class,
             UserSeeder::class,

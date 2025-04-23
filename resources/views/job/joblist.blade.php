@@ -113,7 +113,16 @@
         <!-- Logo -->
         <div class="header-left">
             <a href="{{ route('login') }}" class="logo">
-                <img src="{{ URL::to('assets/img/logo.png') }}" width="40" height="40" alt="">
+                @php
+                    use App\Models\CompanySettings;
+                    $company = CompanySettings::first();
+                    @endphp
+
+                    @if (!empty($company) && !empty($company->logo))
+                    <img src="{{ asset('assets/images/' . $company->logo) }}" width="40" height="40" alt="">
+                    @else
+                    <img src="{{ asset('assets/img/logo2.png') }}" width="40" height="40" alt="">
+                    @endif
             </a>
         </div>
         <!-- /Logo -->
@@ -130,14 +139,23 @@
                     <a href="javascript:void(0);" class="responsive-search">
                         <i class="fa fa-search"></i>
                     </a>
-                    <form action="search.html">
-                        <input class="form-control" type="text" placeholder="Search here">
+                    <form action="{{ route('job/list/search') }}" method="GET">
+                        <input class="form-control" id="search-input" type="text" name="position" placeholder="Search by position" value="{{ request('position') }}">
                         <button class="btn" type="submit"><i class="fa fa-search"></i></button>
                     </form>
                 </div>
             </li>
+            <li class="nav-item">
+                <a class="nav-link pr-12" href="{{ route('login') }}">Back to home page</a>
+            </li>
             <!-- /Search -->
         </ul>
+        <div class="dropdown mobile-user-menu">
+            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></a>
+            <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item" href="{{ route('login') }}">Back to home page</a>
+            </div>
+        </div>
         <!-- /Header Menu -->
     </div>
     <!-- /Header -->
@@ -201,7 +219,7 @@
                         <div class="d-flex justify-content-between align-items-center mt-3">
                             <a href="{{ url('form/job/view/'.$list->id) }}" class="btn btn-apply">View Details</a>
                             <span class="badge-jobtype">{{ ucfirst($list->job_type) ?? 'Full-Time' }}</span>
-                
+
                         </div>
                     </div>
                 </div>

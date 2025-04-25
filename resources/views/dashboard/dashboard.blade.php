@@ -66,7 +66,7 @@
                 <div class="card dash-widget">
                     <div class="card-body"> <span class="dash-widget-icon"><i class="fa fa-user"></i></span>
                         <div class="dash-widget-info">
-                            <h3>{{ $employees->count() }}</h3> <span>Employees</span>
+                            <h3>{{ $employees->where('user.status', '!=', 'Disabled')->count() }}</h3> <span>Employees</span>
                         </div>
                     </div>
                 </div>
@@ -88,7 +88,7 @@
                     <div class="col-md-6 text-center">
                         <div class="card">
                             <div class="card-body">
-                                <h3 class="card-title">Employees Hired Per Decade (by Gender)</h3>
+                                <h3 class="card-title">Employees Hired Per Decade (Onboard vs Resigned)</h3>
                                 <div id="gender-date-hired-line-charts-container" style="overflow-x: auto;">
                                     <div id="gender-date-hired-line-charts" style="height: 300px;"></div>
                                 </div>
@@ -358,12 +358,22 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($employees as $employee)
+                                    @php
+                                    use App\Models\Employee;
+
+                                    $disabledEmployees = Employee::with(['employment', 'user', 'jobDetails'])
+                                    ->whereHas('user', function ($query) {
+                                    $query->where('status', 'Disabled');
+                                    })
+                                    ->get();
+                                    @endphp
+
+                                    @foreach($employees as $employee)
                                     @php
                                     $job = $employee->jobDetails->first();
                                     $department = $job->department->department ?? 'N/A';
                                     $position = $job->position->position_name ?? 'N/A';
-                                    $status = strtolower($employee->user->status ?? 'Unknown');
+                                    $status = $employee->user ? strtolower($employee->user->status) : 'Unknown';
 
                                     $badgeClass = match($status) {
                                     'active' => 'bg-inverse-success',
@@ -381,11 +391,39 @@
                                         <td>{{ $position }}</td>
                                         <td><span class="badge {{ $badgeClass }}">{{ ucfirst($status) }}</span></td>
                                     </tr>
-                                    @empty
+                                    @endforeach
+
+                                    {{-- Disabled employees fetched inline --}}
+                                    @foreach($disabledEmployees as $employee)
+                                    @php
+                                    $job = $employee->jobDetails->first();
+                                    $department = $job->department->department ?? 'N/A';
+                                    $position = $job->position->position_name ?? 'N/A';
+                                    $status = $employee->user ? strtolower($employee->user->status) : 'Unknown';
+
+                                    $badgeClass = match($status) {
+                                    'active' => 'bg-inverse-success',
+                                    'inactive' => 'bg-inverse-warning',
+                                    'disabled' => 'bg-inverse-danger',
+                                    default => 'bg-secondary',
+                                    };
+                                    @endphp
+                                    <tr>
+                                        <td><a href="{{ url('all/employee/view/edit/'.$employee->emp_id) }}">{{ $employee->emp_id }}</a></td>
+                                        <td>
+                                            <h2><a href="{{ url('all/employee/view/edit/'.$employee->emp_id) }}">{{ $employee->name }}</a></h2>
+                                        </td>
+                                        <td>{{ $department }}</td>
+                                        <td>{{ $position }}</td>
+                                        <td><span class="badge {{ $badgeClass }}">{{ ucfirst($status) }}</span></td>
+                                    </tr>
+                                    @endforeach
+
+                                    @if($employees->isEmpty() && $disabledEmployees->isEmpty())
                                     <tr>
                                         <td colspan="5" class="text-center">No employees found</td>
                                     </tr>
-                                    @endforelse
+                                    @endif
                                 </tbody>
                             </table>
                         </div>
@@ -417,11 +455,17 @@
                                 <tbody>
                                     @php
                                     use App\Models\Leave;
+                                    use App\Models\User;
                                     use Carbon\Carbon;
 
                                     $this_month_leaves = Leave::all()->filter(function ($leave) {
                                     $date = Carbon::createFromFormat('d M, Y', $leave->date_from);
-                                    return $date->month === Carbon::now()->month && $date->year === Carbon::now()->year;
+                                    $is_current_month = $date->month === Carbon::now()->month && $date->year === Carbon::now()->year;
+
+                                    $user = User::where('user_id', $leave->staff_id)->first();
+                                    $is_user_enabled = $user ? $user->status !== 'Disabled' : true;
+
+                                    return $is_current_month && $is_user_enabled;
                                     });
                                     @endphp
                                     @forelse($this_month_leaves as $item)
@@ -722,18 +766,19 @@
             element: 'gender-date-hired-line-charts'
             , data: hiringData.map(item => ({
                 y: item.y
-                , a: item.male
-                , b: item.female
+                , a: item.onboard, // Total onboard employees (active or inactive)
+                b: item.resigned, // Total resigned employees
             }))
             , xkey: 'y'
             , ykeys: ['a', 'b']
-            , labels: ['Male Hires', 'Female Hires']
-            , lineColors: ['#007bff', '#e83e8c']
-            , lineWidth: 3
+            , labels: ['Onboard/New Employees', 'Resigned Employees']
+            , lineColors: ['#007bff', '#e83e8c'], // Blue for onboard, pink for resigned
+            lineWidth: 3
             , resize: true
             , redraw: true
             , hideHover: 'auto'
-        , });
+        });
+
 
     });
 

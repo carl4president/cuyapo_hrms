@@ -15,13 +15,35 @@
                     <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong>.
                 </div>
                 <div class="px-4 pt-3">
+                    @php
+                    $stepLabels = [
+                    1 => 'Personal Info',
+                    2 => 'Contact Info',
+                    3 => 'Government Details',
+                    4 => 'Family Info',
+                    5 => 'Children Info',
+                    6 => 'Educational Background',
+                    7 => 'Civil Service Eligibility',
+                    8 => 'Work Experience',
+                    9 => 'Voluntary Work',
+                    10 => 'Learning and Development',
+                    11 => 'Other Information',
+                    12 => 'Employment Details',
+                    13 => 'Review',
+                    ];
+                    $activeStep = $currentStep ?? 1; // Make sure to set this dynamically
+                    @endphp
+
                     <div class="progressbar" id="wizardProgress">
                         <div class="progress-line" id="progressLine"></div>
-                        @for ($i = 1; $i <= 12; $i++) <div class="progress-step {{ $i === 1 ? 'active' : '' }}" id="step-{{ $i }}">
+                        @for ($i = 1; $i <= 13; $i++) <div class="progress-step" id="step-{{ $i }}">
                             <div class="circle">{{ $i }}</div>
-                            <div class="label">Step {{ $i }}</div>
+                            <div class="label" id="label-{{ $i }}" style="display: none;">
+                                {{ $stepLabels[$i] }}
+                            </div>
                     </div>
                     @endfor
+
                 </div>
             </div>
             <form id="employeeForm" action="{{ $route }}" method="POST" enctype="multipart/form-data">
@@ -392,7 +414,7 @@
                     <div class="row">
 
                         <div class="col-12">
-                            <span class="text-primary" style="font-size: 1.125rem;">Employee Educational Background</span>
+                            <span class="text-primary" style="font-size: 1.125rem;">Educational Background</span>
                         </div>
                         <div class="col-12">
                             <div id="education-container">
@@ -1360,7 +1382,7 @@
                     <!-- Employee Other Information -->
                     <div class="row">
                         <div class="col-12">
-                            <span class="text-primary" style="font-size: 1.125rem;">Employee Other Information</span>
+                            <span class="text-primary" style="font-size: 1.125rem;">Other Information</span>
                             <a href="javascript:void(0);" id="heading-add-other-info" class="add-other-info" style="display: none; margin-left: 1rem;">
                                 <i class="fa fa-plus-circle"></i> Add
                             </a>
@@ -1469,6 +1491,15 @@
                     </div>
                 </div>
 
+                <div class="wizard-step d-none col-12" id="step13">
+                    <div class="col-12">
+                        <h4 class="text-primary">Review Information</h4>
+                    </div>
+                    <div id="reviewData">
+                        <!-- This will be populated with JavaScript -->
+                    </div>
+                </div>
+
                 <div class="submit-section d-flex justify-content-between">
                     <button type="button" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" class="btn btn-secondary" id="prevBtn" onclick="prevStep()">Previous</button>
                     <button type="button" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" class="btn btn-primary ml-auto" id="nextBtn" onclick="nextStep()">Next</button>
@@ -1490,7 +1521,7 @@
 
 <script>
     let currentStep = 1;
-    const totalSteps = 12;
+    const totalSteps = 13;
 
     function showStep(step) {
         // Show/Hide step panels
@@ -1516,27 +1547,429 @@
         const steps = document.querySelectorAll('.progress-step');
         const progressLine = document.getElementById('progressLine');
 
-        // Update classes
         steps.forEach((el, idx) => {
+            const label = el.querySelector('.label');
             el.classList.remove('active', 'completed');
+
+            // Hide all labels
+            if (label) label.style.display = 'none';
+
             if (idx < step - 1) {
                 el.classList.add('completed');
+                if (window.innerWidth > 480 && label) label.style.display = 'block';
+
             } else if (idx === step - 1) {
                 el.classList.add('active');
+
+                // Show label for active step only
+                if (window.innerWidth > 480 && label) label.style.display = 'block';
             }
         });
 
-        // Adjust width properly considering the gap at start (left: 32px) and end
         const progressBarEl = document.querySelector('.progressbar');
-        const usableWidth = progressBarEl.offsetWidth - 66; // matches ::before width calc
+        const usableWidth = progressBarEl.offsetWidth - 66;
         const stepWidth = usableWidth / (steps.length - 1);
         const progressWidth = (step - 1) * stepWidth;
 
         progressLine.style.width = `${progressWidth}px`;
     }
 
-    function nextStep() {
-        if (validateInputs()) {
+    function populateReviewStep() {
+        let reviewContainer = document.getElementById("reviewData");
+
+        let department = document.querySelector("select[name='department_id']");
+        let departmentName = department.options[department.selectedIndex].text;
+
+        // Get the selected position text
+        let position = document.querySelector("select[name='position_id']");
+        let positionName = position.options[position.selectedIndex].text;
+
+        let imageInput = document.querySelector("input[name='image']");
+
+        // Get the filename when the user selects a file
+        let fileName = imageInput.files[0] ? imageInput.files[0].name : 'No file selected';
+
+
+        // Collect data from all form fields
+        const formData = {
+            surname: document.querySelector("input[name='lname']").value
+            , firstName: document.querySelector("input[name='fname']").value
+            , middleName: document.querySelector("input[name='mname']").value
+            , email: document.querySelector("input[name='email']").value
+            , birthDate: document.querySelector("input[name='birth_date']").value
+            , placeOfBirth: document.querySelector("input[name='place_of_birth']").value
+            , height: document.querySelector("input[name='height']").value
+            , weight: document.querySelector("input[name='weight']").value
+            , bloodType: document.querySelector("select[name='blood_type']").value
+            , gender: document.querySelector("select[name='gender']").value
+            , civilStatus: document.querySelector("select[name='civil_status']").value
+            , nationality: document.querySelector("input[name='nationality']").value
+            , residentialAddress: document.querySelector("input[name='residential_address']").value
+            , phoneNumber: document.querySelector("input[name='phone_number']").value
+            , mobileNumber: document.querySelector("input[name='mobile_number']").value,
+
+            sssNo: document.querySelector("input[name='sss_no']").value
+            , gsisIdNo: document.querySelector("input[name='gsis_id_no']").value
+            , pagibigNo: document.querySelector("input[name='pagibig_no']").value
+            , philhealthNo: document.querySelector("input[name='philhealth_no']").value
+            , tinNo: document.querySelector("input[name='tin_no']").value
+            , agencyEmployeeNo: document.querySelector("input[name='agency_employee_no']").value,
+
+            // Family Information
+            spouseName: document.querySelector("input[name='spouse_name']").value
+            , spouseOccupation: document.querySelector("input[name='spouse_occupation']").value
+            , spouseEmployer: document.querySelector("input[name='spouse_employer']").value
+            , spouseBusinessAddress: document.querySelector("input[name='spouse_business_address']").value
+            , spouseTelNo: document.querySelector("input[name='spouse_tel_no']").value
+            , fatherName: document.querySelector("input[name='father_name']").value
+            , motherName: document.querySelector("input[name='mother_name']").value
+            , children: getChildrenInfo()
+            , education: getEducationInfo()
+            , eligibility: getEligibilityInfo()
+            , workExperience: getWorkExperienceInfo()
+            , voluntaryWork: getVoluntaryWorkInfo()
+            , trainingPrograms: getTrainingProgramsInfo()
+            , otherInfo: getOtherInfo()
+            , department: departmentName
+            , position: positionName
+            , employmentStatus: document.querySelector("select[name='employment_status']").value
+            , dateHired: document.querySelector("input[name='date_hired']").value
+            , imageFileName: fileName
+        , };
+        // Format the collected data into a review-friendly format
+        console.log('Collected form data:', formData);
+
+        let reviewHtml = `<ul>`;
+        for (let field in formData) {
+            if (formData[field]) {
+                if (field === "children" && formData[field].length > 0) {
+                    reviewHtml += `<li><strong>Children:</strong><ul>`;
+                    formData[field].forEach(child => {
+                        reviewHtml += `<li>${child.name} - ${child.birthdate}</li>`;
+                    });
+                    reviewHtml += `</ul></li>`;
+                } else if (field === "education") {
+                    // Check if the education array is not empty
+                    if (formData[field] && formData[field].length > 0) {
+                        reviewHtml += `<li><strong>Education:</strong><ul>`;
+
+                        // Iterate through each education object
+                        formData[field].forEach(education => {
+                            // Only include the education details if the relevant fields are not null or empty
+                            if (education.schoolName || education.degree || education.yearFrom || education.yearTo || education.highestUnitsEarned || education.yearGraduated || education.scholarship) {
+                                reviewHtml += `<li><strong>${education.educationLevel} Education:</strong><ul>`;
+
+                                // Add the details of the education if they are not null or empty
+                                if (education.schoolName) reviewHtml += `<li>School Name: ${education.schoolName}</li>`;
+                                if (education.degree) reviewHtml += `<li>Course/Degree: ${education.degree}</li>`;
+                                if (education.yearFrom) reviewHtml += `<li>Year From: ${education.yearFrom}</li>`;
+                                if (education.yearTo) reviewHtml += `<li>Year To: ${education.yearTo}</li>`;
+                                if (education.highestUnitsEarned) reviewHtml += `<li>Highest Level/Units Earned: ${education.highestUnitsEarned}</li>`;
+                                if (education.yearGraduated) reviewHtml += `<li>Year Graduated: ${education.yearGraduated}</li>`;
+                                if (education.scholarship) reviewHtml += `<li>Scholarship/Honors: ${education.scholarship}</li>`;
+
+                                reviewHtml += `</ul></li>`;
+                            }
+                        });
+
+                        reviewHtml += `</ul></li>`;
+                    }
+                } else if (field === "eligibility") { // Handling eligibility information
+                    reviewHtml += `<li><strong>Eligibility:</strong><ul>`;
+                    formData[field].forEach(eligibility => {
+                        reviewHtml += `<li><strong>${eligibility.eligibilityName}:</strong><ul>
+                    <li>Rating: ${eligibility.rating}</li>
+                    <li>Exam Date: ${eligibility.examDate}</li>
+                    <li>Exam Place: ${eligibility.examPlace}</li>
+                    <li>License Number: ${eligibility.licenseNumber}</li>
+                    <li>License Validity: ${eligibility.licenseValidity}</li>
+                </ul></li>`;
+                    });
+                    reviewHtml += `</ul></li>`;
+                } else if (field === "workExperience") { // Handling work experience information
+                    reviewHtml += `<li><strong>Work Experience:</strong><ul>`;
+                    formData[field].forEach(workExperience => {
+                        reviewHtml += `<li><strong>${workExperience.position} at ${workExperience.department}:</strong><ul>
+                    <li>From Date: ${workExperience.fromDate}</li>
+                    <li>To Date: ${workExperience.toDate}</li>
+                    <li>Monthly Salary: ${workExperience.monthlySalary}</li>
+                    <li>Salary Grade: ${workExperience.salaryGrade}</li>
+                    <li>Appointment Status: ${workExperience.appointmentStatus}</li>
+                    <li>Government Service: ${workExperience.govtService == "1" ? 'Yes' : 'No'}</li>
+                </ul></li>`;
+                    });
+                    reviewHtml += `</ul></li>`;
+                } else if (field === "voluntaryWork") { // Handling voluntary work information
+                    reviewHtml += `<li><strong>Voluntary Work:</strong><ul>`;
+                    formData[field].forEach(voluntary => {
+                        reviewHtml += `<li><strong>Organization:</strong> ${voluntary.organizationName}
+                    <ul>
+                        <li>From Date: ${voluntary.fromDate}</li>
+                        <li>To Date: ${voluntary.toDate}</li>
+                        <li>Number of Hours: ${voluntary.hours}</li>
+                        <li>Position / Nature of Work: ${voluntary.position}</li>
+                    </ul>
+                </li>`;
+                    });
+                    reviewHtml += `</ul></li>`;
+                } else if (field === "trainingPrograms") { // Handling training programs information
+                    reviewHtml += `<li><strong>Training Programs:</strong><ul>`;
+                    formData[field].forEach(training => {
+                        reviewHtml += `<li><strong>Training Title:</strong> ${training.title}
+                    <ul>
+                        <li>From Date: ${training.fromDate}</li>
+                        <li>To Date: ${training.toDate}</li>
+                        <li>Number of Hours: ${training.hours}</li>
+                        <li>Type of L&D: ${training.type}</li>
+                        <li>Conducted/Sponsored By: ${training.sponsoredBy}</li>
+                    </ul>
+                </li>`;
+                    });
+                    reviewHtml += `</ul></li>`;
+                } else if (field === "otherInfo") { // Handling other information
+                    reviewHtml += `<li><strong>Other Information:</strong><ul>`;
+                    formData[field].forEach(info => {
+                        reviewHtml += `<li><strong>Special Skills & Hobbies:</strong> ${info.skillsHobbies}</li>
+                               <li><strong>Non-Academic Distinctions:</strong> ${info.nonAcademicDistinctions}</li>
+                               <li><strong>Membership in Associations:</strong> ${info.membership}</li>`;
+                    });
+                    reviewHtml += `</ul></li>`;
+                } else if (field === "employmentStatus") {
+                    reviewHtml += `<li><strong>Employment Status:</strong> ${formData[field]}</li>`;
+                } else if (field === "department") {
+                    reviewHtml += `<li><strong>Department:</strong> ${formData[field]}</li>`;
+                } else if (field === "position") {
+                    reviewHtml += `<li><strong>Position:</strong> ${formData[field]}</li>`;
+                } else if (field === "dateHired") {
+                    reviewHtml += `<li><strong>Date Hired:</strong> ${formData[field]}</li>`;
+                } else if (field === "imageFileName") {
+                    reviewHtml += `<li><strong>Photo Filename:</strong> ${formData[field]}</li>`;
+                } else {
+                    reviewHtml += `<li><strong>${capitalizeFirstLetter(field.replace(/_/g, ' '))}:</strong> ${formData[field]}</li>`;
+                }
+            }
+        }
+        reviewHtml += `</ul>`;
+
+        reviewContainer.innerHTML = reviewHtml;
+    }
+
+
+    function getVoluntaryWorkInfo() {
+        const voluntaryWorkData = [];
+        document.querySelectorAll('[name="organization_name[]"]').forEach((orgField, index) => {
+            const organizationName = orgField.value;
+            const fromDate = document.querySelectorAll('[name="voluntary_from_date[]"]')[index].value;
+            const toDate = document.querySelectorAll('[name="voluntary_to_date[]"]')[index].value;
+            const hours = document.querySelectorAll('[name="voluntary_hours[]"]')[index].value;
+            const position = document.querySelectorAll('[name="position_nature_of_work[]"]')[index].value;
+
+            // Only add data if organization name is filled
+            if (organizationName) {
+                voluntaryWorkData.push({
+                    organizationName
+                    , fromDate
+                    , toDate
+                    , hours
+                    , position
+                });
+            }
+        });
+        return voluntaryWorkData;
+    }
+
+    // Get information from Training Programs section
+    function getTrainingProgramsInfo() {
+        const trainingProgramsData = [];
+        document.querySelectorAll('[name="training_title[]"]').forEach((titleField, index) => {
+            const title = titleField.value;
+            const fromDate = document.querySelectorAll('[name="training_from_date[]"]')[index].value;
+            const toDate = document.querySelectorAll('[name="training_to_date[]"]')[index].value;
+            const hours = document.querySelectorAll('[name="training_hours[]"]')[index].value;
+            const type = document.querySelectorAll('[name="type_of_ld[]"]')[index].value;
+            const sponsoredBy = document.querySelectorAll('[name="conducted_by[]"]')[index].value;
+
+            // Only add data if training title is filled
+            if (title) {
+                trainingProgramsData.push({
+                    title
+                    , fromDate
+                    , toDate
+                    , hours
+                    , type
+                    , sponsoredBy
+                });
+            }
+        });
+        return trainingProgramsData;
+    }
+
+    // Get information from Other Information section
+    function getOtherInfo() {
+        const otherInfoData = [];
+        document.querySelectorAll('[name="special_skills_hobbies[]"]').forEach((skillsField, index) => {
+            const skills = skillsField.value;
+            const distinctions = document.querySelectorAll('[name="non_academic_distinctions[]"]')[index].value;
+            const associations = document.querySelectorAll('[name="membership_associations[]"]')[index].value;
+
+            // Only add data if any of the fields are filled
+            if (skills || distinctions || associations) {
+                otherInfoData.push({
+                    skillsHobbies: skills
+                    , nonAcademicDistinctions: distinctions
+                    , membership: associations
+                });
+            }
+        });
+        return otherInfoData;
+    }
+
+    function getEligibilityInfo() {
+        let eligibilityData = [];
+        const eligibilityNames = document.querySelectorAll("input[name='eligibility_type[]']");
+        const ratings = document.querySelectorAll("input[name='rating[]']");
+        const examDates = document.querySelectorAll("input[name='exam_date[]']");
+        const examPlaces = document.querySelectorAll("input[name='exam_place[]']");
+        const licenseNumbers = document.querySelectorAll("input[name='license_number[]']");
+        const licenseValidities = document.querySelectorAll("input[name='license_validity[]']");
+
+        eligibilityNames.forEach((name, index) => {
+            let eligibility = {
+                eligibilityName: name.value
+                , rating: ratings[index].value
+                , examDate: examDates[index].value
+                , examPlace: examPlaces[index].value
+                , licenseNumber: licenseNumbers[index].value
+                , licenseValidity: licenseValidities[index].value
+            };
+
+            // Check if any required field is filled before adding to the list
+            if (eligibility.eligibilityName || eligibility.rating || eligibility.examDate || eligibility.examPlace || eligibility.licenseNumber || eligibility.licenseValidity) {
+                eligibilityData.push(eligibility);
+            }
+        });
+
+        return eligibilityData;
+    }
+
+
+    function getWorkExperienceInfo() {
+        let workExperienceData = [];
+        const departments = document.querySelectorAll("input[name='department_agency_office_company[]']");
+        const positions = document.querySelectorAll("input[name='position_title[]']");
+        const fromDates = document.querySelectorAll("input[name='from_date[]']");
+        const toDates = document.querySelectorAll("input[name='to_date[]']");
+        const salaries = document.querySelectorAll("input[name='monthly_salary[]']");
+        const salaryGrades = document.querySelectorAll("input[name='salary_grade[]']");
+        const appointmentStatuses = document.querySelectorAll("input[name='status_of_appointment[]']");
+        const govtServices = document.querySelectorAll("select[name='govt_service[]']");
+
+        departments.forEach((department, index) => {
+            let workExperience = {
+                department: department.value
+                , position: positions[index].value
+                , fromDate: fromDates[index].value
+                , toDate: toDates[index].value
+                , monthlySalary: salaries[index].value
+                , salaryGrade: salaryGrades[index].value
+                , appointmentStatus: appointmentStatuses[index].value
+                , govtService: govtServices[index].value
+            };
+
+            // Check if any required field is filled before adding to the list
+            if (workExperience.department || workExperience.position || workExperience.fromDate || workExperience.toDate || workExperience.monthlySalary || workExperience.salaryGrade || workExperience.appointmentStatus) {
+                workExperienceData.push(workExperience);
+            }
+        });
+
+        return workExperienceData;
+    }
+
+
+    function getEducationInfo() {
+        let educationData = [];
+        const educationLevels = document.querySelectorAll("input[name='education_level[]']");
+        const schoolNames = document.querySelectorAll("input[name='school_name[]']");
+        const degrees = document.querySelectorAll("input[name='degree[]']");
+        const yearsFrom = document.querySelectorAll("input[name='year_from[]']");
+        const yearsTo = document.querySelectorAll("input[name='year_to[]']");
+        const yearsGraduated = document.querySelectorAll("input[name='year_graduated[]']");
+        const highestUnits = document.querySelectorAll("input[name='highest_units_earned[]']");
+        const scholarships = document.querySelectorAll("input[name='scholarship_honors[]']");
+        const yearFromCheckboxes = document.querySelectorAll("input[name='year_from[]']:checked");
+        const yearToCheckboxes = document.querySelectorAll("input[name='year_to[]']:checked");
+        const yearGraduatedCheckboxes = document.querySelectorAll("input[name='year_graduated[]']:checked");
+
+        educationLevels.forEach((level, index) => {
+            let education = {
+                educationLevel: level.value
+                , schoolName: schoolNames[index].value
+                , degree: degrees[index].value
+                , yearFrom: yearsFrom[index].value
+                , yearTo: yearsTo[index].value
+                , yearGraduated: yearsGraduated[index].value
+                , highestUnitsEarned: highestUnits[index].value
+                , scholarship: scholarships[index].value
+            };
+
+            // Check if the year fields are marked as N/A via checkbox
+            if (yearFromCheckboxes[index] && yearFromCheckboxes[index].value === "N/A") {
+                education.yearFrom = "N/A";
+            }
+            if (yearToCheckboxes[index] && yearToCheckboxes[index].value === "N/A") {
+                education.yearTo = "N/A";
+            }
+            if (yearGraduatedCheckboxes[index] && yearGraduatedCheckboxes[index].value === "N/A") {
+                education.yearGraduated = "N/A";
+            }
+
+            // Check if any required field is filled before adding to the list
+            if (education.schoolName || education.degree || education.yearFrom || education.yearTo || education.yearGraduated || education.highestUnitsEarned || education.scholarship) {
+                educationData.push(education);
+            }
+        });
+
+        return educationData;
+    }
+
+
+    function getChildrenInfo() {
+        let children = [];
+        const childNames = document.querySelectorAll("input[name='child_name[]']");
+        const childBirthdates = document.querySelectorAll("input[name='child_birthdate[]']");
+
+        childNames.forEach((childName, index) => {
+            let childData = {
+                name: childName.value
+                , birthdate: childBirthdates[index].value
+            };
+            if (childData.name && childData.birthdate) {
+                children.push(childData);
+            }
+        });
+
+        return children;
+    }
+
+    function capitalizeFirstLetter(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+
+
+    async function nextStep() {
+        // Ensure all inputs are validated before proceeding
+        const isValid = await validateInputs();
+
+        if (isValid) {
+            // Only move to the next step if validation passes
+            console.log('Validation passed, currentStep:', currentStep);
+
+            if (currentStep === 12) {
+                console.log('Current step is 12, populating review...');
+                populateReviewStep(); // Populate review step before showing it
+            }
+
             if (currentStep < totalSteps) {
                 currentStep++;
                 showStep(currentStep);
@@ -1551,22 +1984,329 @@
         }
     }
 
-    function validateInputs() {
+    async function validateInputs() {
         const currentStepElement = document.querySelector(`.wizard-step:nth-of-type(${currentStep})`);
         const inputs = currentStepElement.querySelectorAll('input, select, textarea');
         let valid = true;
 
-        inputs.forEach(input => {
+        // Loop through all inputs and validate
+        for (let input of inputs) {
             // Only validate visible fields
-            if (input.offsetParent !== null && !input.value.trim()) {
-                valid = false;
-                input.classList.add('is-invalid');
-            } else {
-                input.classList.remove('is-invalid');
+            if (input.offsetParent !== null) {
+                const validationRules = getValidationRules(input);
+                const inputValue = input.value.trim(); // Ensure leading/trailing spaces are removed
+
+                // Check for required fields (if no rules, treat them as required)
+                if ((validationRules.required || Object.keys(validationRules).length === 0) && inputValue === "") {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                    showValidationMessage(input, 'This field is required.');
+                }
+                // Check email validation
+                else if (validationRules.email && inputValue !== "" && !isValidEmail(inputValue)) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                    showValidationMessage(input, 'Please enter a valid email.');
+                }
+                // Check number validation for height, weight, etc.
+                else if (validationRules.number && inputValue !== "" && !isValidNumber(input, validationRules)) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                    showValidationMessage(input, `Please enter a valid number. Min: ${validationRules.min}, Max: ${validationRules.max}`);
+                }
+                // Check if digits are required (e.g., zip code, phone number)
+                else if (validationRules.digits && inputValue !== "" && !isValidDigits(input, validationRules)) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                    showValidationMessage(input, `Please enter a valid ${input.name}.`);
+                } else {
+                    // Remove invalid class and validation message if validation passes
+                    input.classList.remove('is-invalid');
+                    removeValidationMessage(input);
+                }
+
+                // Email validation (only on email field)
+                if (input.name === "email" && inputValue !== "") {
+                    const isEmailValid = await checkEmailExists(inputValue);
+                    if (!isEmailValid) {
+                        valid = false;
+                        input.classList.add('is-invalid');
+                        showValidationMessage(input, 'This email is already taken.');
+                    } else {
+                        removeValidationMessage(input);
+                    }
+                }
             }
-        });
+        }
 
         return valid;
+    }
+
+    function getValidationRules(input) {
+        // You can expand this based on your specific validation rules
+        const rules = {
+            "fname": {
+                required: true
+            }
+            , "mname": {
+                required: true
+            }
+            , "lname": {
+                required: true
+            }
+            , "email": {
+                required: true
+                , email: true
+            }
+            , "birth_date": {
+                required: true
+            }
+            , "place_of_birth": {
+                required: true
+            }
+            , "height": {
+                required: true
+                , number: true
+                , min: 0.5
+                , max: 3
+            }
+            , "weight": {
+                required: true
+                , number: true
+                , min: 1
+                , max: 500
+            }
+            , "blood_type": {
+                required: true
+            }
+            , "gender": {
+                required: true
+            }
+            , "civil_status": {
+                required: true
+            }
+            , "nationality": {
+                required: true
+            }
+            , "residential_address": {
+                required: true
+            }
+            , "residential_zip": {
+                required: true
+                , digits: true
+                , minlength: 4
+                , maxlength: 4
+            }
+            , "permanent_address": {
+                required: true
+            }
+            , "permanent_zip": {
+                required: true
+                , digits: true
+                , minlength: 4
+                , maxlength: 4
+            }
+            , "phone_number": {
+                required: true
+                , digits: true
+                , minlength: 11
+                , maxlength: 11
+            }
+            , "mobile_number": {
+                required: true
+                , digits: true
+                , minlength: 11
+                , maxlength: 11
+            }
+            , "father_name": {
+                required: true
+            }
+            , "mother_name": {
+                required: true
+            }
+            , "child_name[]": {
+                required: true
+            }
+            , "child_birthdate[]": {
+                required: true
+                , date: true
+            },
+            // Eligibility validation rules
+            "eligibility_type[]": {
+                required: true
+            }
+            , "rating[]": {
+                required: true
+                , number: true
+            }
+            , "exam_date[]": {
+                required: true
+                , date: true
+            }
+            , "exam_place[]": {
+                required: true
+            },
+            // Work Experience validation rules
+            "department_agency_office_company[]": {
+                required: true
+            }
+            , "position_title[]": {
+                required: true
+            }
+            , "from_date[]": {
+                required: true
+            }
+            , "to_date[]": {
+                required: true, // Optional field
+                date: true
+            }
+            , "monthly_salary[]": {
+                required: true
+                , number: true
+            }
+            , "salary_grade[]": {
+                required: true
+            }
+            , "status_of_appointment[]": {
+                required: true
+            }
+            , "govt_service[]": {
+                required: true
+            },
+            // Voluntary work fields validation
+            "organization_name[]": {
+                required: true
+            }
+            , "voluntary_from_date[]": {
+                required: true
+                , date: true
+            }
+            , "voluntary_to_date[]": {
+                required: true
+                , date: true
+            }
+            , "voluntary_hours[]": {
+                required: true
+                , number: true
+                , min: 1
+            }
+            , "position_nature_of_work[]": {
+                required: true
+            }
+            , "training_title[]": {
+                required: true
+            }
+            , "training_from_date[]": {
+                required: true
+                , date: true
+            }
+            , "training_to_date[]": {
+                required: true
+                , date: true
+            }
+            , "training_hours[]": {
+                required: true
+                , number: true
+                , min: 1 // Minimum valid training hours (e.g., 1 hour)
+            }
+            , "type_of_ld[]": {
+                required: true
+            }
+            , "conducted_by[]": {
+                required: true
+            }
+            , "special_skills_hobbies[]": {
+                required: true
+            }
+            , "non_academic_distinctions[]": {
+                required: true
+            }
+            , "membership_associations[]": {
+                required: true
+            },
+            // Government details validation for required fields
+            "sss_no": {
+                required: true
+            }
+            , "gsis_id_no": {
+                required: true
+            }
+            , "pagibig_no": {
+                required: true
+            }
+            , "philhealth_no": {
+                required: true
+            }
+            , "tin_no": {
+                required: true
+            }
+            , "agency_employee_no": {
+                required: true
+            }
+        };
+
+        return rules[input.name] || {};
+    }
+
+    function showValidationMessage(input, message) {
+        let messageDiv = input.nextElementSibling;
+        if (!messageDiv || !messageDiv.classList.contains('validation-message')) {
+            messageDiv = document.createElement('div');
+            messageDiv.classList.add('validation-message');
+            input.parentNode.insertBefore(messageDiv, input.nextSibling);
+        }
+        messageDiv.textContent = message;
+        messageDiv.style.color = 'red';
+    }
+
+    function removeValidationMessage(input) {
+        const messageDiv = input.nextElementSibling;
+        if (messageDiv && messageDiv.classList.contains('validation-message')) {
+            messageDiv.remove();
+        }
+    }
+
+    function isValidEmail(email) {
+        const regex = /^[a-zA-Z0-9._%+-]+@[a-zAZ0-9.-]+\.[a-zA-Z]{2,}$/;
+        return regex.test(email);
+    }
+
+    function isValidNumber(input, validationRules) {
+        const value = parseFloat(input.value.trim());
+        if (isNaN(value)) {
+            return false;
+        }
+        if (validationRules.min && value < validationRules.min) {
+            return false;
+        }
+        if (validationRules.max && value > validationRules.max) {
+            return false;
+        }
+        return true;
+    }
+
+    function isValidDigits(input, rules) {
+        const value = input.value.trim();
+        return /^[0-9]+$/.test(value) && value.length >= rules.minlength && value.length <= rules.maxlength;
+    }
+
+    function checkEmailExists(email) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '{{ route("check/email") }}'
+                , method: 'POST'
+                , data: {
+                    email: email
+                    , _token: '{{ csrf_token() }}'
+                }
+                , success: function(response) {
+                    resolve(response.valid);
+                }
+                , error: function() {
+                    reject(false);
+                }
+            });
+        });
     }
 
     // Reset to step 1 when modal opens

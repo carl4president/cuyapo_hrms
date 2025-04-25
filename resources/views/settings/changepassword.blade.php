@@ -11,8 +11,6 @@
                     @if(auth()->user()->role_name === 'Admin')
 
                     <li><a href="{{ route('company/settings/page') }}"><i class="la la-building"></i><span>Company Settings</span></a></li>
-                    <li><a href="{{ route('roles/permissions/page') }}"><i class="la la-key"></i><span>Roles & Permissions</span></a></li>
-                    <li><a href="email-settings.html"><i class="la la-at"></i><span>Email Settings</span></a></li>
 
                     @endif
 

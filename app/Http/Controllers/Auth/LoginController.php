@@ -27,12 +27,13 @@ class LoginController extends Controller
     }
 
     /** Display the login page */
-    public function login()
+    public function loginadmin()
     {
-        return view('auth.login');
+        return view('auth.loginadmin');
     }
+    
 
-    public function loginemployee()
+    public function login()
     {
         $employee = Employee::with(
             'contact',
@@ -50,7 +51,7 @@ class LoginController extends Controller
         $departments = department::all();
         $typeJobs = TypeJob::all();
 
-        return view('auth.loginemployee', compact('employee', 'userList', 'departments', 'typeJobs'));
+        return view('auth.login', compact('employee', 'userList', 'departments', 'typeJobs'));
     }
 
     /** Authenticate user and redirect */
@@ -154,9 +155,9 @@ class LoginController extends Controller
         Auth::logout();
         flash()->success('Logout successfully :)');
         if ($user && $user->role_name === 'Admin') {
-            return redirect()->route('login'); // admin login route
+            return redirect()->route('loginadmin'); // admin login route
         } else {
-            return redirect()->route('login/employee'); // employee login route
+            return redirect()->route('login'); // employee login route
         }
     }
 }

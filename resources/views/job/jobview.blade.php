@@ -282,6 +282,34 @@
             </div>
         </div>
         <!-- /Page Content -->
+        <div class="modal custom-modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <div class="form-header mb-4">
+                            <h3 class="text-center mb-3">Privacy Agreement</h3>
+                            <p class="text-justify">
+                                By clicking “I Agree”, you consent to the collection, use, and processing of your personal data by the Local Government Unit (LGU) in accordance with Republic Act No. 10173, the Data Privacy Act of 2012, its Implementing Rules and Regulations, and relevant issuances of the National Privacy Commission. We collect only the information necessary for assessing your application for a specific job posting—such as your personal details, contact details, family details, educational background, employment history, and supporting documents—and process it strictly for recruitment purposes under the principles of transparency, legitimate purpose, and proportionality.
+                            </p>
+                            </div>
+
+                            <!-- Buttons to Agree or Decline -->
+                            <div class="modal-btn delete-action">
+                            <div class="row">
+                                <div class="col-6">
+                                    <button type="button" id="agreePrivacy" class="btn btn-primary continue-btn submit-btn">I Agree</button>
+                                </div>
+                                <div class="col-6">
+                                    <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Decline</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
 
         <!-- Apply Job Modal -->
         <x-layouts.add-emp-modal modal_title='Add Your Details' :route="route('form/apply/job/save')" :routeUrl="route('hr/get/information/apppos')">
@@ -301,10 +329,11 @@
 </div>
 
 <script>
-    const expireDate = {!! $expire_date ? "'$expire_date'" : 'null' !!};
+    const expireDate = {{ $expire_date ?? 'null' }};
     const jobStatus = "{{ $job_view[0]->status ?? '' }}"; // Ensure the status is passed correctly from the server
     const applyBtn = document.getElementById('applyBtn');
     const countdownElement = document.getElementById('countdown');
+
 
     function startCountdown() {
         if (!applyBtn || !countdownElement) return;
@@ -334,7 +363,7 @@
             applyBtn.classList.remove('disabled');
             applyBtn.href = "#";
             applyBtn.setAttribute('data-toggle', 'modal');
-            applyBtn.setAttribute('data-target', '#add_employee');
+            applyBtn.setAttribute('data-target', '#privacyModal');
             applyBtn.style.pointerEvents = 'auto';
             applyBtn.style.opacity = '1';
         }
@@ -349,9 +378,29 @@
         applyBtn.style.opacity = '0.6';
     }
 
+    // Handling Privacy Modal Acceptance and Decline
+    const acceptPrivacy = document.getElementById('agreePrivacy');
+
+    if (acceptPrivacy) {
+        acceptPrivacy.addEventListener('click', function() {
+            console.log("Privacy Accepted");
+
+            $('#privacyModal').modal('hide');
+
+            setTimeout(function() {
+                console.log("Attempting to show Add Employee Modal");
+                applyBtn.setAttribute('data-toggle', 'modal');
+                applyBtn.setAttribute('data-target', '#add_employee');
+                applyBtn.click();
+            }, 500);
+        });
+    }
+
+
     startCountdown();
 
 </script>
+
 
 
 <script>

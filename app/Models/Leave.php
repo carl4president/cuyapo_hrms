@@ -128,7 +128,7 @@ class Leave extends Model
                         'number_of_day'   => $number_of_days,
                         'leave_date'      => json_encode($request->leave_date),
                         'leave_day'       => json_encode($request->select_leave_day),
-                        'status'          => 'Pending',
+                        'status'          => auth()->user()->role_name === 'Employee' ? 'New' : 'Pending',
                         'approved_by'     => null,
                         'vacation_location' => $request->vacation_location,
                         'abroad_specify'   => $request->abroad_specify,
@@ -255,7 +255,7 @@ class Leave extends Model
                     'number_of_day'   => $request->number_of_day ?? 0,
                     'leave_date'      => $leave_date,
                     'leave_day'       => $select_leave_day,
-                    'status'          => 'Pending',
+                    'status'          => auth()->user()->role_name === 'Employee' ? 'New' : 'Pending',
                     'approved_by'     => Session::get('line_manager', null),
 
                     'vacation_location' => $request->vacation_location,

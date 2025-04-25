@@ -146,7 +146,7 @@
                                 <td>
                                     @foreach($profiles as $profile)
                                     <h2 class="table-avatar">
-                                        <a href="profile.html" class="avatar avatar-xs">
+                                        <a href="#" class="avatar avatar-xs">
                                             <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
                                         </a>
                                         <a href="#">{{ $leave->approved_by }}</a>
@@ -199,7 +199,7 @@
                                 <td>
                                     @foreach($profiles as $key => $profile)
                                     <h2 class="table-avatar">
-                                        <a href="profile.html" class="avatar avatar-xs">
+                                        <a href="#" class="avatar avatar-xs">
                                             <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
                                         </a>
                                         <a href="#">{{ $leave->approved_by }}</a>

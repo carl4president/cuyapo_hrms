@@ -32,7 +32,7 @@
     </form>
 
     <div class="account-footer">
-        <p>Already have an account? <a href="{{ route('login') }}">Login</a></p>
+        <p>Already have an account? <a href="{{ route('loginadmin') }}">Login</a></p>
     </div>
 </x-layouts.reset>
 @endsection

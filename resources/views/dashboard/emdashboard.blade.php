@@ -61,11 +61,31 @@
                                 <div class="dash-card-container">
                                     <div class="dash-card-icon">
                                         @if($leave->leave_type == 'Sick Leave')
-                                        <i class="fa fa-hourglass-o"></i>
+                                        <i class="fa fa-hospital-o"></i>
                                         @elseif($leave->leave_type == 'Vacation Leave')
                                         <i class="fa fa-suitcase"></i>
                                         @elseif($leave->leave_type == 'Maternity Leave')
                                         <i class="fa fa-female"></i>
+                                        @elseif($leave->leave_type == 'Paternity Leave')
+                                        <i class="fa fa-male"></i>
+                                        @elseif($leave->leave_type == 'Mandatory/Forced Leave')
+                                        <i class="fa fa-ban"></i>
+                                        @elseif($leave->leave_type == 'Special Privilege Leave')
+                                        <i class="fa fa-star"></i>
+                                        @elseif($leave->leave_type == 'Solo Parent Leave')
+                                        <i class="fa fa-user"></i>
+                                        @elseif($leave->leave_type == 'Study Leave')
+                                        <i class="fa fa-book"></i>
+                                        @elseif($leave->leave_type == '10-Day VAWC Leave')
+                                        <i class="fa fa-hand-paper-o"></i>
+                                        @elseif($leave->leave_type == 'Rehabilitation Privilege')
+                                        <i class="fa fa-medkit"></i>
+                                        @elseif($leave->leave_type == 'Special Leave Benefits for Women')
+                                        <i class="fa fa-venus"></i>
+                                        @elseif($leave->leave_type == 'Special Emergency (Calamity) Leave')
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        @elseif($leave->leave_type == 'Adoption Leave')
+                                        <i class="fa fa-child"></i>
                                         @else
                                         <i class="fa fa-calendar"></i>
                                         @endif

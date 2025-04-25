@@ -95,7 +95,18 @@ class JobController extends Controller
 
         $employee = Employee::all();
 
-        return view('job.jobsdashboard', compact('job_list', 'appJobs', 'employee', 'shortlistedJobs'));
+        $positionLabels = [];
+        $applicantCounts = [];
+
+        foreach ($job_list as $job) {
+            $positionName = $job->position->position_name;
+            $applicantCount = $job->applicants->where('status', '!=', 'Rejected')->count(); // exclude Rejected
+
+            $positionLabels[] = $positionName;
+            $applicantCounts[] = $applicantCount;
+        }
+
+        return view('job.jobsdashboard', compact('job_list', 'appJobs', 'employee', 'shortlistedJobs', 'positionLabels', 'applicantCounts'));
     }
 
     /** User All Job */

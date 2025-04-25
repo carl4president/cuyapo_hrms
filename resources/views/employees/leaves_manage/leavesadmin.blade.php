@@ -60,15 +60,16 @@
                 <div class="card text-center border-0 shadow-sm rounded-3 py-3 px-2" style="background-color: #fff;">
                     <div class="card-body p-0">
                         <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem;">Today Presents</h6>
-                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">12 / 60</h2>
+                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">{{ $stats['todayOnLeave'] }} / {{ $stats['totalEmployees'] }}</h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="card text-center border-0 shadow-sm rounded-3 py-3 px-2" style="background-color: #fff;">
                     <div class="card-body p-0">
-                        <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem;">Planned Leaves</h6>
-                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">8</h2>
+                        <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem;">New Leaves</h6>
+                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">{{ $stats['newLeavesToday'] }}
+</h2>
                         <small class="text-muted">Today</small>
                     </div>
                 </div>
@@ -76,8 +77,8 @@
             <div class="col-md-3 col-sm-6">
                 <div class="card text-center border-0 shadow-sm rounded-3 py-3 px-2" style="background-color: #fff;">
                     <div class="card-body p-0">
-                        <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem;">Unplanned Leaves</h6>
-                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">0</h2>
+                        <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem;">Pending Leaves</h6>
+                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">{{ $stats['pendingToday'] }}</h2>
                         <small class="text-muted">Today</small>
                     </div>
                 </div>
@@ -86,7 +87,7 @@
                 <div class="card text-center border-0 shadow-sm rounded-3 py-3 px-2" style="background-color: #fff;">
                     <div class="card-body p-0">
                         <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem;">Pending Requests</h6>
-                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">12</h2>
+                        <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">{{ $stats['pendingTotal'] }}</h2>
                     </div>
                 </div>
             </div>

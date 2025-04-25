@@ -280,7 +280,8 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <label>Department</label>
-                                <select class="select" name="department" id="e_department">
+                                <select class="form-control" name="department" id="e_department">
+                                <option value="" disabled selected>-- Select Department --</option>
                                     @foreach ($department as $departments )
                                     <option value="{{ $departments->id }}">{{ $departments->department }}</option>
                                     @endforeach
@@ -288,7 +289,8 @@
                             </div>
                             <div class="col-sm-6">
                                 <label>Position</label>
-                                <select class="select" name="position" id="e_position">
+                                <select class="form-control" name="position" id="e_position">
+                                <option value="" disabled selected>-- Select Position --</option>
                                 </select>
                             </div>
                         </div>
@@ -432,9 +434,10 @@
         var url = "{{ route('hr/get/information/emppos') }}";
 
         // Reusable function to reset a dropdown
-        function resetDropdown(selector, placeholder) {
-            $(selector).html(`<option value="" disabled selected>${placeholder}</option>`);
-        }
+            function resetDropdown(selector, placeholder) {
+                $(selector).empty(); // Clear all options
+                $(selector).append(`<option value="" disabled selected>${placeholder}</option>`);
+            }
 
         // Reusable function to populate positions
         function populatePositions(departmentId, selectId = '#position', preselectedPositionId = null) {
@@ -451,7 +454,8 @@
                     , success: function(response) {
 
                         if (response.positions) {
-                            $(selectId).html('<option value="" disabled selected>-- Select Position --</option>');
+                            resetDropdown(selectId, '-- Select Position --');
+                            console.log('preselected', preselectedPositionId);
                             response.positions.forEach((position) => {
                                 $(selectId).append(
                                     `<option value="${position.id}" ${
@@ -476,7 +480,7 @@
         });
 
         // Edit form: when department changes
-        $('#e_department').change(function() {
+         $('#e_department').off('change').on('change', function() {
             const departmentId = $(this).val();
             populatePositions(departmentId, '#e_position');
         });
@@ -502,7 +506,7 @@
             const departmentName = _this.find('.department').text();
             const positionId = _this.find('.position').data('id');
 
-            console.log(departmentId);
+            console.log(positionId);
 
 
             $('#e_id').val(userId);

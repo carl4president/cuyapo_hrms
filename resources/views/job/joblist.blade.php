@@ -205,7 +205,7 @@
 
                         <div class="job-meta mt-3">
                             <div class="item"><i class="fa fa-users"></i> {{ $list->no_of_vacancies }} vacancies</div>
-                            <div class="item"><i class="fa fa-briefcase"></i> {{ $list->experience }} experience</div>
+                            <div class="item"><i class="fa fa-briefcase"></i> {{ \Illuminate\Support\Str::limit($list->experience, 20) }}</div>
                             <div class="item"><i class="fa fa-money"></i> ₱{{ $list->salary_from }} – ₱{{ $list->salary_to }}</div>
                             <div class="item"><i class="fa fa-calendar"></i> Start: {{ $list->start_date }}</div>
                             <div class="item"><i class="fa fa-calendar"></i> Expiry: {{ $list->expired_date }}</div>

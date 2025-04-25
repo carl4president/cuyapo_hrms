@@ -112,7 +112,11 @@ class HomeController extends Controller
     public function index()
     {
         $currentDate = Carbon::now();
-        $employees = Employee::with('employment', 'user', 'jobDetails')->get();
+        $employees = Employee::with(['employment', 'user', 'jobDetails'])
+            ->whereHas('user', function ($query) {
+                $query->where('status', '!=', 'Disabled');
+            })
+            ->get();
         $available_jobs = AddJob::all();
         $applicants = Applicant::all();
         $leave = Leave::all();
@@ -142,6 +146,8 @@ class HomeController extends Controller
     private function getEmploymentStatusCount()
     {
         return DB::table('employee_employment')
+            ->join('users', 'employee_employment.emp_id', '=', 'users.user_id')
+            ->where('users.status', '!=', 'Disabled')
             ->select('employment_status', DB::raw('count(*) as total'))
             ->groupBy('employment_status')
             ->pluck('total', 'employment_status');
@@ -164,6 +170,7 @@ class HomeController extends Controller
                 'users.name as user_name',
                 'users.avatar as user_avatar'
             )
+            ->where('users.status', '!=', 'Disabled')
             ->whereBetween(DB::raw('STR_TO_DATE(leaves.date_from, "%d %b, %Y")'), [
                 $startOfWeek,
                 $endOfWeek
@@ -180,7 +187,15 @@ class HomeController extends Controller
         $totalDepartments = Department::count();
         $totalDesignations = Position::count();
 
-        $departmentStaff = Department::withCount(['employeeJobDetails as staff_count'])->get();
+        // Only count employeeJobDetails where the related user is not disabled
+        $departmentStaff = Department::withCount([
+            'employeeJobDetails as staff_count' => function ($query) {
+                $query->whereHas('employee.user', function ($q) {
+                    $q->where('status', '!=', 'Disabled');
+                });
+            }
+        ])->get();
+
         $totalStaff = $departmentStaff->sum('staff_count');
 
         $departmentProgress = $departmentStaff->map(function ($dept) use ($totalStaff) {
@@ -198,82 +213,69 @@ class HomeController extends Controller
         ];
     }
 
+
     private function getLeaveStatistics()
     {
-        // All leaves count
-        $allLeavesCount = Leave::count();
-
-        // Get current month and year
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        // Get last month and next month details
         $lastMonth = Carbon::now()->subMonth();
-        $nextMonth = Carbon::now()->addMonth();
 
-        // Define leave status counts for different statuses
-        $newLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
-            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
-            ->where('status', 'New')  // New status filter
+        $baseQuery = DB::table('leaves')
+            ->join('employees', 'leaves.staff_id', '=', 'employees.emp_id')
+            ->join('users', 'employees.emp_id', '=', 'users.user_id')
+            ->where('users.status', '!=', 'Disabled');
+
+        $allLeavesCount = (clone $baseQuery)->count();
+
+        $newLeavesCount = (clone $baseQuery)
+            ->whereRaw('MONTH(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentMonth])
+            ->whereRaw('YEAR(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentYear])
+            ->where('leaves.status', 'New')
             ->count();
 
-        // Get leave status counts for Pending, Approved, and Declined for this month
-        $pendingLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
-            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
-            ->where('status', 'Pending')
+        $pendingLeavesCount = (clone $baseQuery)
+            ->whereRaw('MONTH(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentMonth])
+            ->whereRaw('YEAR(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentYear])
+            ->where('leaves.status', 'Pending')
             ->count();
 
-        $approvedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
-            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
-            ->where('status', 'Approved')
+        $approvedLeavesCount = (clone $baseQuery)
+            ->whereRaw('MONTH(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentMonth])
+            ->whereRaw('YEAR(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentYear])
+            ->where('leaves.status', 'Approved')
             ->count();
 
-        $declinedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$currentMonth])
-            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$currentYear])
-            ->where('status', 'Declined')
+        $declinedLeavesCount = (clone $baseQuery)
+            ->whereRaw('MONTH(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentMonth])
+            ->whereRaw('YEAR(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$currentYear])
+            ->where('leaves.status', 'Declined')
             ->count();
 
-        $lastMonthApprovedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$lastMonth->month])
-            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$lastMonth->year])
-            ->where('status', 'Approved')
+        $lastMonthApprovedLeavesCount = (clone $baseQuery)
+            ->whereRaw('MONTH(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$lastMonth->month])
+            ->whereRaw('YEAR(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$lastMonth->year])
+            ->where('leaves.status', 'Approved')
             ->count();
 
-        $lastMonthDeclinedLeavesCount = Leave::whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%m") = ?', [$lastMonth->month])
-            ->whereRaw('DATE_FORMAT(STR_TO_DATE(date_from, "%d %b, %Y"), "%Y") = ?', [$lastMonth->year])
-            ->where('status', 'Declined')
+        $lastMonthDeclinedLeavesCount = (clone $baseQuery)
+            ->whereRaw('MONTH(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$lastMonth->month])
+            ->whereRaw('YEAR(STR_TO_DATE(date_from, "%d %b, %Y")) = ?', [$lastMonth->year])
+            ->where('leaves.status', 'Declined')
             ->count();
 
-        // Percentage calculations for leave types (relative to total leaves count)
-        $newLeavesPercentage = $newLeavesCount > 0 && $allLeavesCount > 0
-            ? round(($newLeavesCount / $allLeavesCount) * 100, 2)
-            : 0;
+        // Percentages
+        $newLeavesPercentage = $allLeavesCount > 0 ? round(($newLeavesCount / $allLeavesCount) * 100, 2) : 0;
+        $pendingLeavePercentage = $allLeavesCount > 0 ? round(($pendingLeavesCount / $allLeavesCount) * 100, 2) : 0;
+        $approvedLeavePercentage = $allLeavesCount > 0 ? round(($approvedLeavesCount / $allLeavesCount) * 100, 2) : 0;
+        $declinedLeavePercentage = $allLeavesCount > 0 ? round(($declinedLeavesCount / $allLeavesCount) * 100, 2) : 0;
 
-        // Adding percentage for pending, approved, and declined
-        $pendingLeavePercentage = $pendingLeavesCount > 0 && $allLeavesCount > 0
-            ? round(($pendingLeavesCount / $allLeavesCount) * 100, 2)
-            : 0;
-
-        $approvedLeavePercentage = $approvedLeavesCount > 0 && $allLeavesCount > 0
-            ? round(($approvedLeavesCount / $allLeavesCount) * 100, 2)
-            : 0;
-
-        $declinedLeavePercentage = $declinedLeavesCount > 0 && $allLeavesCount > 0
-            ? round(($declinedLeavesCount / $allLeavesCount) * 100, 2)
-            : 0;
-
-        // Percentage change calculations (for pending vs all-time)
-        $newPercentageChange = $allLeavesCount > 0
-            ? round(($newLeavesCount / $allLeavesCount) * 100, 2)
-            : 0;
-
-        $pendingPercentageChange = $allLeavesCount > 0
-            ? round(($pendingLeavesCount / $allLeavesCount) * 100, 2)
-            : 0;
-
+        // Percentage change
+        $newPercentageChange = $allLeavesCount > 0 ? round(($newLeavesCount / $allLeavesCount) * 100, 2) : 0;
+        $pendingPercentageChange = $allLeavesCount > 0 ? round(($pendingLeavesCount / $allLeavesCount) * 100, 2) : 0;
         $approvedPercentageChange = $lastMonthApprovedLeavesCount > 0
             ? round((($approvedLeavesCount - $lastMonthApprovedLeavesCount) / $lastMonthApprovedLeavesCount) * 100, 2)
             : 0;
-
         $declinedPercentageChange = $lastMonthDeclinedLeavesCount > 0
             ? round((($declinedLeavesCount - $lastMonthDeclinedLeavesCount) / $lastMonthDeclinedLeavesCount) * 100, 2)
             : 0;
@@ -290,12 +292,13 @@ class HomeController extends Controller
             'pendingLeavePercentage' => $pendingLeavePercentage,
             'approvedLeavePercentage' => $approvedLeavePercentage,
             'declinedLeavePercentage' => $declinedLeavePercentage,
-            'newPercentageChange'     => $newPercentageChange,
+            'newPercentageChange' => $newPercentageChange,
             'pendingPercentageChange' => $pendingPercentageChange,
             'approvedPercentageChange' => $approvedPercentageChange,
             'declinedPercentageChange' => $declinedPercentageChange,
         ];
     }
+
 
     private function getDepartmentGenderChartData()
     {
@@ -307,11 +310,21 @@ class HomeController extends Controller
                 $departmentName = Department::find($department->department_id)?->department ?? 'Unknown';
 
                 $maleCount = Employee::where('gender', 'male')
-                    ->whereHas('jobDetails', fn($q) => $q->where('department_id', $department->department_id))
+                    ->whereHas('jobDetails', function ($q) use ($department) {
+                        $q->where('department_id', $department->department_id);
+                    })
+                    ->whereHas('user', function ($q) {
+                        $q->where('status', '!=', 'Disabled');
+                    })
                     ->count();
 
                 $femaleCount = Employee::where('gender', 'female')
-                    ->whereHas('jobDetails', fn($q) => $q->where('department_id', $department->department_id))
+                    ->whereHas('jobDetails', function ($q) use ($department) {
+                        $q->where('department_id', $department->department_id);
+                    })
+                    ->whereHas('user', function ($q) {
+                        $q->where('status', '!=', 'Disabled');
+                    })
                     ->count();
 
                 return [
@@ -336,15 +349,34 @@ class HomeController extends Controller
                 return "$startRange-$endRange";
             })
             ->map(function ($group, $range) {
+                $activeCount = 0;
+                $inactiveCount = 0;
+                $resignationCount = 0;
+
+                foreach ($group as $employee) {
+                    // Check user status and increment counters accordingly
+                    $user = $employee->user;
+
+                    if ($user->status === 'Active' || $user->status === 'Inactive') {
+                        // Count based on the date_hired for active and inactive
+                        $activeCount++;
+                    } elseif ($user->status === 'Disabled') {
+                        // Count based on updated_at (resignation date) for disabled employees
+                        $resignationCount++;
+                    }
+                }
+
                 return [
                     'y' => $range,
-                    'male' => $group->where('gender', 'Male')->count(),
-                    'female' => $group->where('gender', 'Female')->count()
+                    'onboard' => $activeCount + $inactiveCount, // Employee onboard count (active and inactive)
+                    'resigned' => $resignationCount, // Resigned employees
                 ];
             })
             ->sortKeys()
             ->values();
     }
+
+
 
 
 
@@ -558,7 +590,7 @@ class HomeController extends Controller
 
         // Get the first job detail record (by earliest appointment_date)
         $firstJobDetail = EmployeeJobDetail::where('emp_id', $employeeId)
-             ->where('is_designation', 0)
+            ->where('is_designation', 0)
             ->orderBy('appointment_date', 'asc')
             ->first();
 

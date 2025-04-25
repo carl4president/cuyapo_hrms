@@ -41,17 +41,6 @@
             <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
                 <div class="card dash-widget">
                     <div class="card-body">
-                        <span class="dash-widget-icon"><i class="fa fa-users"></i></span>
-                        <div class="dash-widget-info">
-                            <h3>40</h3>
-                            <span>Job Seekers</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                <div class="card dash-widget">
-                    <div class="card-body">
                         <span class="dash-widget-icon"><i class="fa fa-user"></i></span>
                         <div class="dash-widget-info">
                             <h3>{{ $employee->count() }}</h3>
@@ -65,8 +54,19 @@
                     <div class="card-body">
                         <span class="dash-widget-icon"><i class="fa fa-clipboard"></i></span>
                         <div class="dash-widget-info">
-                            <h3>{{ $appJobs->sum(fn($job) => $job->applicants->count()) }}</h3>
+                            <h3>{{ $appJobs->sum(fn($job) => $job->applicants->where('status', '!=', 'Rejected')->count()) }}</h3>
                             <span>Applications</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
+                <div class="card dash-widget">
+                    <div class="card-body">
+                        <span class="dash-widget-icon"><i class="fa fa-users"></i></span>
+                        <div class="dash-widget-info">
+                            <h3>{{ $appJobs->sum(fn($job) => $job->applicants->where('status', 'Rejected')->count()) }}</h3>
+                            <span>Rejected Application</span>
                         </div>
                     </div>
                 </div>
@@ -78,12 +78,14 @@
                 <div class="row">
                     <div class="col-md-6 text-center d-flex">
                         <div class="card flex-fill">
-                            <div class="card-body">
+                            <div class="card-body" style="height: 300px; overflow: auto;">
                                 <h3 class="card-title">Overview</h3>
-                                <canvas id="lineChart"></canvas>
+                                <canvas id="OverviewlineChart" style="width: 800px; height: 300px;"></canvas> <!-- Ensure width exceeds container -->
                             </div>
                         </div>
                     </div>
+
+
                     <div class="col-md-6 d-flex">
                         <div class="card flex-fill">
                             <div class="card-body">
@@ -296,5 +298,37 @@
     </div>
     <!-- /Page Content -->
 </div>
+
+@section('script')
+<script>
+    var ctx = document.getElementById("OverviewlineChart").getContext('2d');
+    var lineChart = new Chart(ctx, {
+        type: 'line'
+        , data: {
+            labels: @json($positionLabels), // dynamically insert position names
+            datasets: [{
+                label: 'Applicants per Job Position'
+                , data: @json($applicantCounts), // dynamically insert counts
+                fill: false
+                , borderColor: '#4e73df'
+                , backgroundColor: '#4e73df'
+                , borderWidth: 2
+            }]
+        }
+        , options: {
+            responsive: false, // Set to false to have more control over dimensions
+            maintainAspectRatio: false, // Ensure it doesn't automatically scale
+            plugins: {
+                legend: {
+                    display: true
+                    , position: 'top'
+                }
+            }
+        }
+    });
+
+</script>
+
 <!-- /Page Wrapper -->
+@endsection
 @endsection

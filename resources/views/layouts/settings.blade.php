@@ -3,13 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-    <meta name="description" content="Smarthr - Bootstrap Admin Template">
-    <meta name="keywords" content="admin, estimates, bootstrap, business, corporate, creative, management, minimal, modern, accounts, invoice, html5, responsive, CRM, Projects">
-    <meta name="author" content="Soeng Souy">
-    <meta name="robots" content="noindex, nofollow">
     <title>Settings - HRMS</title>
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/x-icon" href="{{ URL::to('assets/img/favicon.png') }}">
+    @php
+    use App\Models\CompanySettings;
+    $company = CompanySettings::first();
+    @endphp
+
+    @if (!empty($company) && !empty($company->logo))
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/' . $company->logo) }}">
+    @else
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/img/logo.png') }}">
+    @endif
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ URL::to('assets/css/bootstrap.min.css') }}">
     <!-- Fontawesome CSS -->
@@ -41,10 +46,6 @@
             <!-- Logo -->
             <div class="header-left">
                 <a href="{{ route('home') }}" class="logo">
-                    @php
-                    use App\Models\CompanySettings;
-                    $company = CompanySettings::first();
-                    @endphp
 
                     @if (!empty($company) && !empty($company->logo))
                     <img src="{{ asset('assets/images/' . $company->logo) }}" width="40" height="40" alt="">

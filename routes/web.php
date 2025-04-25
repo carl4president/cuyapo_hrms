@@ -30,8 +30,8 @@ Auth::routes();
 Route::group(['namespace' => 'App\Http\Controllers\Auth'], function () {
     // -----------------------------login--------------------------------------//
     Route::middleware([LeaveUpdateMiddleware::class])->controller(LoginController::class)->group(function () {
-        Route::get('/login/hr/lgu/admins/cuyapo', 'login')->name('login')->middleware(LeaveUpdateMiddleware::class);
-        Route::get('/login/hr/employees/cuyapo', 'loginemployee')->name('login/employee')->middleware(LeaveUpdateMiddleware::class);
+        Route::get('/login/hr/lgu/admins/cuyapo', 'loginadmin')->name('loginadmin')->middleware(LeaveUpdateMiddleware::class);
+        Route::get('/login/hr/employees/cuyapo', 'login')->name('login')->middleware(LeaveUpdateMiddleware::class);
         Route::post('/login/hr/lgu/admins/cuyapo', 'authenticate');
         Route::post('/login/hr/employees/cuyapo', 'authenticateEmployee');
         Route::get('/logout', 'logout')->name('logout');
@@ -116,6 +116,8 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
         Route::get('job/list/search', 'jobListSearch')->name('job/list/search');
         Route::get('form/job/view/{id}', 'jobView');
         Route::post('form/apply/job/save', 'applyJobSaveRecord')->name('form/apply/job/save');
+        Route::post('get/information/emppos', 'getInformationEmppos')->name('hr/get/information/emppos');
+        Route::post('get/information/apppos', 'getInformationApppos')->name('hr/get/information/apppos');
         
         Route::middleware('auth')->group(function () {
             Route::get('user/dashboard/index', 'userDashboard')->name('user/dashboard/index');
@@ -134,7 +136,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::post('form/jobTypes/delete', 'JobTypesDeleteRecord')->name('form/jobTypes/delete');
             Route::get('job/applicants/{job_title}', 'jobApplicants');
             Route::get('applicant/view/edit/{applicant_id}', 'viewRecord');
-            Route::post('get/information/apppos', 'getInformationApppos')->name('hr/get/information/apppos');
             Route::get('job/details/{id}', 'jobDetails');
             Route::get('cv/download/{id}', 'downloadCV');
             Route::post('form/jobs/save', 'JobsSaveRecord')->name('form/jobs/save');
@@ -157,7 +158,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::post('/saveChildren', 'updateChildrenInfo')->name('all/applicant/save/childrenInfo');
             Route::post('/saveEducation', 'updateEducationInfo')->name('all/applicant/save/educationInfo');
             Route::post('/saveEligibilities', 'updateEligibilitiesInfo')->name('all/applicant/save/eligibilitiesInfo');
-            Route::post('get/information/emppos', 'getInformationEmppos')->name('hr/get/information/emppos');
             Route::post('/saveExperience', 'updateExperienceInfo')->name('all/applicant/save/experienceInfo');
             Route::post('/saveVoluntary', 'updateVoluntaryInfo')->name('all/applicant/save/voluntaryInfo');
             Route::post('/saveTraining', 'updateTrainingInfo')->name('all/applicant/save/trainingInfo');
@@ -174,12 +174,14 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
 
     // ------------------------- Form Employee ---------------------------//
     Route::middleware([LeaveUpdateMiddleware::class])->controller(EmployeeController::class)->group(function () {
+        Route::post('/check-email', 'checkEmail')->name('check/email');
+        Route::post('get/information/emppos', 'getInformationEmppos')->name('hr/get/information/emppos');
+        Route::post('/save', 'saveRecord')->name('all/employee/save');
         Route::middleware('auth')->group(function () {
             // ---------------- Employee Management Routes ---------------------
             Route::prefix('all/employee')->group(function () {
                 Route::get('/card', 'cardAllEmployee')->name('all/employee/card');
                 Route::get('/list', 'listAllEmployee')->name('all/employee/list');
-                Route::post('/save', 'saveRecord')->name('all/employee/save');
                 Route::post('/saveProfile', 'updateProfileInfo')->name('all/employee/save/profileInfo');
                 Route::post('/savePersonal', 'updatePersonalInfo')->name('all/employee/save/personalInfo');
                 Route::post('/saveGovIds', 'updateGovIdsInfo')->name('all/employee/save/govIds');
@@ -187,7 +189,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                 Route::post('/saveChildren', 'updateChildrenInfo')->name('all/employee/save/childrenInfo');
                 Route::post('/saveEducation', 'updateEducationInfo')->name('all/employee/save/educationInfo');
                 Route::post('/saveEligibilities', 'updateEligibilitiesInfo')->name('all/employee/save/eligibilitiesInfo');
-                Route::post('get/information/emppos', 'getInformationEmppos')->name('hr/get/information/emppos');
                 Route::post('/saveExperience', 'updateExperienceInfo')->name('all/employee/save/experienceInfo');
                 Route::post('/saveVoluntary', 'updateVoluntaryInfo')->name('all/employee/save/voluntaryInfo');
                 Route::post('/saveTraining', 'updateTrainingInfo')->name('all/employee/save/trainingInfo');
@@ -213,7 +214,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                     Route::get('employee/departments/{department}', 'employeeDepartments');
                     Route::post('/employee/editPosition', 'editPosition')->name('employee/editPosition');
                     Route::post('/employee/changeDepartment', 'changeDepartment')->name('employee/changeDepartment');
-                    Route::delete('/employee/deleteFromDepartment/{emp_id}/{department_id}', 'deleteFromDepartment')->name('employee/deleteFromDepartment');
+                    Route::delete('/employee/deleteFromDepartment/{emp_id}/{department_id}/{created_at}', 'deleteFromDepartment')->name('employee/deleteFromDepartment');
                 });
                 // ----------------------- Designations ------------------------
                 // ----------------------- Positions ------------------------

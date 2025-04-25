@@ -52,7 +52,7 @@ class UserManagementController extends Controller
         $columnSortOrder = $order_arr[0]['dir']; // asc or desc
         $searchValue     = $search_arr['value']; // Search value
 
-        $users = User::with(['employee.jobDetails.department']);
+        $users = User::withoutGlobalScope('userStatusEnabled')->with(['employee.jobDetails.department']);
         $totalRecords = $users->count();
 
         // Search filters

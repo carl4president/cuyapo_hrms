@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -86,12 +87,6 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'emp_id', 'user_id');
-    }
-
-
-    public function positionHistory()
-    {
-        return $this->hasMany(PositionHistory::class, 'emp_id', 'emp_id');
     }
 
     public function jobDetails()

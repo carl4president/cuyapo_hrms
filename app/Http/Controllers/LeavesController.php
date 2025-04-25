@@ -30,10 +30,16 @@ class LeavesController extends Controller
             // Admin can access all employees and all leave data
             $userList = DB::table('users')
                 ->where('role_name', 'Employee')
+                ->where('status', '!=', 'Disabled')
                 ->get();
 
             $leaveInformation = LeaveInformation::all();
-            $getLeave = Leave::all();
+            $getLeave = DB::table('leaves')
+                ->join('users', 'leaves.staff_id', '=', 'users.user_id')
+                ->where('users.status', '!=', 'Disabled')
+                ->select('leaves.*') // Ensure only columns from `leaves` are returned
+                ->get();
+            $stats = $this->getLeaveStats();
         } elseif ($user->role_name == 'Employee') {
             // Get job details (assume relation is jobdetails, and it's a hasMany)
             $jobDetail = optional($user->employee->jobdetails->first());
@@ -45,6 +51,7 @@ class LeavesController extends Controller
                     ->join('employee_job_details', 'employees.emp_id', '=', 'employee_job_details.emp_id')
                     ->where('employee_job_details.department_id', $jobDetail->department_id)
                     ->where('users.role_name', 'Employee')
+                    ->where('status', '!=', 'Disabled')
                     ->get();
 
                 $empIds = $userList->pluck('emp_id');
@@ -53,7 +60,14 @@ class LeavesController extends Controller
                 $leaveInformation = LeaveInformation::all();
 
                 // Ensure the 'emp_id' is the correct column in 'leaves' table
-                $getLeave = Leave::whereIn('staff_id', $empIds)->get();  // Change 'emp_id' to 'employee_id' or the correct column name
+                $getLeave = DB::table('leaves')
+                    ->join('users', 'leaves.staff_id', '=', 'users.user_id')
+                    ->whereIn('leaves.staff_id', $empIds)
+                    ->where('users.status', '!=', 'Disabled')
+                    ->select('leaves.*')
+                    ->get();  // Change 'emp_id' to 'employee_id' or the correct column name
+
+                $stats = $this->getLeaveStats($empIds);
             } else {
                 // Not a department head — no access or only self
                 abort(403, 'Unauthorized access to leave management.');
@@ -62,7 +76,63 @@ class LeavesController extends Controller
             // Not allowed
             abort(403, 'Unauthorized role.');
         }
-        return view('employees.leaves_manage.leavesadmin', compact('leaveInformation', 'userList', 'getLeave'));
+        return view('employees.leaves_manage.leavesadmin', compact('leaveInformation', 'userList', 'getLeave', 'stats'));
+    }
+
+    private function getLeaveStats($empIds = null)
+    {
+        $today = now()->format('Y-m-d');
+
+        $employeeQuery = DB::table('users')
+            ->where('role_name', 'Employee')
+            ->where('status', '!=', 'Disabled');
+
+        if ($empIds) {
+            $employeeQuery->whereIn('user_id', $empIds);
+        }
+
+        $totalEmployees = $employeeQuery->count();
+
+        $leaveQuery = DB::table('leaves')
+            ->join('users', 'leaves.staff_id', '=', 'users.user_id')
+            ->whereRaw("STR_TO_DATE(date_from, '%d %b, %Y') <= ?", [$today])
+            ->whereRaw("STR_TO_DATE(date_to, '%d %b, %Y') >= ?", [$today])
+            ->where('users.status', '!=', 'Disabled');
+
+        if ($empIds) {
+            $leaveQuery->whereIn('leaves.staff_id', $empIds);
+        }
+
+        $todayOnLeave = $leaveQuery->count();
+
+        $newLeavesToday = DB::table('leaves')
+            ->whereDate('created_at', $today)
+            ->where('status', 'New')
+            ->when($empIds, fn($q) => $q->whereIn('staff_id', $empIds))
+            ->count();
+
+        $pendingToday = DB::table('leaves')
+            ->whereDate('created_at', $today)
+            ->where('status', 'Pending')
+            ->when($empIds, fn($q) => $q->whereIn('staff_id', $empIds))
+            ->count();
+
+        $pendingTotal = DB::table('leaves')
+            ->join('users', 'leaves.staff_id', '=', 'users.user_id')
+            ->where('users.status', '!=', 'Disabled')
+            ->where('leaves.status', 'Pending')
+            ->when($empIds, fn($q) => $q->whereIn('leaves.staff_id', $empIds))
+            ->count();
+
+        $todayOnLeave = $totalEmployees - $todayOnLeave;
+
+        return [
+            'todayOnLeave' => $todayOnLeave,
+            'totalEmployees' => $totalEmployees,
+            'newLeavesToday' => $newLeavesToday,
+            'pendingToday' => $pendingToday,
+            'pendingTotal' => $pendingTotal,
+        ];
     }
 
     public function getLeaveOptions(Request $request)
@@ -99,11 +169,13 @@ class LeavesController extends Controller
     public function getStaffLeaveOptions(Request $request)
     {
         $employeeId = $request->input('employee_id');
+        $currentYear = now()->year;
 
         // Fetch leave types where the employee_id is part of the JSON array in staff_id or it's 'all'
         $leaveInformation = LeaveInformation::where(function ($query) use ($employeeId) {
             $query->whereJsonContains('staff_id', $employeeId);
         })
+            ->where('year_leave', $currentYear)
             ->get();
 
         return response()->json($leaveInformation);
@@ -376,8 +448,8 @@ class LeavesController extends Controller
         $leave = Leave::findOrFail($id);
 
         $leaveBalance = LeaveBalance::where('staff_id', $leave->staff_id)
-        ->where('leave_type', $leave->leave_type)
-        ->first();
+            ->where('leave_type', $leave->leave_type)
+            ->first();
 
         return view('employees.leaves_manage.leavedetails', compact('leave', 'leaveBalance'));
     }
@@ -508,34 +580,70 @@ class LeavesController extends Controller
     /** Leave Search */
     public function leaveSearch(Request $request)
     {
-        $query = DB::table('leaves');
+        $user = Auth::user();
+        $query = DB::table('leaves')
+            ->join('users', 'leaves.staff_id', '=', 'users.user_id')
+            ->where('users.status', '!=', 'Disabled')
+            ->select('leaves.*');
 
-        // Apply filters
+        // Apply search filters
         if ($request->employee_name) {
-            $query->where('employee_name', 'LIKE', '%' . $request->employee_name . '%');
+            $query->where('users.name', 'LIKE', '%' . $request->employee_name . '%');
         }
 
         if ($request->leave_type) {
-            $query->where('leave_type', $request->leave_type);
+            $query->where('leaves.leave_type', $request->leave_type);
         }
 
         if ($request->status) {
-            $query->where('status', $request->status);
+            $query->where('leaves.status', $request->status);
         }
 
         if ($request->date_from && $request->date_to) {
-            $query->whereBetween('date_from', [$request->date_from, $request->date_to]);
+            $query->whereBetween('leaves.date_from', [$request->date_from, $request->date_to]);
         }
 
-        // Fetch filtered leaves
-        $leaves = $query->get();
+        // Role-based filtering
+        if ($user->role_name == 'Admin') {
+            // Admin sees all filtered leaves
+            $userList = DB::table('users')
+                ->where('role_name', 'Employee')
+                ->where('status', '!=', 'Disabled')
+                ->get();
 
-        // Fetch other required data
-        $userList = DB::table('users')->get();
-        $leaveInformation = LeaveInformation::all();
-        $getLeave = $leaves; // Use filtered data
+            $leaveInformation = LeaveInformation::all();
+            $getLeave = $query->get();
+            $stats = $this->getLeaveStats();
+        } elseif ($user->role_name == 'Employee') {
+            $jobDetail = optional($user->employee->jobdetails->first());
 
-        return view('employees.leaves_manage.leavesadmin', compact('leaves', 'userList', 'leaveInformation', 'getLeave'));
+            if ($jobDetail && $jobDetail->is_head == 1) {
+                // Head sees only department employees
+                $userList = DB::table('users')
+                    ->join('employees', 'users.user_id', '=', 'employees.emp_id')
+                    ->join('employee_job_details', 'employees.emp_id', '=', 'employee_job_details.emp_id')
+                    ->where('employee_job_details.department_id', $jobDetail->department_id)
+                    ->where('users.role_name', 'Employee')
+                    ->where('status', '!=', 'Disabled')
+                    ->get();
+
+                $empIds = $userList->pluck('emp_id');
+
+                $leaveInformation = LeaveInformation::all();
+
+                $query->whereIn('leaves.staff_id', $empIds);
+                $getLeave = $query->get();
+
+                $stats = $this->getLeaveStats($empIds);
+            } else {
+                // Unauthorized
+                abort(403, 'Unauthorized access to leave search.');
+            }
+        } else {
+            abort(403, 'Unauthorized role.');
+        }
+
+        return view('employees.leaves_manage.leavesadmin', compact('leaveInformation', 'userList', 'getLeave', 'stats'));
     }
 
     private function autoApprovePendingLeaves()

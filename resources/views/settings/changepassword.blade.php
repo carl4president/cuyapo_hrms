@@ -8,7 +8,7 @@
                     <li><a href="{{ Auth::user()->role_name === 'Admin' ? route('home') : route('em/dashboard') }}"><i class="la la-home"></i> <span>Back to Home</span></a></li>
                     <li class="menu-title">Settings</li>
 
-                    @if(auth()->user()->role_name === 'Admin')
+                    @if(Auth::user()->role_name == 'Admin' || Auth::user()->role_name == 'Super Admin')
 
                     <li><a href="{{ route('company/settings/page') }}"><i class="la la-building"></i><span>Company Settings</span></a></li>
 

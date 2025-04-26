@@ -6,13 +6,13 @@
                 <li class="menu-title">
                     <span>Main</span>
                 </li>
-                @if (Auth::user()->role_name == 'Admin')
+                @if (Auth::user()->role_name == 'Admin' || Auth::user()->role_name == 'Super Admin')
                 <li class="{{set_active(['home'])}}"><a class="{{set_active(['home'])}}" href="{{ route('home') }}"><i class="la la-dashboard"></i><span>Dashboard</span></a></li>
                 @elseif (Auth::user()->role_name == 'Employee')
                 <li class="{{set_active(['em/dashboard'])}}"><a class="{{set_active(['em/dashboard'])}}" href="{{ route('em/dashboard') }}"><i class="la la-dashboard"></i><span>Dashboard</span></a></li>
                 @endif
 
-                @if (Auth::user()->role_name == 'Admin')
+                @if (Auth::user()->role_name == 'Admin' || Auth::user()->role_name == 'Super Admin')
                 <li class="menu-title"> <span>Authentication</span> </li>
                 <li class="{{set_active(['search/user/list','userManagement','activity/log','activity/login/logout'])}} submenu">
                     <a href="#" class="{{ set_active(['search/user/list','userManagement','activity/log','activity/login/logout']) ? 'noti-dot' : '' }}">
@@ -25,7 +25,7 @@
                 @endif
 
                 <!-- Employees Section -->
-                @if (Auth::user()->role_name == 'Admin')
+                @if (Auth::user()->role_name == 'Admin' || Auth::user()->role_name == 'Super Admin')
                 <li class="menu-title"><span>Employees</span></li>
                 <li class="{{set_active(['all/employee/list','all/employee/card','form/holidays/new','form/leaves/new', 
                     'form/leaves/employee/new','form/leavesettings/page','form/departments/page', 'form/departments/employee/departments', 'form/positions/page', 'form/leaves/calendar'])}} {{ request()->is('form/departments/employee/departments/*') ? 'active' : '' }} submenu">
@@ -48,7 +48,7 @@
                 </li>
                 @endif
 
-                @if (Auth::user()->role_name == 'Admin')
+                @if (Auth::user()->role_name == 'Admin' || Auth::user()->role_name == 'Super Admin')
                 <li class="menu-title"> <span>HR</span> </li>
                 <li class="{{set_active(['form/leave/reports/page','form/daily/reports/page','form/employee/reports/page'])}} submenu">
                     <a href="#" class="{{ set_active(['form/leave/reports/page','form/daily/reports/page','form/employee/reports/page']) ? 'noti-dot' : '' }}">
@@ -61,12 +61,12 @@
                 </li>
                 @endif
 
-                @if (Auth::user()->role_name == 'Admin')
+                @if (Auth::user()->role_name == 'Admin' || Auth::user()->role_name == 'Super Admin')
                 <li class="menu-title"> <span>Administration</span> </li>
                 @endif
 
 
-                @if (Auth::user()->role_name == 'Admin')
+                @if (Auth::user()->role_name == 'Admin' || Auth::user()->role_name == 'Super Admin')
                 <li class="{{set_active(['user/dashboard/index','jobs/dashboard/index','user/dashboard/all','user/dashboard/applied/jobs','user/dashboard/interviewing','user/dashboard/offered/jobs','user/dashboard/visited/jobs','user/dashboard/archived/jobs','user/dashboard/save','jobs','job/applicants','job/details','page/shortlist/candidates','page/interview/questions','page/offer/approvals','page/rejected/applicant','page/candidates','page/schedule/timing','page/aptitude/result', 'jobsTypes'])}} submenu">
                     <a href="#" class="{{ set_active(['user/dashboard/index','jobs/dashboard/index','user/dashboard/all','user/dashboard/save','jobs','job/applicants','job/details', 'jobsTypes']) ? 'noti-dot' : '' }}">
                         <i class="la la-briefcase"></i>

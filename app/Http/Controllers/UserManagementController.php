@@ -26,7 +26,7 @@ class UserManagementController extends Controller
     /** Index page */
     public function index()
     {
-        if (Session::get('role_name') == 'Admin') {
+        if (Session::get('role_name') == 'Admin' || Session::get('role_name') == 'Super Admin') {
             $result      = DB::table('users')->get();
             $position    = DB::table('positions')->get();
             $department  = DB::table('departments')->get();
@@ -185,14 +185,33 @@ class UserManagementController extends Controller
                 ' . $full_status;
 
             // Action buttons
-            $action = '
-                <div class="dropdown dropdown-action">
-                    <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
-                    <div class="dropdown-menu dropdown-menu-right">
-                        <a href="#" class="dropdown-item userUpdate" data-toggle="modal" data-id="' . $record->id . '" data-target="#edit_user"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                        <a href="#" class="dropdown-item userDelete" data-toggle="modal" data-id="' . $record->id . '" data-target="#delete_user"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
-                    </div>
-                </div>';
+            $action = '';
+
+            
+            if (Auth::user()->role_name === 'Super Admin' || (Auth::user()->role_name === 'Admin' && (Auth::user()->id === $record->id || $record->role_name === 'Employee'))) {
+
+                $action = '
+                    <div class="dropdown dropdown-action">
+                        <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                ';
+
+                
+                if (Auth::user()->role_name === 'Super Admin' || (Auth::user()->role_name === 'Admin' && (Auth::user()->id === $record->id || $record->role_name === 'Employee'))) {
+
+                    
+                    $action .= '<a href="#" class="dropdown-item userUpdate" data-toggle="modal" data-id="' . $record->id . '" data-role="' . $record->role_name . '" data-target="#edit_user"><i class="fa fa-pencil m-r-5"></i> Edit</a>';
+                }
+
+                if (Auth::user()->role_name === 'Super Admin' || (Auth::user()->role_name === 'Admin' && (Auth::user()->id === $record->id || $record->role_name === 'Employee'))) {
+
+                    
+                    $action .= '<a href="#" class="dropdown-item userDelete" data-toggle="modal" data-id="' . $record->id . '" data-target="#delete_user"><i class="fa fa-trash-o m-r-5"></i> Delete</a>';
+                }
+
+                $action .= '</div></div>';
+            }
+
 
             $last_login = Carbon::parse($record->last_login)->diffForHumans();
 
@@ -694,32 +713,58 @@ class UserManagementController extends Controller
     {
         DB::beginTransaction();
         try {
-            $dt = Carbon::now();
-            $todayDate = $dt->toDayDateTimeString();
-
-
-            // Handle the deletion of user-related information
             $userId = $request->id;
             $avatar = $request->avatar;
 
-            // Delete user and related records
-            User::destroy($userId);
-            PersonalInformation::destroy($userId);
-            UserEmergencyContact::destroy($userId);
+            // Get the user
+            $user = User::where('id', $userId)->first();
 
-            // Delete the avatar image if it's not the default
-            if ($avatar !== 'photo_defaults.jpg') {
-                // Delete the file using the Storage facade
-                unlink('assets/images/' . $avatar);
+            if ($user) {
+                $employee = Employee::where('emp_id', $user->user_id)->first();
+
+                if ($employee) {
+                    // Delete related data if they exist
+                    $employee->contact()?->delete();
+                    $employee->governmentIds()?->delete();
+                    $employee->familyInfo()?->delete();
+                    $employee->education()->delete();
+                    $employee->employment()?->delete();
+                    $employee->children()->delete();
+                    $employee->civilServiceEligibility()->delete();
+                    $employee->workExperiences()->delete();
+                    $employee->voluntaryWorks()->delete();
+                    $employee->trainings()->delete();
+                    $employee->otherInformations()->delete();
+                    $employee->jobDetails()->delete();
+
+                    // Delete the employee itself
+                    $employee->delete();
+                }
+
+                // Delete related user tables
+                User::destroy($userId);
+                PersonalInformation::destroy($userId);
+                UserEmergencyContact::destroy($userId);
+
+                // Delete avatar if not default
+                if ($avatar && $avatar !== 'photo_defaults.jpg') {
+                    $avatarPath = public_path('assets/images/' . $avatar);
+                    if (file_exists($avatarPath)) {
+                        unlink($avatarPath);
+                    }
+                }
+
+                DB::commit();
+                flash()->success('User deleted successfully :)');
+            } else {
+                flash()->error('User not found.');
             }
 
-            DB::commit();
-            flash()->success('User deleted successfully :)');
             return redirect()->back();
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error deleting user: ' . $e->getMessage()); // Log error details
-            flash()->error('User deletion failed :)');
+            \Log::error('Error deleting user and employee: ' . $e->getMessage());
+            flash()->error('Deletion failed :(');
             return redirect()->back();
         }
     }

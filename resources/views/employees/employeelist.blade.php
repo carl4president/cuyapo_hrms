@@ -1,6 +1,38 @@
 @extends('layouts.master')
 @section('content')
 <style>
+    .review-section {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        gap: 10px;
+        /* Ensures spacing between elements */
+    }
+
+    .review-section h3 {
+        width: 100%;
+        font-size: 1.5em;
+        margin-bottom: 5px;
+    }
+
+    .review-section ul {
+        flex: 1 1 45%;
+        padding-left: 20px;
+        list-style-position: inside;
+    }
+
+    .review-section li {
+        margin-bottom: 5px;
+        line-height: 2;
+    }
+
+    .section-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
     .progressbar {
         position: relative;
         display: flex;
@@ -84,6 +116,10 @@
     }
 
     @media (max-width: 768px) {
+        .review-section ul {
+            flex: 1 1 100%;
+        }
+
         .progressbar {
             flex-wrap: wrap;
         }
@@ -101,6 +137,16 @@
             width: 28px;
             height: 28px;
             font-size: 12px;
+        }
+
+        .submit-section .btn {
+            width: 100% !important;
+            margin: 5px 0;
+            font-size: 0.9375rem !important;
+        }
+
+        .submit-section .ml-auto {
+            margin-left: 0 !important;
         }
     }
 
@@ -248,7 +294,7 @@
     </div>
     <!-- /Page Content -->
 
-    <x-layouts.add-emp-modal modal_title='Add Employee' :route="route('all/employee/save')" :routeUrl="route('hr/get/information/emppos')" :$departments :$userList :$employee>
+    <x-layouts.add-emp-modal modal_title='Add Employee' :route="route('all/employee/save')" :routeUrl="route('hr/get/information/emppos')" :$departments :$userList :$employee :positions="null">
         <!-- Employment Details -->
         <div class="col-12">
             <h4 class="text-primary">Employment Details</h4>

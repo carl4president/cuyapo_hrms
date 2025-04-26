@@ -260,9 +260,11 @@
                                 <select class="select" name="role_name" id="e_role_name">
                                     <option selected disabled>-- Select Role Name --</option>
                                     @php
-                                    $roles = ['Admin', 'Employee']; // Predefined role types
+                                    $roles = ['Admin', 'Employee'];
+                                    if (auth()->user()->role_name === 'Super Admin') {
+                                    $roles[] = 'Super Admin';
+                                    }
                                     @endphp
-
                                     @foreach ($roles as $role)
                                     <option value="{{ $role }}">{{ $role }}</option>
                                     @endforeach
@@ -281,7 +283,7 @@
                             <div class="col-sm-6">
                                 <label>Department</label>
                                 <select class="form-control" name="department" id="e_department">
-                                <option value="" disabled selected>-- Select Department --</option>
+                                    <option value="" disabled selected>-- Select Department --</option>
                                     @foreach ($department as $departments )
                                     <option value="{{ $departments->id }}">{{ $departments->department }}</option>
                                     @endforeach
@@ -290,7 +292,7 @@
                             <div class="col-sm-6">
                                 <label>Position</label>
                                 <select class="form-control" name="position" id="e_position">
-                                <option value="" disabled selected>-- Select Position --</option>
+                                    <option value="" disabled selected>-- Select Position --</option>
                                 </select>
                             </div>
                         </div>
@@ -434,10 +436,10 @@
         var url = "{{ route('hr/get/information/emppos') }}";
 
         // Reusable function to reset a dropdown
-            function resetDropdown(selector, placeholder) {
-                $(selector).empty(); // Clear all options
-                $(selector).append(`<option value="" disabled selected>${placeholder}</option>`);
-            }
+        function resetDropdown(selector, placeholder) {
+            $(selector).empty(); // Clear all options
+            $(selector).append(`<option value="" disabled selected>${placeholder}</option>`);
+        }
 
         // Reusable function to populate positions
         function populatePositions(departmentId, selectId = '#position', preselectedPositionId = null) {
@@ -480,7 +482,7 @@
         });
 
         // Edit form: when department changes
-         $('#e_department').off('change').on('change', function() {
+        $('#e_department').off('change').on('change', function() {
             const departmentId = $(this).val();
             populatePositions(departmentId, '#e_position');
         });
@@ -505,8 +507,21 @@
             const departmentId = _this.find('.department').data('id');
             const departmentName = _this.find('.department').text();
             const positionId = _this.find('.position').data('id');
+            
 
             console.log(positionId);
+
+            var $roleSelect = $('#e_role_name');
+            $roleSelect.empty();
+
+            $roleSelect.append('<option selected disabled>-- Select Role Name --</option>');
+            $roleSelect.append('<option value="Admin">Admin</option>');
+            $roleSelect.append('<option value="Employee">Employee</option>');
+
+            // If the user being edited is a Super Admin, add Super Admin option
+            if (roleName === 'Super Admin') {
+                $roleSelect.append('<option value="Super Admin">Super Admin</option>');
+            }
 
 
             $('#e_id').val(userId);

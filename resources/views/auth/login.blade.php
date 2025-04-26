@@ -1,6 +1,38 @@
 @extends('layouts.app')
 @section('content')
 <style>
+    .review-section {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        gap: 10px;
+        /* Ensures spacing between elements */
+    }
+
+    .review-section h3 {
+        width: 100%;
+        font-size: 1.5em;
+        margin-bottom: 5px;
+    }
+
+    .review-section ul {
+        flex: 1 1 45%;
+        padding-left: 20px;
+        list-style-position: inside;
+    }
+
+    .review-section li {
+        margin-bottom: 5px;
+        line-height: 2;
+    }
+
+    .section-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
     .progressbar {
         position: relative;
         display: flex;
@@ -84,6 +116,10 @@
     }
 
     @media (max-width: 768px) {
+        .review-section ul {
+            flex: 1 1 100%;
+        }
+
         .progressbar {
             flex-wrap: wrap;
         }
@@ -101,6 +137,16 @@
             width: 28px;
             height: 28px;
             font-size: 12px;
+        }
+
+        .submit-section .btn {
+            width: 100% !important;
+            margin: 5px 0;
+            font-size: 0.9375rem !important;
+        }
+
+        .submit-section .ml-auto {
+            margin-left: 0 !important;
         }
     }
 
@@ -138,50 +184,50 @@
         <p>Don't have an account yet? <a href="#" data-toggle="modal" data-target="#add_employee">Register</a></p>
     </div>
 </x-layouts.login>
-<x-layouts.add-emp-modal modal_title='Add Your Details' :route="route('all/employee/save')" :routeUrl="route('hr/get/information/emppos')" :$departments :$userList :$employee>
-        <!-- Employment Details -->
-        <div class="col-12">
-            <h4 class="text-primary">Employment Details</h4>
+<x-layouts.add-emp-modal modal_title='Add Your Details' :route="route('all/employee/save')" :routeUrl="route('hr/get/information/emppos')" :$departments :$userList :$employee :positions="null">
+    <!-- Employment Details -->
+    <div class="col-12">
+        <h4 class="text-primary">Employment Details</h4>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Department</label>
+            <select class="form-control" id="department" name="department_id">
+                <option value="" disabled selected>-- Select Department --</option>
+                @foreach ($departments as $department)
+                <option value="{{ $department->id }}">{{ $department->department }}</option>
+                @endforeach
+            </select>
         </div>
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>Department</label>
-                <select class="form-control" id="department" name="department_id">
-                    <option value="" disabled selected>-- Select Department --</option>
-                    @foreach ($departments as $department)
-                    <option value="{{ $department->id }}">{{ $department->department }}</option>
-                    @endforeach
-                </select>
-            </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Position</label>
+            <select class="form-control" id="position" name="position_id">
+                <option value="" disabled selected>-- Select Position --</option>
+            </select>
         </div>
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>Position</label>
-                <select class="form-control" id="position" name="position_id">
-                    <option value="" disabled selected>-- Select Position --</option>
-                </select>
-            </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Employment Status</label>
+            <select class="form-control" id="employment_status" name="employment_status">
+                <option value="" disabled selected>-- Select Employment Status --</option>
+                @foreach($typeJobs as $jobType)
+                <option value="{{ $jobType->name_type_job }}">{{ $jobType->name_type_job }}</option>
+                @endforeach
+            </select>
         </div>
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>Employment Status</label>
-                <select class="form-control" id="employment_status" name="employment_status">
-                    <option value="" disabled selected>-- Select Employment Status --</option>
-                    @foreach($typeJobs as $jobType)
-                    <option value="{{ $jobType->name_type_job }}">{{ $jobType->name_type_job }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
+    </div>
 
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>Date Hired</label>
-                <div class="cal-icon">
-                    <input type="text" class="form-control datetimepicker" name="date_hired">
-                </div>
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Date Hired</label>
+            <div class="cal-icon">
+                <input type="text" class="form-control datetimepicker" name="date_hired">
             </div>
         </div>
-    </x-layouts.add-emp-modal>
+    </div>
+</x-layouts.add-emp-modal>
 @endsection
 @endsection

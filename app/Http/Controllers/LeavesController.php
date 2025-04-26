@@ -6,6 +6,7 @@ use App\Models\Applicant;
 use App\Models\ApplicantEmployment;
 use App\Models\department;
 use App\Models\Employee;
+use App\Models\EmployeeEmployment;
 use App\Models\Holiday;
 use Illuminate\Http\Request;
 use App\Models\LeaveInformation;
@@ -1045,9 +1046,6 @@ class LeavesController extends Controller
         $daysFromStart = $startOfYear->diffInDays($today); // Calculate the number of days from Jan 1st to today
 
         // Calculate vacation leave earned (0.041666 leave per day)
-        $leavePerDay = 0.041666;
-        $earnedLeaveRaw = $daysFromStart * $leavePerDay;
-        $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
 
 
         // Fetch all employee ids
@@ -1055,6 +1053,34 @@ class LeavesController extends Controller
 
         // Separate employees who need deductions
         foreach ($employeeIds as $staffId) {
+            $employment = EmployeeEmployment::where('emp_id', $staffId)->first();
+            $dateHiredStr = $employment->date_hired;
+
+            // Remove the comma from the date string
+            $dateHiredStr = str_replace(',', '', $dateHiredStr);
+
+            try {
+                // Try to create a Carbon instance from the date_hired without comma
+                $dateHired = Carbon::createFromFormat('d M Y', $dateHiredStr);
+            } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+                // Log invalid date format for further debugging
+                \Log::error('Invalid date format for employee ' . $staffId . ': ' . $dateHiredStr);
+                continue; // Skip this employee and move to the next
+            }
+
+            // Determine how many days to calculate leave
+            if ($dateHired->isSameYear($today)) {
+                // If hired this year, use difference from date_hired to today
+                $daysFromStart = $dateHired->diffInDays($today);
+            } else {
+                // If hired in a previous year, use the start of the year
+                $daysFromStart = $startOfYear->diffInDays($today);
+            }
+
+            $leavePerDay = 0.041666;
+            $earnedLeaveRaw = $daysFromStart * $leavePerDay;
+            $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
+
             // Get leave balance for the employee
             $leaveBalance = LeaveBalance::where('staff_id', $staffId)
                 ->where('leave_type', 'Vacation Leave')
@@ -1089,9 +1115,6 @@ class LeavesController extends Controller
         $daysFromStart = $startOfYear->diffInDays($today); // Calculate the number of days from Jan 1st to today
 
         // Calculate vacation leave earned (0.041666 leave per day)
-        $leavePerDay = 0.041666;
-        $earnedLeaveRaw = $daysFromStart * $leavePerDay;
-        $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
 
 
         // Fetch all employee ids
@@ -1100,6 +1123,35 @@ class LeavesController extends Controller
         // Separate employees who need deductions
         foreach ($employeeIds as $staffId) {
             // Get leave balance for the employee
+            $employment = EmployeeEmployment::where('emp_id', $staffId)->first();
+            $dateHiredStr = $employment->date_hired;
+
+            // Remove the comma from the date string
+            $dateHiredStr = str_replace(',', '', $dateHiredStr);
+
+            try {
+                // Try to create a Carbon instance from the date_hired without comma
+                $dateHired = Carbon::createFromFormat('d M Y', $dateHiredStr);
+            } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+                // Log invalid date format for further debugging
+                \Log::error('Invalid date format for employee ' . $staffId . ': ' . $dateHiredStr);
+                continue; // Skip this employee and move to the next
+            }
+
+            // Determine how many days to calculate leave
+            if ($dateHired->isSameYear($today)) {
+                // If hired this year, use difference from date_hired to today
+                $daysFromStart = $dateHired->diffInDays($today);
+            } else {
+                // If hired in a previous year, use the start of the year
+                $daysFromStart = $startOfYear->diffInDays($today);
+            }
+
+            $leavePerDay = 0.041666;
+            $earnedLeaveRaw = $daysFromStart * $leavePerDay;
+            $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
+
+
             $leaveBalance = LeaveBalance::where('staff_id', $staffId)
                 ->where('leave_type', 'Sick Leave')
                 ->latest('created_at')

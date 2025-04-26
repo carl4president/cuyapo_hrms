@@ -108,7 +108,7 @@
             </a>
             <!-- Header Title -->
             <div class="page-title-box">
-                <h3>Hi, {{ Session::get('name') }}</h3>
+                <h3>Hi, {{ Auth::user()->name }}</h3>
             </div>
             <!-- /Header Title -->
             <a id="mobile_btn" class="mobile_btn" href="#sidebar"><i class="fa fa-bars"></i></a>

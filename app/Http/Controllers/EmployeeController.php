@@ -493,7 +493,7 @@ class EmployeeController extends Controller
             'jobDetails.department',
             'jobDetails.position'
         ])
-            ->where('emp_id', $emp_id) 
+            ->where('emp_id', $emp_id)
             ->whereHas('user', function ($query) {
                 $query->where('status', '!=', 'Disabled');
             })
@@ -1495,6 +1495,7 @@ class EmployeeController extends Controller
     public function assignHead($emp_id, Request $request)
     {
         $department_id = $request->input('department_id');
+        $assign_job_id = $request->input('assign_job_id');
 
         // Find the employee
         $employee = Employee::where('emp_id', $emp_id)->first();
@@ -1506,6 +1507,7 @@ class EmployeeController extends Controller
         // Get the position_id of the employee (you can customize this if needed)
         $employeeJobDetails = EmployeeJobDetail::where('emp_id', $emp_id)
             ->where('department_id', $department_id)
+            ->where('id', $assign_job_id)
             ->first();
 
         if (!$employeeJobDetails) {
@@ -1623,7 +1625,7 @@ class EmployeeController extends Controller
         // Retrieve the employee's job details for the given department
         $jobDetail = EmployeeJobDetail::where('emp_id', $request->emp_id)
             ->where('department_id', $request->department_id)
-            ->where('created_at', $request->created_at)
+            ->where('id', $request->id)
             ->first();
 
         // If job details not found, return an error
@@ -1668,26 +1670,43 @@ class EmployeeController extends Controller
             'current_dept_id' => 'required',
             'new_department_id' => 'required|different:current_dept_id',
             'position_id' => 'required',
+            'change_dep_job_id' => 'required',
         ]);
 
-        // Remove from current department
-        DB::table('employee_job_details')
+        $existingJob = DB::table('employee_job_details')
             ->where('emp_id', $request->emp_id)
-            ->where('department_id', $request->current_dept_id)
-            ->delete();
+            ->where('department_id', $request->new_department_id)
+            ->where('position_id', $request->position_id)
+            ->first();
 
-        // Assign to new department
+        if ($existingJob) {
+            return redirect()->back()->with('error', 'Employee is already assigned to this position in the new department.');
+        }
+
+        $jobDetails = DB::table('employee_job_details')
+            ->where('emp_id', $request->emp_id)
+            ->where('id', $request->change_dep_job_id)
+            ->first();
+
+
         DB::table('employee_job_details')->insert([
             'emp_id' => $request->emp_id,
             'department_id' => $request->new_department_id,
             'position_id' => $request->position_id,
-            'is_head' => 0,
-            'is_designation' => 0,
+            'is_head' => $jobDetails->is_head,
+            'is_designation' => $jobDetails->is_designation,
             'appointment_date' => now()->format('d M, Y'),
             'created_at' => now(),
             'updated_at' => now(),
 
         ]);
+
+        // Remove from current department
+        DB::table('employee_job_details')
+            ->where('emp_id', $request->emp_id)
+            ->where('id', $request->change_dep_job_id)
+            ->delete();
+
 
         return redirect()->back()->with('success', 'Department changed successfully.');
     }
@@ -1701,7 +1720,7 @@ class EmployeeController extends Controller
         // Get the record for the employee in the specific department
         $record = EmployeeJobDetail::where('emp_id', $emp_id)
             ->where('department_id', $department_id)
-            ->where('created_at', $created_at)
+            ->where('id', $created_at)
             ->first();
 
         if (!$record) {
@@ -1719,7 +1738,7 @@ class EmployeeController extends Controller
         // Proceed with deletion if not the last record with is_designation == 0
         $record->delete();
 
-        return redirect()->back()->with('success', 'Employee removed from department successfully.');
+        return redirect()->back()->with('success', 'Employee`s position removed from department successfully.');
     }
 
 

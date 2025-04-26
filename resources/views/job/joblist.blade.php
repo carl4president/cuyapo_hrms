@@ -146,14 +146,14 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link pr-12" href="{{ route('login') }}">Back to home page</a>
+                <a class="nav-link pr-12" href="{{ url('/') }}">Back to home page</a>
             </li>
             <!-- /Search -->
         </ul>
         <div class="dropdown mobile-user-menu">
             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></a>
             <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" href="{{ route('login') }}">Back to home page</a>
+                <a class="dropdown-item" href="{{ url('/') }}">Back to home page</a>
             </div>
         </div>
         <!-- /Header Menu -->

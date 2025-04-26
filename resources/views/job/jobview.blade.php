@@ -1,6 +1,38 @@
 @extends('layouts.job')
 @section('content')
 <style>
+    .review-section {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        gap: 10px;
+        /* Ensures spacing between elements */
+    }
+
+    .review-section h3 {
+        width: 100%;
+        font-size: 1.5em;
+        margin-bottom: 5px;
+    }
+
+    .review-section ul {
+        flex: 1 1 45%;
+        padding-left: 20px;
+        list-style-position: inside;
+    }
+
+    .review-section li {
+        margin-bottom: 5px;
+        line-height: 2;
+    }
+
+    .section-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
     .progressbar {
         position: relative;
         display: flex;
@@ -84,6 +116,10 @@
     }
 
     @media (max-width: 768px) {
+        .review-section ul {
+            flex: 1 1 100%;
+        }
+
         .progressbar {
             flex-wrap: wrap;
         }
@@ -101,6 +137,16 @@
             width: 28px;
             height: 28px;
             font-size: 12px;
+        }
+
+        .submit-section .btn {
+            width: 100% !important;
+            margin: 5px 0;
+            font-size: 0.9375rem !important;
+        }
+
+        .submit-section .ml-auto {
+            margin-left: 0 !important;
         }
     }
 
@@ -291,10 +337,10 @@
                             <p class="text-justify">
                                 By clicking “I Agree”, you consent to the collection, use, and processing of your personal data by the Local Government Unit (LGU) in accordance with Republic Act No. 10173, the Data Privacy Act of 2012, its Implementing Rules and Regulations, and relevant issuances of the National Privacy Commission. We collect only the information necessary for assessing your application for a specific job posting—such as your personal details, contact details, family details, educational background, employment history, and supporting documents—and process it strictly for recruitment purposes under the principles of transparency, legitimate purpose, and proportionality.
                             </p>
-                            </div>
+                        </div>
 
-                            <!-- Buttons to Agree or Decline -->
-                            <div class="modal-btn delete-action">
+                        <!-- Buttons to Agree or Decline -->
+                        <div class="modal-btn delete-action">
                             <div class="row">
                                 <div class="col-6">
                                     <button type="button" id="agreePrivacy" class="btn btn-primary continue-btn submit-btn">I Agree</button>
@@ -312,7 +358,7 @@
 
 
         <!-- Apply Job Modal -->
-        <x-layouts.add-emp-modal modal_title='Add Your Details' :route="route('form/apply/job/save')" :routeUrl="route('hr/get/information/apppos')">
+        <x-layouts.add-emp-modal modal_title='Add Your Details' :route="route('form/apply/job/save')" :routeUrl="route('hr/get/information/apppos')" :$departments :$positions>
             <div class="col-12">
                 <h4 class="text-primary">Applicant Photo</h4>
             </div>
@@ -329,7 +375,7 @@
 </div>
 
 <script>
-    const expireDate = {{ $expire_date ?? 'null' }};
+    const expireDate = "{{ $expire_date ?? 'null' }}";
     const jobStatus = "{{ $job_view[0]->status ?? '' }}"; // Ensure the status is passed correctly from the server
     const applyBtn = document.getElementById('applyBtn');
     const countdownElement = document.getElementById('countdown');

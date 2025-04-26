@@ -1,4 +1,4 @@
-@props(['modal_title' => '', 'route' => '', 'routeUrl' => '', 'departments', 'userList', 'employee'])
+@props(['modal_title' => '', 'route' => '', 'routeUrl' => '', 'departments', 'positions', 'userList', 'employee'])
 
 <!-- Add Employee Modal -->
 <div id="add_employee" class="modal custom-modal fade" role="dialog">
@@ -1050,7 +1050,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>Monthly Salary</label>
-                                                <input class="form-control" type="text" name="monthly_salary[]" placeholder="Enter monthly salary">
+                                                <input class="form-control" type="number" name="monthly_salary[]" placeholder="Enter monthly salary">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -1204,7 +1204,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>Number of Hours</label>
-                                                <input class="form-control" type="text" name="voluntary_hours[]" placeholder="Enter total hours volunteered">
+                                                <input class="form-control" type="number" name="voluntary_hours[]" placeholder="Enter total hours volunteered">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -1345,7 +1345,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>Number of Hours</label>
-                                                <input class="form-control" type="text" name="training_hours[]" placeholder="Enter duration in hours">
+                                                <input class="form-control" type="number" name="training_hours[]" placeholder="Enter duration in hours">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -1495,16 +1495,22 @@
                     <div class="col-12">
                         <h4 class="text-primary">Review Information</h4>
                     </div>
+
                     <div id="reviewData">
                         <!-- This will be populated with JavaScript -->
                     </div>
                 </div>
 
-                <div class="submit-section d-flex justify-content-between">
-                    <button type="button" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" class="btn btn-secondary" id="prevBtn" onclick="prevStep()">Previous</button>
-                    <button type="button" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" class="btn btn-primary ml-auto" id="nextBtn" onclick="nextStep()">Next</button>
+                <div class="submit-section d-flex flex-wrap justify-content-between align-items-center">
+                    <button type="button" class="btn btn-secondary w-md-auto mb-2 mb-md-0" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" id="prevBtn" onclick="prevStep()">Previous</button>
+
+                    <button type="button" class="btn btn-primary w-md-auto mb-2 mb-md-0 ml-auto" style="border-radius: 50px; font-size: 18px; font-weight: 600; min-width: 200px; padding: 10px 20px;" id="nextBtn" onclick="nextStep()">Next</button>
+
                     <button id="submitBtn" class="d-none btn btn-primary submit-btn">Submit</button>
                 </div>
+
+
+
 
             </form>
         </div>
@@ -1574,24 +1580,29 @@
         progressLine.style.width = `${progressWidth}px`;
     }
 
+    const departments = @json($departments);
+    const positions = @json($positions);
+
     function populateReviewStep() {
         let reviewContainer = document.getElementById("reviewData");
 
-        let department = document.querySelector("select[name='department_id']");
-        let departmentName = department.options[department.selectedIndex].text;
+        let department = document.querySelector("select[name='department_id'], input[name='department_id']");
+        let departmentName = department ? (department.tagName === "SELECT" ? department.options[department.selectedIndex].text : getDepartmentName(department.value)) : 'No department selected';
 
-        // Get the selected position text
-        let position = document.querySelector("select[name='position_id']");
-        let positionName = position.options[position.selectedIndex].text;
+        let position = document.querySelector("select[name='position_id'], input[name='position_id']");
+        let positionName = position ? (position.tagName === "SELECT" ? position.options[position.selectedIndex].text : getPositionName(position.value)) : 'No position selected';
+
+        let employmentStatus = document.querySelector("select[name='employment_status'], input[name='employment_status']");
+        let employmentStatusValue = employmentStatus ? (employmentStatus.tagName === "SELECT" ? employmentStatus.options[employmentStatus.selectedIndex].text : employmentStatus.value) : 'No employment status selected';
+
+        let dateHiredInput = document.querySelector("input[name='date_hired']");
+        let dateHired = (dateHiredInput && dateHiredInput.value.trim() !== '') ? dateHiredInput.value : '';
 
         let imageInput = document.querySelector("input[name='image']");
+        let fileName = imageInput && imageInput.files[0] ? imageInput.files[0].name : 'No file selected';
 
-        // Get the filename when the user selects a file
-        let fileName = imageInput.files[0] ? imageInput.files[0].name : 'No file selected';
-
-
-        // Collect data from all form fields
         const formData = {
+            // Personal Information
             surname: document.querySelector("input[name='lname']").value
             , firstName: document.querySelector("input[name='fname']").value
             , middleName: document.querySelector("input[name='mname']").value
@@ -1608,6 +1619,7 @@
             , phoneNumber: document.querySelector("input[name='phone_number']").value
             , mobileNumber: document.querySelector("input[name='mobile_number']").value,
 
+            // IDs
             sssNo: document.querySelector("input[name='sss_no']").value
             , gsisIdNo: document.querySelector("input[name='gsis_id_no']").value
             , pagibigNo: document.querySelector("input[name='pagibig_no']").value
@@ -1615,143 +1627,215 @@
             , tinNo: document.querySelector("input[name='tin_no']").value
             , agencyEmployeeNo: document.querySelector("input[name='agency_employee_no']").value,
 
-            // Family Information
+            // Family
             spouseName: document.querySelector("input[name='spouse_name']").value
             , spouseOccupation: document.querySelector("input[name='spouse_occupation']").value
             , spouseEmployer: document.querySelector("input[name='spouse_employer']").value
             , spouseBusinessAddress: document.querySelector("input[name='spouse_business_address']").value
             , spouseTelNo: document.querySelector("input[name='spouse_tel_no']").value
             , fatherName: document.querySelector("input[name='father_name']").value
-            , motherName: document.querySelector("input[name='mother_name']").value
-            , children: getChildrenInfo()
+            , motherName: document.querySelector("input[name='mother_name']").value,
+
+            children: getChildrenInfo()
             , education: getEducationInfo()
             , eligibility: getEligibilityInfo()
             , workExperience: getWorkExperienceInfo()
             , voluntaryWork: getVoluntaryWorkInfo()
             , trainingPrograms: getTrainingProgramsInfo()
-            , otherInfo: getOtherInfo()
-            , department: departmentName
+            , otherInfo: getOtherInfo(),
+
+            department: departmentName
             , position: positionName
-            , employmentStatus: document.querySelector("select[name='employment_status']").value
-            , dateHired: document.querySelector("input[name='date_hired']").value
+            , employmentStatus: employmentStatusValue
+            , dateHired: dateHired
             , imageFileName: fileName
-        , };
-        // Format the collected data into a review-friendly format
-        console.log('Collected form data:', formData);
+        };
 
-        let reviewHtml = `<ul>`;
-        for (let field in formData) {
+        let reviewHtml = `<div class="review-section"><h3 class="section-title">Personal Information</h3><ul>`;
+        [
+            "surname", "firstName", "middleName", "email", "birthDate", "placeOfBirth", "height", "weight"
+            , "bloodType", "gender", "civilStatus", "nationality", "residentialAddress", "phoneNumber", "mobileNumber"
+        ].forEach(field => {
             if (formData[field]) {
-                if (field === "children" && formData[field].length > 0) {
-                    reviewHtml += `<li><strong>Children:</strong><ul>`;
-                    formData[field].forEach(child => {
-                        reviewHtml += `<li>${child.name} - ${child.birthdate}</li>`;
-                    });
-                    reviewHtml += `</ul></li>`;
-                } else if (field === "education") {
-                    // Check if the education array is not empty
-                    if (formData[field] && formData[field].length > 0) {
-                        reviewHtml += `<li><strong>Education:</strong><ul>`;
-
-                        // Iterate through each education object
-                        formData[field].forEach(education => {
-                            // Only include the education details if the relevant fields are not null or empty
-                            if (education.schoolName || education.degree || education.yearFrom || education.yearTo || education.highestUnitsEarned || education.yearGraduated || education.scholarship) {
-                                reviewHtml += `<li><strong>${education.educationLevel} Education:</strong><ul>`;
-
-                                // Add the details of the education if they are not null or empty
-                                if (education.schoolName) reviewHtml += `<li>School Name: ${education.schoolName}</li>`;
-                                if (education.degree) reviewHtml += `<li>Course/Degree: ${education.degree}</li>`;
-                                if (education.yearFrom) reviewHtml += `<li>Year From: ${education.yearFrom}</li>`;
-                                if (education.yearTo) reviewHtml += `<li>Year To: ${education.yearTo}</li>`;
-                                if (education.highestUnitsEarned) reviewHtml += `<li>Highest Level/Units Earned: ${education.highestUnitsEarned}</li>`;
-                                if (education.yearGraduated) reviewHtml += `<li>Year Graduated: ${education.yearGraduated}</li>`;
-                                if (education.scholarship) reviewHtml += `<li>Scholarship/Honors: ${education.scholarship}</li>`;
-
-                                reviewHtml += `</ul></li>`;
-                            }
-                        });
-
-                        reviewHtml += `</ul></li>`;
-                    }
-                } else if (field === "eligibility") { // Handling eligibility information
-                    reviewHtml += `<li><strong>Eligibility:</strong><ul>`;
-                    formData[field].forEach(eligibility => {
-                        reviewHtml += `<li><strong>${eligibility.eligibilityName}:</strong><ul>
-                    <li>Rating: ${eligibility.rating}</li>
-                    <li>Exam Date: ${eligibility.examDate}</li>
-                    <li>Exam Place: ${eligibility.examPlace}</li>
-                    <li>License Number: ${eligibility.licenseNumber}</li>
-                    <li>License Validity: ${eligibility.licenseValidity}</li>
-                </ul></li>`;
-                    });
-                    reviewHtml += `</ul></li>`;
-                } else if (field === "workExperience") { // Handling work experience information
-                    reviewHtml += `<li><strong>Work Experience:</strong><ul>`;
-                    formData[field].forEach(workExperience => {
-                        reviewHtml += `<li><strong>${workExperience.position} at ${workExperience.department}:</strong><ul>
-                    <li>From Date: ${workExperience.fromDate}</li>
-                    <li>To Date: ${workExperience.toDate}</li>
-                    <li>Monthly Salary: ${workExperience.monthlySalary}</li>
-                    <li>Salary Grade: ${workExperience.salaryGrade}</li>
-                    <li>Appointment Status: ${workExperience.appointmentStatus}</li>
-                    <li>Government Service: ${workExperience.govtService == "1" ? 'Yes' : 'No'}</li>
-                </ul></li>`;
-                    });
-                    reviewHtml += `</ul></li>`;
-                } else if (field === "voluntaryWork") { // Handling voluntary work information
-                    reviewHtml += `<li><strong>Voluntary Work:</strong><ul>`;
-                    formData[field].forEach(voluntary => {
-                        reviewHtml += `<li><strong>Organization:</strong> ${voluntary.organizationName}
-                    <ul>
-                        <li>From Date: ${voluntary.fromDate}</li>
-                        <li>To Date: ${voluntary.toDate}</li>
-                        <li>Number of Hours: ${voluntary.hours}</li>
-                        <li>Position / Nature of Work: ${voluntary.position}</li>
-                    </ul>
-                </li>`;
-                    });
-                    reviewHtml += `</ul></li>`;
-                } else if (field === "trainingPrograms") { // Handling training programs information
-                    reviewHtml += `<li><strong>Training Programs:</strong><ul>`;
-                    formData[field].forEach(training => {
-                        reviewHtml += `<li><strong>Training Title:</strong> ${training.title}
-                    <ul>
-                        <li>From Date: ${training.fromDate}</li>
-                        <li>To Date: ${training.toDate}</li>
-                        <li>Number of Hours: ${training.hours}</li>
-                        <li>Type of L&D: ${training.type}</li>
-                        <li>Conducted/Sponsored By: ${training.sponsoredBy}</li>
-                    </ul>
-                </li>`;
-                    });
-                    reviewHtml += `</ul></li>`;
-                } else if (field === "otherInfo") { // Handling other information
-                    reviewHtml += `<li><strong>Other Information:</strong><ul>`;
-                    formData[field].forEach(info => {
-                        reviewHtml += `<li><strong>Special Skills & Hobbies:</strong> ${info.skillsHobbies}</li>
-                               <li><strong>Non-Academic Distinctions:</strong> ${info.nonAcademicDistinctions}</li>
-                               <li><strong>Membership in Associations:</strong> ${info.membership}</li>`;
-                    });
-                    reviewHtml += `</ul></li>`;
-                } else if (field === "employmentStatus") {
-                    reviewHtml += `<li><strong>Employment Status:</strong> ${formData[field]}</li>`;
-                } else if (field === "department") {
-                    reviewHtml += `<li><strong>Department:</strong> ${formData[field]}</li>`;
-                } else if (field === "position") {
-                    reviewHtml += `<li><strong>Position:</strong> ${formData[field]}</li>`;
-                } else if (field === "dateHired") {
-                    reviewHtml += `<li><strong>Date Hired:</strong> ${formData[field]}</li>`;
-                } else if (field === "imageFileName") {
-                    reviewHtml += `<li><strong>Photo Filename:</strong> ${formData[field]}</li>`;
-                } else {
-                    reviewHtml += `<li><strong>${capitalizeFirstLetter(field.replace(/_/g, ' '))}:</strong> ${formData[field]}</li>`;
-                }
+                reviewHtml += `<li><strong>${capitalizeFirstLetter(field.replace(/([A-Z])/g, ' $1'))}:</strong> ${formData[field]}</li>`;
             }
+        });
+        reviewHtml += `</ul></div>`;
+
+        reviewHtml += `<div class="review-section"><h3 class="section-title">Government IDs</h3><ul>`;
+        ["sssNo", "gsisIdNo", "pagibigNo", "philhealthNo", "tinNo", "agencyEmployeeNo"].forEach(field => {
+            if (formData[field]) {
+                reviewHtml += `<li><strong>${field.replace(/([A-Z])/g, ' $1')}:</strong> ${formData[field]}</li>`;
+            }
+        });
+        reviewHtml += `</ul></div>`;
+
+        reviewHtml += `<div class="review-section"><h3 class="section-title">Family Background</h3><ul>`;
+        ["spouseName", "spouseOccupation", "spouseEmployer", "spouseBusinessAddress", "spouseTelNo", "fatherName", "motherName"].forEach(field => {
+            if (formData[field]) {
+                reviewHtml += `<li><strong>${field.replace(/([A-Z])/g, ' $1')}:</strong> ${formData[field]}</li>`;
+            }
+        });
+
+        if (formData.children.length > 0) {
+            reviewHtml += `<li><strong>Children:</strong><ul>`;
+            formData.children.forEach(child => {
+                reviewHtml += `<li>${child.name} - ${child.birthdate}</li>`;
+            });
+            reviewHtml += `</ul></li>`;
         }
-        reviewHtml += `</ul>`;
+        reviewHtml += `</ul></div>`;
+
+        const sections = [{
+                title: "Educational Background"
+                , field: "education"
+                , render: renderEducation
+            }
+            , {
+                title: "Eligibility"
+                , field: "eligibility"
+                , render: renderEligibility
+            }
+            , {
+                title: "Work Experience"
+                , field: "workExperience"
+                , render: renderWorkExperience
+            }
+            , {
+                title: "Voluntary Work"
+                , field: "voluntaryWork"
+                , render: renderVoluntaryWork
+            }
+            , {
+                title: "Training Programs"
+                , field: "trainingPrograms"
+                , render: renderTrainingPrograms
+            }
+            , {
+                title: "Other Information"
+                , field: "otherInfo"
+                , render: renderOtherInfo
+            }
+        ];
+
+        sections.forEach(section => {
+            if (formData[section.field] && formData[section.field].length > 0) {
+                reviewHtml += `<div class="review-section"><h3 class="section-title">${section.title}</h3>`;
+                reviewHtml += section.render(formData[section.field]);
+                reviewHtml += `</div>`;
+            }
+        });
+
+        reviewHtml += `<div class="review-section"><h3 class="section-title">Job Assignment</h3><ul>`;
+        reviewHtml += `<li><strong>Department:</strong> ${formData.department}</li>`;
+        reviewHtml += `<li><strong>Position:</strong> ${formData.position}</li>`;
+        reviewHtml += `<li><strong>Employment Status:</strong> ${formData.employmentStatus}</li>`;
+        reviewHtml += `<li><strong>Date Hired:</strong> ${formData.dateHired}</li>`;
+        reviewHtml += `<li><strong>Photo Filename:</strong> ${formData.imageFileName}</li>`;
+        reviewHtml += `</ul></div>`;
 
         reviewContainer.innerHTML = reviewHtml;
+    }
+
+    // Helper formatting functions
+    function capitalizeFirstLetter(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function renderEducation(educationList) {
+        return `<ul>` + educationList.map(edu => {
+            return `<li><strong>${edu.educationLevel}:</strong>
+            <ul>
+                ${edu.schoolName ? `<li>School: ${edu.schoolName}</li>` : ""}
+                ${edu.degree ? `<li>Degree: ${edu.degree}</li>` : ""}
+                ${edu.yearFrom ? `<li>From: ${edu.yearFrom}</li>` : ""}
+                ${edu.yearTo ? `<li>To: ${edu.yearTo}</li>` : ""}
+                ${edu.highestUnitsEarned ? `<li>Units: ${edu.highestUnitsEarned}</li>` : ""}
+                ${edu.yearGraduated ? `<li>Graduated: ${edu.yearGraduated}</li>` : ""}
+                ${edu.scholarship ? `<li>Honors: ${edu.scholarship}</li>` : ""}
+            </ul>
+        </li>`;
+        }).join("") + `</ul>`;
+    }
+
+    function renderEligibility(list) {
+        return `<ul>` + list.map(item => {
+            return `<li>${item.eligibilityName}
+            <ul>
+                <li>Rating: ${item.rating}</li>
+                <li>Date: ${item.examDate}</li>
+                <li>Place: ${item.examPlace}</li>
+                <li>License #: ${item.licenseNumber}</li>
+                <li>Validity: ${item.licenseValidity}</li>
+            </ul>
+        </li>`;
+        }).join("") + `</ul>`;
+    }
+
+    function renderWorkExperience(list) {
+        return `<ul>` + list.map(item => {
+            return `<li>${item.position} at ${item.department}
+            <ul>
+                <li>From: ${item.fromDate}</li>
+                <li>To: ${item.toDate}</li>
+                <li>Salary: ${item.monthlySalary}</li>
+                <li>Grade: ${item.salaryGrade}</li>
+                <li>Status: ${item.appointmentStatus}</li>
+                <li>Gov't: ${item.govtService == "1" ? "Yes" : "No"}</li>
+            </ul>
+        </li>`;
+        }).join("") + `</ul>`;
+    }
+
+    function renderVoluntaryWork(list) {
+        return `<ul>` + list.map(item => {
+            return `<li>${item.organizationName}
+            <ul>
+                <li>From: ${item.fromDate}</li>
+                <li>To: ${item.toDate}</li>
+                <li>Hours: ${item.hours}</li>
+                <li>Position: ${item.position}</li>
+            </ul>
+        </li>`;
+        }).join("") + `</ul>`;
+    }
+
+    function renderTrainingPrograms(list) {
+        return `<ul>` + list.map(item => {
+            return `<li>${item.title}
+            <ul>
+                <li>From: ${item.fromDate}</li>
+                <li>To: ${item.toDate}</li>
+                <li>Hours: ${item.hours}</li>
+                <li>Type: ${item.type}</li>
+                <li>Sponsored By: ${item.sponsoredBy}</li>
+            </ul>
+        </li>`;
+        }).join("") + `</ul>`;
+    }
+
+    function renderOtherInfo(list) {
+        return `<ul>` + list.map(item => {
+            return `<li>
+            <ul>
+                <li>Skills & Hobbies: ${item.skillsHobbies}</li>
+                <li>Distinctions: ${item.nonAcademicDistinctions}</li>
+                <li>Memberships: ${item.membership}</li>
+            </ul>
+        </li>`;
+        }).join("") + `</ul>`;
+    }
+
+
+    function getDepartmentName(departmentId) {
+        const department = departments.find(dep => dep.id == departmentId);
+        return department ? department.department : 'Unknown Department';
+    }
+
+    // Function to fetch position name by ID
+    function getPositionName(positionId) {
+        const position = positions.find(pos => pos.id == positionId);
+        return position ? position.position_name : 'Unknown Position';
     }
 
 
@@ -2163,6 +2247,7 @@
             , "monthly_salary[]": {
                 required: true
                 , number: true
+                , min: 0
             }
             , "salary_grade[]": {
                 required: true
@@ -2365,7 +2450,7 @@
 
         $('#department').change(function() {
             const departmentId = $(this).val();
-            $('#position').html('<option value="" disabled selected>-- Select Position --</option>'); // Clear position dropdown
+            $('#position').html('<option value="" disabled selected>Loading...</option>');
 
             if (departmentId) {
                 $.ajax({
@@ -2377,7 +2462,7 @@
                     }
                     , dataType: "json"
                     , success: function(response) {
-                        console.log("AJAX Response:", response);
+                        $('#position').html('<option value="" disabled selected>-- Select Position --</option>');
                         if (response.positions) {
                             response.positions.forEach(position => {
                                 $('#position').append(

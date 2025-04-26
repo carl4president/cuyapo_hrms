@@ -112,7 +112,7 @@ class User extends Authenticatable
             $save->save();
 
             flash()->success('Account created successfully :)');
-            return redirect('login');
+            return redirect('/login/hr/lgu/admins/cuyapo');
         } catch (\Exception $e) {
             \Log::error($e);
             flash()->error('Failed to Create Account. Please try again.');

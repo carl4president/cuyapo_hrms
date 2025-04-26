@@ -41,6 +41,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Auth'], function () {
     Route::middleware([LeaveUpdateMiddleware::class])->controller(RegisterController::class)->group(function () {
         Route::get('/register', 'register')->name('register');
         Route::post('/register', 'storeUser')->name('register');
+        Route::get('/check-super-admin', 'checkSuperAdmin')->name('check/super/admin');
+        Route::get('/check-email-user', 'checkEmailUser')->name('check/email/user');
     });
 
     // ----------------------------- Forget Password --------------------------//

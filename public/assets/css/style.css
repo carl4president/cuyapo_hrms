@@ -707,21 +707,21 @@ table.dataTable thead > tr > td.sorting {
     color: #fff;
 }
 .btn-custom {
-	background: #f43b48;
-	background: -moz-linear-gradient(left, #f43b48 0%, #453a94 100%);
-	background: -webkit-linear-gradient(left, #f43b48 0%, #453a94 100%);
-	background: -ms-linear-gradient(left, #f43b48 0%, #453a94 100%);
-	background: linear-gradient(to right, #f43b48 0%, #453a94 100%);
+	background: #007fff;
+	background: -moz-linear-gradient(left, #007fff 0%, #2a52be 100%);
+	background: -webkit-linear-gradient(left, #007fff 0%, #2a52be 100%);
+	background: -ms-linear-gradient(left, #007fff 0%, #2a52be 100%);
+	background: linear-gradient(to right, #2a52be 0%, #007fff 100%);
 	color: #fff;
 }
 .btn-custom.focus,
 .btn-custom:focus,
 .btn-custom:hover {
-	background: #f43b48;
-	background: -moz-linear-gradient(left, #f43b48 0%, #453a94 100%);
-	background: -webkit-linear-gradient(left, #f43b48 0%, #453a94 100%);
-	background: -ms-linear-gradient(left, #f43b48 0%, #453a94 100%);
-	background: linear-gradient(to right, #f43b48 0%, #453a94 100%);
+	background: #007fff;
+	background: -moz-linear-gradient(left, #007fff 0%, #2a52be 100%);
+	background: -webkit-linear-gradient(left, #007fff 0%, #2a52be 100%);
+	background: -ms-linear-gradient(left, #007fff 0%, #2a52be 100%);
+	background: linear-gradient(to right, #2a52be 0%, #007fff 100%);
 	color: #fff;
 }
 .pagination > .active > a, 
@@ -6057,7 +6057,7 @@ table.table-inbox tbody tr.checked {
 
 .error-page {
     align-items: center;
-    background-color: rgba(244, 59, 72, 0.2);
+    background-color: #7AC6D2;
     color: #1f1f1f;
     display: flex;
 }
@@ -6075,7 +6075,7 @@ table.table-inbox tbody tr.checked {
     width: 100%;
 }
 .error-box h1 {
-    color: #f43b48;
+    color: #3D90D7;
     font-size: 10em;
 }
 .error-box p {

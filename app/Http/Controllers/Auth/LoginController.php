@@ -75,7 +75,7 @@ class LoginController extends Controller
                 flash()->success('Login successfully :)');
                 if ($user->role_name == 'Employee') {
                     return redirect()->route('em/dashboard'); // Redirect to employee dashboard
-                } elseif ($user->role_name == 'Admin') {
+                } elseif (in_array($user->role_name, ['Admin', 'Super Admin'])) {
                     return redirect()->route('home'); // Redirect to admin home
                 } else {
                     return redirect()->intended('home'); // Default fallback
@@ -111,7 +111,7 @@ class LoginController extends Controller
                 flash()->success('Login successfully :)');
                 if ($user->role_name == 'Employee') {
                     return redirect()->route('em/dashboard'); // Redirect to employee dashboard
-                } elseif ($user->role_name == 'Admin') {
+                } elseif (in_array($user->role_name, ['Admin', 'Super Admin'])) {
                     return redirect()->route('home'); // Redirect to admin home
                 } else {
                     return redirect()->intended('home'); // Default fallback
@@ -154,7 +154,7 @@ class LoginController extends Controller
         $request->session()->flush();
         Auth::logout();
         flash()->success('Logout successfully :)');
-        if ($user && $user->role_name === 'Admin') {
+        if ($user && in_array($user->role_name, ['Admin', 'Super Admin'])) {
             return redirect()->route('loginadmin'); // admin login route
         } else {
             return redirect()->route('login'); // employee login route

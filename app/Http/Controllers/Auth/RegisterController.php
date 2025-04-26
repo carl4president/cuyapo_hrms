@@ -22,16 +22,28 @@ class RegisterController extends Controller
     public function storeUser(Request $request)
     {
         try {
-           // Create an instance of the User model
+            // Create an instance of the User model
             $users = new User();
             // Call the saveNewuser method
             return $users->saveNewuser($request);
             flash()->success('Account created successfully :)');
-            return redirect('login');
+            return redirect('/login/hr/lgu/admins/cuyapo');
         } catch (\Exception $e) {
             \Log::error($e);
             flash()->error('Failed to Create Account. Please try again.');
             return redirect()->back();
         }
+    }
+
+    public function checkSuperAdmin()
+    {
+        $exists = User::where('role_name', 'Super Admin')->exists();
+        return response()->json(['super_admin_exists' => $exists]);
+    }
+
+    public function checkEmailUser(Request $request)
+    {
+        $emailExists = User::where('email', $request->email)->exists();
+        return response()->json(['exists' => $emailExists]);
     }
 }

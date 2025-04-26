@@ -51,8 +51,11 @@ class JobController extends Controller
             $job->save();
         }
 
+        $positions = Position::all();
+        $departments = department::all();
 
-        return view('job.jobview', compact('job_view'));
+
+        return view('job.jobview', compact('job_view', 'positions', 'departments'));
     }
 
     public function jobListSearch(Request $request)

@@ -69,7 +69,7 @@
                     <div class="card-body p-0">
                         <h6 class="text-uppercase mb-2" style="color: #6c757d; font-size: 0.75rem;">New Leaves</h6>
                         <h2 class="mb-0" style="font-size: 1.75rem; font-weight: 700; color: #0d2d59;">{{ $stats['newLeavesToday'] }}
-</h2>
+                        </h2>
                         <small class="text-muted">Today</small>
                     </div>
                 </div>
@@ -488,7 +488,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                <div id="edit_loader" style="display: none; text-align: center; padding: 20px;">
+                    <div id="edit_loader" style="display: none; text-align: center; padding: 20px;">
                         <div class="spinner-border text-primary" role="status">
                             <span class="sr-only">Loading...</span>
                         </div>
@@ -755,8 +755,8 @@
 @section('script')
 
 <script>
-    $(document).ready(function () {
-        $('form').on('submit', function () {
+    $(document).ready(function() {
+        $('form').on('submit', function() {
             // General button finder inside the submitting form
             var $submitBtn = $(this).find('button[type="submit"].submit-btn');
 
@@ -780,36 +780,60 @@
             }
         });
     });
+
 </script>
 
 
 <script>
     $('#add_leave').on('hidden.bs.modal', function() {
-        $(this).find('form')[0].reset(); // Reset the form
-        // Reset additional fields manually if needed
+        const form = $(this).find('form')[0];
+        form.reset();
+
+        // Reset enhanced select2
+        $('#employee_name, #leave_type, #leave_day').val('').trigger('change');
+
+        // Reset custom fields
         $('#counter_remaining_leave, #remaining_leave, #number_of_day').val('0');
         $('#leave_dates_display, #select_leave_day').hide();
-        // Reset checkboxes or any additional elements
+
+        // Reset checkboxes and text fields
         $('#vacation_ph, #vacation_abroad').prop('checked', false);
         $('#abroad_specify').hide().val('');
+
         $('#sick_hospital, #sick_outpatient').prop('checked', false);
         $('#illness_specify').val('');
+
         $('#study_master, #study_bar').prop('checked', false);
         $('#women_illness').val('');
     });
 
     $('#edit_leave').on('hidden.bs.modal', function() {
-        $(this).find('form')[0].reset(); // Reset the form
-        // Reset additional fields manually if needed
-        $('#edit_counter_remaining_leave, #edit_remaining_leave, #edit_number_of_day').val('0');
-        $('#edit_leave_dates_display, #edit_select_leave_day').hide();
-        // Reset checkboxes or any additional elements
-        $('#e_vacation_philippines, #e_vacation_abroad').prop('checked', false);
+        const form = $('#editLeaveForm');
+
+        // Reset form fields
+        form[0].reset();
+
+        // Clear readonly inputs manually
+        $('#edit_employee_name, #edit_employee_id, #edit_counter_remaining_leave, #edit_remaining_leave, #edit_number_of_day').val('');
+
+        // Reset datepickers
+        $('#edit_date_from, #edit_date_to').val('');
+
+        // Reset select dropdowns
+        $('#edit_leave_type').prop('selectedIndex', 0);
+
+        // Hide dynamic sections
+        $('#edit_loader').hide();
+        $('#edit_leave_dates_display, #edit_select_leave_day').hide().empty();
+
+        // Hide optional fields
         $('#e_abroad_specify').hide().val('');
-        $('#e_sick_hospital, #e_sick_outpatient').prop('checked', false);
-        $('#e_illness_specify').val('');
-        $('#e_study_master, #e_study_bar').prop('checked', false);
-        $('#e_women_illness').val('');
+
+        // Uncheck all checkboxes
+        form.find('input[type="checkbox"]').prop('checked', false);
+
+        // Clear illness/women/study inputs
+        form.find('input[name="e_illness_specify"], input[name="e_women_illness"]').val('');
     });
 
 </script>

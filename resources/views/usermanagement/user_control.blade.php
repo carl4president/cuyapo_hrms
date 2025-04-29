@@ -35,7 +35,7 @@
                     <select class="select floating" id="type_role">
                         <option selected disabled>-- Select Role Name --</option>
                         @php
-                        $roles = ['Admin', 'Employee']; // Predefined role types
+                        $roles = ['Super Admin', 'Admin', 'Employee']; // Predefined role types
                         @endphp
 
                         @foreach ($roles as $role)
@@ -107,7 +107,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{ route('user/add/save') }}" method="POST" enctype="multipart/form-data">
+                    <form id="add-user-form" action="{{ route('user/add/save') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="row">
                             <div class="col-sm-6">
@@ -130,7 +130,7 @@
                             </div>
                             <div class="col-sm-6">
                                 <label>Email Address</label>
-                                <input class="form-control" type="email" id="" name="email" placeholder="Enter Email">
+                                <input class="form-control" type="email" id="email" name="email" placeholder="Enter Email"> <span class="invalid-feedback" id="email-error" role="alert" style="display: none;"> <strong>Email already taken.</strong> </span>
                             </div>
                         </div>
                         <div class="row">
@@ -227,7 +227,7 @@
                 </div>
                 <br>
                 <div class="modal-body">
-                    <form action="{{ route('update') }}" method="POST" enctype="multipart/form-data">
+                    <form id="edit-user-form" action="{{ route('update') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="user_id" id="e_id">
                         <div class="row">
@@ -251,7 +251,7 @@
                             </div>
                             <div class="col-sm-6">
                                 <label>Email</label>
-                                <input class="form-control" type="text" name="email" id="e_email" value="" />
+                                <input class="form-control" type="text" name="email" id="e_email" value="" /><span class="invalid-feedback" id="email-error" role="alert" style="display: none;"> <strong>Email already taken.</strong> </span>
                             </div>
                         </div>
                         <div class="row">
@@ -270,6 +270,7 @@
                                     @endforeach
 
                                 </select>
+                            <span id="role-warning" style="color: red; font-size: 13px; display: none;">⚠️ Changing the role to Admin and saving will remove all employee data (if any).</span>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-group">
@@ -345,7 +346,7 @@
                             <input type="hidden" name="avatar" id="e_avatar" value="">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                    <button style="width: 100%;" type="submit" class="btn btn-primary continue-btn">Delete</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -361,6 +362,18 @@
 </div>
 <!-- /Page Wrapper -->
 @section('script')
+<script>
+    $(document).ready(function() {
+        $('#e_role_name').change(function() {
+            var selectedRole = $(this).val();
+            if (selectedRole === 'Admin') {
+                $('#role-warning').show();
+            } else {
+                $('#role-warning').hide();
+            }
+        });
+    });
+</script>
 
 <script type="text/javascript">
     $(document).ready(function() {
@@ -457,7 +470,6 @@
 
                         if (response.positions) {
                             resetDropdown(selectId, '-- Select Position --');
-                            console.log('preselected', preselectedPositionId);
                             response.positions.forEach((position) => {
                                 $(selectId).append(
                                     `<option value="${position.id}" ${
@@ -507,9 +519,7 @@
             const departmentId = _this.find('.department').data('id');
             const departmentName = _this.find('.department').text();
             const positionId = _this.find('.position').data('id');
-            
 
-            console.log(positionId);
 
             var $roleSelect = $('#e_role_name');
             $roleSelect.empty();
@@ -549,6 +559,84 @@
 
 </script>
 
+
+<script>
+    $(document).ready(function() {
+
+        $('#add-user-form, #edit-user-form').on('submit', function(event) {
+            event.preventDefault(); // Prevent the form from being submitted immediately
+
+            var form = $(this); // Reference to the form
+            var email = form.find('input[type="email"]').val(); // Get the email from the form
+            var emailInput = form.find('input[type="email"]');
+            var emailError = form.find('.invalid-feedback');
+            var submitButton = form.find('button[type="submit"]'); // Reference to the submit button
+
+            // Disable the submit button and change its text to "Submitting..."
+
+            // Perform the email check via AJAX
+            $.ajax({
+                url: '{{ route("check/email/user") }}'
+                , type: 'GET'
+                , data: {
+                    email: email
+                }
+                , success: function(response) {
+                    // If email exists, show error and prevent form submission
+                    if (response.exists) {
+                        emailInput.addClass('is-invalid');
+                        emailError.show();
+                        // Re-enable the button and change text back
+                        submitButton.prop('disabled', false).text('Submit');
+                    } else {
+                        submitButton.prop('disabled', true).text('Submitting...');
+                        // If email is valid, submit the form
+                        emailInput.removeClass('is-invalid');
+                        emailError.hide();
+                        form.off('submit').submit(); // Manually submit the form
+                    }
+                }
+                , error: function() {
+                    // Handle any error with the AJAX request (Optional)
+                    console.error("Error checking email.");
+                    // Re-enable the button and change text back in case of error
+                    submitButton.prop('disabled', false).text('Submit');
+                }
+            });
+        });
+
+        // Email validation on input change (for both Add and Edit modals)
+        $('#email').on('input', function() {
+            var email = $(this).val();
+            var emailInput = $(this);
+            var emailError = $('#email-error');
+
+            if (email.length > 0) { // Only check if not empty
+                $.ajax({
+                    url: '{{ route("check/email/user") }}'
+                    , type: 'GET'
+                    , data: {
+                        email: email
+                    }
+                    , success: function(response) {
+                        if (response.exists) {
+                            emailInput.addClass('is-invalid');
+                            emailError.show();
+                        } else {
+                            emailInput.removeClass('is-invalid');
+                            emailError.hide();
+                        }
+                    }
+                });
+            } else {
+                emailInput.removeClass('is-invalid');
+                emailError.hide();
+            }
+        });
+
+    });
+
+</script>
 
 @endsection
 @endsection

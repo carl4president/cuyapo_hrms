@@ -31,7 +31,7 @@ class LoginController extends Controller
     {
         return view('auth.loginadmin');
     }
-    
+
 
     public function login()
     {
@@ -65,21 +65,32 @@ class LoginController extends Controller
         try {
             $credentials = $request->only('email', 'password') + ['status' => 'Active'];
 
+            // Attempt to login with the provided credentials
             if (Auth::attempt($credentials)) {
                 $user = Auth::user();
+
+                // Check if user has an allowed role
+                if (!in_array($user->role_name, ['Admin', 'Super Admin'])) {
+                    // If the user is not Admin or Super Admin, log them out and return an error
+                    Auth::logout();
+                    flash()->error('Unauthorized access: Invalid role.');
+                    return redirect()->back();
+                }
+
                 Session::put($this->getUserSessionData($user));
 
                 // Update last login
                 $user->update(['last_login' => Carbon::now()]);
 
                 flash()->success('Login successfully :)');
+                // Redirect to appropriate dashboard based on the role
                 if ($user->role_name == 'Employee') {
                     return redirect()->route('em/dashboard'); // Redirect to employee dashboard
                 } elseif (in_array($user->role_name, ['Admin', 'Super Admin'])) {
                     return redirect()->route('home'); // Redirect to admin home
                 } else {
                     return redirect()->intended('home'); // Default fallback
-                };
+                }
             }
 
             flash()->error('Wrong Username or Password');
@@ -90,6 +101,7 @@ class LoginController extends Controller
             return redirect()->back();
         }
     }
+
 
     public function authenticateEmployee(Request $request)
     {
@@ -101,21 +113,26 @@ class LoginController extends Controller
         try {
             $credentials = $request->only('email', 'password') + ['status' => 'Active'];
 
+            // Attempt to login with the provided credentials
             if (Auth::attempt($credentials)) {
                 $user = Auth::user();
+
+                // Check if the user is an 'Employee'
+                if ($user->role_name != 'Employee') {
+                    // If the role is not 'Employee', log them out and return an error
+                    Auth::logout();
+                    flash()->error('Unauthorized access: Invalid role.');
+                    return redirect()->back();
+                }
+
+                // Proceed with the session and last login update
                 Session::put($this->getUserSessionData($user));
 
                 // Update last login
                 $user->update(['last_login' => Carbon::now()]);
 
                 flash()->success('Login successfully :)');
-                if ($user->role_name == 'Employee') {
-                    return redirect()->route('em/dashboard'); // Redirect to employee dashboard
-                } elseif (in_array($user->role_name, ['Admin', 'Super Admin'])) {
-                    return redirect()->route('home'); // Redirect to admin home
-                } else {
-                    return redirect()->intended('home'); // Default fallback
-                };
+                return redirect()->route('em/dashboard'); // Redirect to employee dashboard
             }
 
             flash()->error('Wrong Username or Password');
@@ -126,7 +143,8 @@ class LoginController extends Controller
             return redirect()->back();
         }
     }
-    
+
+
 
     /** Prepare User Session Data */
     private function getUserSessionData($user)

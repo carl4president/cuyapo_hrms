@@ -74,14 +74,6 @@ class JobController extends Controller
 
 
 
-
-    /** Users Dashboard */
-    public function userDashboard()
-    {
-        $job_list   = AddJob::with('position', 'department')->get();
-        return view('job.userdashboard', compact('job_list'));
-    }
-
     /** Jobs Dashboard */
     public function jobsDashboard()
     {
@@ -112,47 +104,6 @@ class JobController extends Controller
         return view('job.jobsdashboard', compact('job_list', 'appJobs', 'employee', 'shortlistedJobs', 'positionLabels', 'applicantCounts'));
     }
 
-    /** User All Job */
-    public function userDashboardAll()
-    {
-        return view('job.useralljobs');
-    }
-
-    /** Save Job */
-    public function userDashboardSave()
-    {
-        return view('job.savedjobs');
-    }
-
-    /** Applied Job */
-    public function userDashboardApplied()
-    {
-        return view('job.appliedjobs');
-    }
-
-    /** Inter Viewing Job*/
-    public function userDashboardInterviewing()
-    {
-        return view('job.interviewing');
-    }
-
-    /** Inter viewing Job*/
-    public function userDashboardOffered()
-    {
-        return view('job.offeredjobs');
-    }
-
-    /** Visited Job */
-    public function userDashboardVisited()
-    {
-        return view('job.visitedjobs');
-    }
-
-    /** Archived Job*/
-    public function userDashboardArchived()
-    {
-        return view('job.visitedjobs');
-    }
 
     /** Jobs */
     public function Jobs()
@@ -384,7 +335,7 @@ class JobController extends Controller
                     'middle_name' => $employee->middle_name,
                     'last_name' => $employee->last_name,
                     'email' => $employee->email,
-                    'avatar' => $employee->photo,
+                    'avatar' => $applicant->photo,
                     'join_date' => now()->format('D, M d, Y g:i A'),
                     'status' => 'Active',
                     'role_name' => 'Employee',
@@ -486,7 +437,7 @@ class JobController extends Controller
             if ($applicantEmployment) {
                 $position = Position::where('id', $applicantEmployment->position_id)->first();
                 $positionName = $position ? $position->position_name : 'Unknown Position';
-                return redirect()->back()->with('error', 'Your application for the ' . $positionName . ' position has been submitted. Please wait for HR to update you on your status.');
+                return redirect()->back()->with('error', 'Your application for the ' . $positionName . ' position has been submitted. Please wait for HR to update you on your status. Use a different email to apply again');
             }
 
             return redirect()->back()->with('error', 'Position not found for your application.');
@@ -1912,7 +1863,7 @@ class JobController extends Controller
                 'from_date'                           => 'nullable|array',
                 'from_date.*'                         => 'nullable|string|max:255',
                 'to_date'                             => 'nullable|array',
-                'to_date.*'                           => 'nullable|string|max:255|after_or_equal:from_date.*',
+                'to_date.*'                           => 'nullable|string|max:255',
                 'monthly_salary'                      => 'nullable|array',
                 'monthly_salary.*'                    => 'nullable|numeric|min:0',
                 'salary_grade'                        => 'nullable|array',
@@ -1992,7 +1943,7 @@ class JobController extends Controller
             'voluntary_from_date'     => 'nullable|array',
             'voluntary_from_date.*'     => 'nullable|string|max:255',
             'voluntary_to_date'         => 'nullable|array',
-            'voluntary_to_date.*'       => 'nullable|string|max:255|after_or_equal:voluntary_from_date.*',
+            'voluntary_to_date.*'       => 'nullable|string|max:255',
             'voluntary_hours'           => 'nullable|array',
             'voluntary_hours.*'         => 'nullable|numeric|min:0',
             'position_nature_of_work'   => 'nullable|array',
@@ -2066,7 +2017,7 @@ class JobController extends Controller
             'training_from_date'   => 'nullable|array',
             'training_from_date.*' => 'nullable|string|max:255',
             'training_to_date'     => 'nullable|array',
-            'training_to_date.*'   => 'nullable|string|max:255|after_or_equal:training_from_date.*',
+            'training_to_date.*'   => 'nullable|string|max:255',
             'training_hours'       => 'nullable|array',
             'training_hours.*'     => 'nullable|numeric|min:0',
             'type_of_ld'          => 'nullable|array',
@@ -2399,8 +2350,4 @@ class JobController extends Controller
     }
 
     /** Aptitude Result */
-    public function aptituderesultIndex()
-    {
-        return view('job.aptituderesult');
-    }
 }

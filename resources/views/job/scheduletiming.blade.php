@@ -10,7 +10,7 @@
                 <div class="col-12">
                     <h3 class="page-title">Schedule Interview Time</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         <li class="breadcrumb-item">Jobs</li>
                         <li class="breadcrumb-item active">Schedule Interview Time</li>
                     </ul>

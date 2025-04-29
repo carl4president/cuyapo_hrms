@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Dashboard - HRMS</title>
+    <title>Dashboard - HRMS - {{ !empty($company) && !empty($company->company_name) ? $company->company_name : 'Local Government Unit of Cuyapo' }}</title>
     <!-- Favicon -->
     @php
     use App\Models\CompanySettings;
@@ -54,9 +54,6 @@
     <link rel="stylesheet" href="{{ URL::to('assets/css/style.css') }}">
 
     {{-- message toastr --}}
-    <link rel="stylesheet" href="{{ URL::to('assets/css/toastr.min.css') }}">
-    <script src="{{ URL::to('assets/js/toastr_jquery.min.js') }}"></script>
-    <script src="{{ URL::to('assets/js/toastr.min.js') }}"></script>
 </head>
 
 <body>
@@ -123,7 +120,7 @@
                     </a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{ route('profile_user') }}">My Profile</a>
-                        @if(Auth::user()->role_name === 'Admin')
+                        @if(Auth::user()->role_name === 'Admin' || Auth::user()->role_name === 'Super Admin')
                         <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a>
                         @else
                         <a class="dropdown-item" href="{{ route('change/password') }}">Settings</a>
@@ -141,7 +138,7 @@
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
                     <a class="dropdown-item" href="{{ route('profile_user') }}">My Profile</a>
-                    @if(Auth::user()->role_name === 'Admin')
+                    @if(Auth::user()->role_name === 'Admin' || Auth::user()->role_name === 'Super Admin')
                     <a class="dropdown-item" href="{{ route('company/settings/page') }}">Settings</a>
                     @else
                     <a class="dropdown-item" href="{{ route('change/password') }}">Settings</a>

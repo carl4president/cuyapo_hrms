@@ -187,7 +187,7 @@ class UserManagementController extends Controller
             // Action buttons
             $action = '';
 
-            
+
             if (Auth::user()->role_name === 'Super Admin' || (Auth::user()->role_name === 'Admin' && (Auth::user()->id === $record->id || $record->role_name === 'Employee'))) {
 
                 $action = '
@@ -196,16 +196,16 @@ class UserManagementController extends Controller
                         <div class="dropdown-menu dropdown-menu-right">
                 ';
 
-                
+
                 if (Auth::user()->role_name === 'Super Admin' || (Auth::user()->role_name === 'Admin' && (Auth::user()->id === $record->id || $record->role_name === 'Employee'))) {
 
-                    
+
                     $action .= '<a href="#" class="dropdown-item userUpdate" data-toggle="modal" data-id="' . $record->id . '" data-role="' . $record->role_name . '" data-target="#edit_user"><i class="fa fa-pencil m-r-5"></i> Edit</a>';
                 }
 
                 if (Auth::user()->role_name === 'Super Admin' || (Auth::user()->role_name === 'Admin' && (Auth::user()->id === $record->id || $record->role_name === 'Employee'))) {
 
-                    
+
                     $action .= '<a href="#" class="dropdown-item userDelete" data-toggle="modal" data-id="' . $record->id . '" data-target="#delete_user"><i class="fa fa-trash-o m-r-5"></i> Delete</a>';
                 }
 
@@ -543,14 +543,14 @@ class UserManagementController extends Controller
         DB::beginTransaction();
 
         try {
-            $user_id   = $request->user_id;
-            $fullName  = trim($request->fname . ' ' . $request->mname . ' ' . $request->lname);
-            $email     = $request->email;
-            $role_name = $request->role_name;
-            $position  = $request->position;
-            $phone     = $request->phone;
+            $user_id    = $request->user_id;
+            $fullName   = trim($request->fname . ' ' . $request->mname . ' ' . $request->lname);
+            $email      = $request->email;
+            $role_name  = $request->role_name;
+            $position   = $request->position;
+            $phone      = $request->phone;
             $department = $request->department;
-            $status    = $request->status;
+            $status     = $request->status;
             $image_name = $request->hidden_image;
 
             $image = $request->file('images');
@@ -582,54 +582,57 @@ class UserManagementController extends Controller
             ];
             User::where('user_id', $user_id)->update($update);
 
-            // Role has changed logic
+            // Check if role changed
             if (strtolower($current_role) !== strtolower($role_name)) {
                 if (strtolower($role_name) === 'employee') {
-                    $employee = Employee::create([
-                        'emp_id'          => $user_id,
-                        'name'            => $fullName,
-                        'first_name'      => $request->fname,
-                        'middle_name'     => $request->mname,
-                        'last_name'       => $request->lname,
-                        'email'           => $email,
-                        'birth_date'      => 'N/A',
-                        'place_of_birth'  => 'N/A',
-                        'height'          => 'N/A',
-                        'weight'          => 'N/A',
-                        'blood_type'      => 'N/A',
-                        'gender'          => 'N/A',
-                        'civil_status'    => 'N/A',
-                        'nationality'     => 'N/A',
-                    ]);
+                    // If now employee, create or update employee records
+                    $employee = Employee::updateOrCreate(
+                        ['emp_id' => $user_id],
+                        [
+                            'name'            => $fullName,
+                            'first_name'      => $request->fname,
+                            'middle_name'     => $request->mname,
+                            'last_name'       => $request->lname,
+                            'email'           => $email,
+                            'birth_date'      => 'N/A',
+                            'place_of_birth'  => 'N/A',
+                            'height'          => 'N/A',
+                            'weight'          => 'N/A',
+                            'blood_type'      => 'N/A',
+                            'gender'          => 'N/A',
+                            'civil_status'    => 'N/A',
+                            'nationality'     => 'N/A',
+                        ]
+                    );
 
-                    $employee->familyInfo()->create([
+                    $employee->familyInfo()->updateOrCreate([], [
                         'father_name'             => 'N/A',
                         'mother_name'             => 'N/A',
                         'spouse_name'             => 'N/A',
                         'spouse_occupation'       => 'N/A',
                         'spouse_employer'         => 'N/A',
                         'spouse_business_address' => 'N/A',
-                        'spouse_tel_no'           => 'N/A',
+                        'spouse_tel_no'            => 'N/A',
                     ]);
 
-                    $employee->jobDetails()->create([
-                        'department_id'  => $department ?? 1,
-                        'position_id'    => $position ?? 1,
-                        'is_head'        => false,
-                        'is_designation' => false,
-                        'appointment_date' => now()->format('d M, Y'),
+                    $employee->jobDetails()->updateOrCreate([], [
+                        'department_id'     => $department ?? 1,
+                        'position_id'       => $position ?? 1,
+                        'is_head'           => false,
+                        'is_designation'    => false,
+                        'appointment_date'  => now()->format('d M, Y'),
                     ]);
 
-                    $employee->governmentIds()->create([
+                    $employee->governmentIds()->updateOrCreate([], [
                         'agency_employee_no' => 'N/A',
-                        'sss_no'             => 'N/A',
-                        'gsis_id_no'         => 'N/A',
-                        'pagibig_no'         => 'N/A',
-                        'philhealth_no'      => 'N/A',
-                        'tin_no'             => 'N/A',
+                        'sss_no'              => 'N/A',
+                        'gsis_id_no'          => 'N/A',
+                        'pagibig_no'          => 'N/A',
+                        'philhealth_no'       => 'N/A',
+                        'tin_no'              => 'N/A',
                     ]);
 
-                    $employee->contact()->create([
+                    $employee->contact()->updateOrCreate([], [
                         'residential_address' => 'N/A',
                         'residential_zip'     => '0000',
                         'permanent_address'   => 'N/A',
@@ -638,7 +641,7 @@ class UserManagementController extends Controller
                         'mobile_number'       => $phone,
                     ]);
 
-                    $employee->employment()->create([
+                    $employee->employment()->updateOrCreate([], [
                         'employment_status' => 'Full Time',
                         'date_hired'        => now()->format('d M, Y'),
                     ]);
@@ -652,19 +655,21 @@ class UserManagementController extends Controller
                     ];
 
                     foreach ($education_levels as $level) {
-                        $employee->education()->create([
-                            'education_level'      => $level,
-                            'degree'               => in_array($level, ['Elementary', 'Secondary']) ? null : 'N/A',
-                            'school_name'          => 'N/A',
-                            'year_from'            => 'N/A',
-                            'year_to'              => 'N/A',
-                            'highest_units_earned' => in_array($level, ['Elementary', 'Secondary', 'Graduate Studies']) ? null : 'N/A',
-                            'year_graduated'       => 'N/A',
-                            'scholarship_honors'   => 'N/A',
-                        ]);
+                        $employee->education()->updateOrCreate(
+                            ['education_level' => $level],
+                            [
+                                'degree'               => in_array($level, ['Elementary', 'Secondary']) ? null : 'N/A',
+                                'school_name'          => 'N/A',
+                                'year_from'            => 'N/A',
+                                'year_to'              => 'N/A',
+                                'highest_units_earned' => in_array($level, ['Elementary', 'Secondary', 'Graduate Studies']) ? null : 'N/A',
+                                'year_graduated'       => 'N/A',
+                                'scholarship_honors'   => 'N/A',
+                            ]
+                        );
                     }
-                } elseif (strtolower($role_name) === 'admin') {
-                    // Delete all related employee records if user was an employee before
+                } elseif (strtolower($current_role) === 'employee') {
+                    // If was employee but now admin/super admin — delete employee records
                     $employee = Employee::where('emp_id', $user_id)->first();
                     if ($employee) {
                         $employee->familyInfo()->delete();
@@ -676,25 +681,8 @@ class UserManagementController extends Controller
                         $employee->delete();
                     }
                 }
-            } else {
-                // Just update existing Employee and Contact data if not changing role
-                Employee::where('emp_id', $user_id)->update([
-                    'name'        => $fullName,
-                    'first_name'  => $request->fname,
-                    'middle_name' => $request->mname,
-                    'last_name'   => $request->lname,
-                    'email'       => $email,
-                ]);
-                EmployeeContact::where('emp_id', $user_id)->update([
-                    'phone_number' => $phone,
-                ]);
-                DB::table('employee_job_details')
-                    ->where('emp_id', $user_id)
-                    ->update([
-                        'department_id' => $department,
-                        'position_id'   => $position,
-                    ]);
             }
+            // If role did not change, do nothing to Employee tables.
 
             DB::commit();
             flash()->success('User updated successfully :)');
@@ -706,6 +694,7 @@ class UserManagementController extends Controller
             return redirect()->back()->withInput();
         }
     }
+
 
 
     /** Delete Record */
@@ -743,8 +732,6 @@ class UserManagementController extends Controller
 
                 // Delete related user tables
                 User::destroy($userId);
-                PersonalInformation::destroy($userId);
-                UserEmergencyContact::destroy($userId);
 
                 // Delete avatar if not default
                 if ($avatar && $avatar !== 'photo_defaults.jpg') {
@@ -794,7 +781,11 @@ class UserManagementController extends Controller
             // Show success message
             flash()->success('Password changed successfully :)');
             // Redirect to the intended route
-            return redirect()->intended('home');
+            if ($user->role_name == 'Employee') {
+                return redirect()->route('em/dashboard');
+            } else {
+                return redirect()->intended('home');
+            }
         } catch (\Exception $e) {
             // Rollback the transaction in case of error
             DB::rollBack();

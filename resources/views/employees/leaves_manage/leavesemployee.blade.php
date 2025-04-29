@@ -385,7 +385,18 @@
                                 </div>
                             </div>
                         </div>
-
+                        <div class="row">
+                            <div id="commutation_select" class="col-md-12">
+                                <div class="form-group">
+                                    <label>Commutation <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="commutation" id="commutation">
+                                        <option value="" selected disabled>-- Select Commutation --</option>
+                                        <option value="Requested">Requested</option>
+                                        <option value="Not Requested">Not Requested</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         <div class="submit-section">
                             <button type="submit" id="apply_leave" class="btn btn-primary submit-btn">Submit</button>
                         </div>
@@ -506,7 +517,18 @@
                                 <label class="form-check-label" for="e_study_bar">BAR/Board Examination Review</label>
                             </div>
                         </div>
-
+                        <div class="row">
+                            <div id="commutation_select" class="col-md-12">
+                                <div class="form-group">
+                                    <label>Commutation <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="commutation" id="edit_commutation">
+                                        <option value="" selected disabled>-- Select Commutation --</option>
+                                        <option value="Requested" {{ old('commutation') == 'Requested' ? 'selected' : '' }}>Requested</option>
+                                        <option value="Not Requested" {{ old('commutation') == 'Not Requested' ? 'selected' : '' }}>Not Requested</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         <div class="submit-section">
                             <button type="submit" id="editleave" class="btn btn-primary submit-btn">Submit</button>
                         </div>
@@ -532,7 +554,7 @@
                             <input type="hidden" class="form-control" id="d_id_record" name="id" readonly>
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" id="delete_leave" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                    <button style="width: 100%;" type="submit" id="delete_leave" class="btn btn-primary continue-btn">Delete</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -551,8 +573,8 @@
 <!-- /Page Wrapper -->
 @section('script')
 <script>
-    $(document).ready(function () {
-        $('form').on('submit', function () {
+    $(document).ready(function() {
+        $('form').on('submit', function() {
             var $applyOrEditBtn = $(this).find('#apply_leave, #editleave');
             var $deleteBtn = $(this).find('#delete_leave');
 
@@ -567,6 +589,7 @@
             }
         });
     });
+
 </script>
 
 
@@ -863,6 +886,7 @@
         var leaveType = $('#leave_type').val();
         var numberOfDay = $('#number_of_day').val();
         var staffId = $('#employee_id').val();
+        $('#counter_remaining_leave').val('Loading...');
         $.post(url, {
             leave_type: leaveType
             , staff_id: staffId
@@ -1002,6 +1026,7 @@
 
     // Function to update remaining leave
     function updateRemainingLeave(numDays) {
+        $('#counter_remaining_leave').val('Loading...');
         $.post(url, {
             number_of_day: numDays
             , leave_type: $('#leave_type').val()
@@ -1051,7 +1076,7 @@
                 , date_to: {
                     required: true
                 , }
-                , reason: {
+                , commutation: {
                     required: true
                 , }
             }
@@ -1065,8 +1090,8 @@
                 , date_to: {
                     required: "Please select date to"
                 }
-                , reason: {
-                    required: "Please input reason leave"
+                , commutation: {
+                    required: "Please select commutation"
                 }
             }
             , errorElement: 'span'
@@ -1121,6 +1146,7 @@
                     $("#edit_date_from").val(leave.date_from);
                     $("#edit_date_to").val(leave.date_to);
                     $("#edit_number_of_day").val(leave.number_of_day);
+                    $("#edit_commutation").val(leave.commutation);
 
                     renderLeaveDetails(leave);
 
@@ -1376,6 +1402,7 @@
 
     // ✅ Update remaining leave count
     function updateeditRemainingLeave(numDays) {
+        $('#edit_counter_remaining_leave').val('Loading...');
         $.post(urlEdit, {
             number_of_day: numDays
             , date_from: $('#edit_date_from').val()
@@ -1433,6 +1460,7 @@
             return $(this).val(); // Collect selected study reasons
         }).get();
 
+        var commutation = $("#edit_commutation").val(); 
         // Sending the data via POST request
         $.post("{{ route('form/leaves/edit') }}", {
                 leave_id: leave_id
@@ -1450,6 +1478,7 @@
                 illness_specify: illness_specify, // Adding illness specify
                 women_illness: women_illness, // Adding women illness
                 study_reason: study_reason, // Adding study reason
+                commutation: commutation,
                 _token: $('meta[name="csrf-token"]').attr('content')
             })
             .done(function(response) {

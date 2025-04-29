@@ -34,7 +34,7 @@ $company = CompanySettings::first();
                     $role = strtolower($user->role_name ?? '');
                     $resetUrl = match ($role) {
                         'employee' => url('/reset-password/employee/' . $token),
-                        'admin' => url('/reset-password/' . $token),
+                        'admin', 'super admin' => url('/reset-password/' . $token),
                         default => url('/reset-password/' . $token),
                     };
                     @endphp

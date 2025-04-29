@@ -14,8 +14,7 @@ class RegisterController extends Controller
     /** Show the registration page */
     public function register()
     {
-        $roles = DB::table('role_type_users')->get();
-        return view('auth.register', compact('roles'));
+        return view('auth.register');
     }
 
     /** Store New User */

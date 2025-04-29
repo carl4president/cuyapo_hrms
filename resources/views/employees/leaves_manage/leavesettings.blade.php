@@ -628,7 +628,7 @@
                                 'data-policy-id="' + policy.policy_id + '" ' +
                                 'data-policy-name="' + policy.leave_type + '" ' +
                                 'data-leave-days="' + policy.leave_days + '" ' +
-                                'data-employees=\'' + JSON.stringify(policy.employees) + '\' ' +
+                                'data-employees="' + encodeURIComponent(JSON.stringify(policy.employees)) + '" ' +
                                 'data-toggle="modal" data-target="#edit_custom_policy">' +
                                 '<i class="fa fa-pencil m-r-5"></i> Edit</a>';
 
@@ -670,7 +670,14 @@
             const policyId = $(this).data('policy-id');
             const policyName = $(this).data('policy-name');
             const leaveDays = $(this).data('leave-days');
-            const employees = $(this).data('employees'); // Get the assigned employees
+            let employees = $(this).attr('data-employees');
+            try {
+                employees = JSON.parse(decodeURIComponent(employees));
+            } catch (e) {
+                console.error("Failed to parse employees JSON:", e);
+                employees = [];
+            }
+
             const $leftSelect = $('#edit_customleave_select');
             const $rightSelect = $('#edit_customleave_select_to');
 
@@ -795,7 +802,6 @@
                 , value: JSON.stringify(selectedEmployees)
             }).appendTo('#editCustomPolicyForm');
 
-            console.log("Updated selectedEmployees:", selectedEmployees);
         }
 
         $('#editCustomPolicyForm').on('submit', function(e) {
@@ -807,7 +813,6 @@
                 selectedEmployees.push($(this).val());
             });
 
-            console.log("Final selectedEmployees for submit:", selectedEmployees); // 🔍 DEBUG
 
             // Remove any old hidden input if it exists
             $(this).find('input[name="employees"]').remove();

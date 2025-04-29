@@ -188,13 +188,13 @@
                 <div class="col">
                     <h3 class="page-title">Candidates List</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         <li class="breadcrumb-item">Jobs</li>
                         <li class="breadcrumb-item active">Candidates List</li>
                     </ul>
                 </div>
                 <div class="col-auto float-right ml-auto">
-                    <a href="#" data-toggle="modal" data-target="#add_employee" class="btn add-btn"> Add Candidates</a>
+                    <a href="#" data-toggle="modal" data-target="#add_employee" class="btn add-btn"><i class="fa fa-plus"></i> Add Candidates</a>
                 </div>
             </div>
         </div>
@@ -425,7 +425,7 @@
                 , success: function(response) {
                     console.log("Status updated successfully:", response);
 
-                    if (status === "Qualified" || status === "Rejected" || status === "Eligible for Interview") {
+                    if (status === "New" ||status === "Qualified" || status === "Rejected" || status === "Eligible for Interview") {
                         table.row(row).remove().draw(); // Remove row from the table if status is Qualified, Rejected, or Eligible for Interview
                     } else {
                         var statusColor = getStatusColor(status);

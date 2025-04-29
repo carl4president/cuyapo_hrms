@@ -188,7 +188,7 @@
                 <div class="col">
                     <h3 class="page-title">Employee</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         <li class="breadcrumb-item active">Employee</li>
                     </ul>
                 </div>
@@ -263,16 +263,26 @@
                                 <td>{{ $items->employment->date_hired }}</td>
                                 <td>
                                     @php
-                                    // Get all main jobs (where is_designation == 0)
                                     $mainJobs = $items->jobDetails->where('is_designation', 0);
+                                    $designations = $items->jobDetails->where('is_designation', 1);
                                     @endphp
 
+                                    {{-- Display main positions --}}
                                     @if($mainJobs->isNotEmpty())
                                     @foreach ($mainJobs as $job)
                                     <div>{{ $job->position->position_name ?? 'N/A' }}</div>
                                     @endforeach
                                     @else
-                                    N/A
+                                    <div>N/A</div>
+                                    @endif
+
+                                    {{-- Display designations --}}
+                                    @if($designations->isNotEmpty())
+                                    @foreach ($designations as $designation)
+                                    <div class="text-muted">
+                                        {{ $designation->position->position_name ?? 'Other Responsibility' }} (Designation)
+                                    </div>
+                                    @endforeach
                                     @endif
                                 </td>
                                 <td class="text-right">
@@ -280,7 +290,9 @@
                                         <a href="#" class="action-icon dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="material-icons">more_vert</i></a>
                                         <div class="dropdown-menu dropdown-menu-right">
                                             <a class="dropdown-item" href="{{ url('all/employee/view/edit/'.$items->emp_id) }}"><i class="fa fa-pencil m-r-5"></i> Edit</a>
-                                            <a class="dropdown-item" href="{{url('all/employee/delete/'.$items->emp_id)}}" onclick="return confirm('Are you sure to want to delete it?')"><i class="fa fa-trash-o m-r-5"></i> Delete</a>
+                                            <a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#delete_employee_modal" data-emp-id="{{ $items->emp_id }}">
+                                                <i class="fa fa-trash-o m-r-5"></i> Delete
+                                            </a>
                                         </div>
                                     </div>
                                 </td>
@@ -339,5 +351,50 @@
             </div>
         </div>
     </x-layouts.add-emp-modal>
-    @endsection
-    @endsection
+
+
+    <div class="modal custom-modal fade" id="delete_employee_modal" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="form-header">
+                        <h3>Delete Employee</h3>
+                        <p id="delete-message">Are you sure you want to delete this employee?</p>
+                    </div>
+                    <div class="modal-btn delete-action">
+                        <form action="{{ route('employee/delete', ['employee_id' => 'emp_id_placeholder']) }}" method="POST" id="delete-employee-form">
+                            @csrf
+                            <input type="hidden" name="emp_id" class="emp_id" value="">
+                            <div class="row">
+                                <div class="col-6">
+                                    <button style="width: 100%;" type="submit" class="btn btn-primary continue-btn">Delete</button>
+                                </div>
+                                <div class="col-6">
+                                    <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#delete_employee_modal').on('show.bs.modal', function(e) {
+        // Get the emp_id from the data attribute of the clicked element
+        var empId = $(e.relatedTarget).data('emp-id');
+
+        // Set the emp_id value in the hidden input field inside the modal
+        $(this).find('.emp_id').val(empId);
+
+        // Update the form action to include the employee_id in the URL
+        var formAction = "{{ route('employee/delete', ['employee_id' => ':emp_id']) }}";
+        formAction = formAction.replace(':emp_id', empId);
+        $(this).find('form').attr('action', formAction);
+    });
+
+</script>
+@endsection
+@endsection

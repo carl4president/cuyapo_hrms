@@ -182,7 +182,7 @@
                             <input type="hidden" name="id" class="e_id" value="">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                    <button style="width: 100%;" type="submit" class="btn btn-primary continue-btn">Delete</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="#" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>

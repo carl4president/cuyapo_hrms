@@ -12,7 +12,7 @@
             </div>
             <div class="modal-body">
                 <div class="alert alert-info mb-1">
-                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong>.
+                    <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong>.
                 </div>
                 <div class="px-4 pt-3">
                     @php
@@ -329,7 +329,7 @@
                             <div id="children-container">
                                 <div class="card child-entry">
                                     <div class="alert alert-info">
-                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                        <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                     </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Child Information
@@ -367,7 +367,7 @@
                         <div id="child-template" style="display:none;">
                             <div class="card child-entry">
                                 <div class="alert alert-info">
-                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                 </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
@@ -437,12 +437,6 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -450,24 +444,12 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -499,12 +481,7 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -512,24 +489,14 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]" placeholder="Enter year graduated"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -565,12 +532,7 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -578,17 +540,12 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label>Highest Level/Units Earned</label>
+                                                    <label>Highest Level/Units Earned (if not graduated)</label>
                                                     <input class="form-control" type="text" name="highest_units_earned[]" placeholder="Enter highest level/units earned">
                                                 </div>
                                             </div>
@@ -596,12 +553,7 @@
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -637,12 +589,7 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -650,17 +597,12 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label>Highest Level/Units Earned</label>
+                                                    <label>Highest Level/Units Earned (if not graduated)</label>
                                                     <input class="form-control" type="text" name="highest_units_earned[]" placeholder="Enter highest level/units earned">
                                                 </div>
                                             </div>
@@ -668,12 +610,7 @@
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -710,12 +647,7 @@
                                                     <label>Year From</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_from[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_from[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -723,24 +655,14 @@
                                                     <label>Year To</label>
                                                     <div class="cal-icon">
                                                         <input class="form-control yearpicker" type="text" name="year_to[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_to[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Year Graduated</label>
                                                     <div class="cal-icon"> <input class="form-control yearpicker" type="text" name="year_graduated[]"></div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="year_to_na" name="year_graduated[]" value="N/A">
-                                                        <label class="form-check-label" for="year_to_na">
-                                                            N/A
-                                                        </label>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -774,10 +696,10 @@
                             <div id="eligibility-container">
                                 <div class="card civil-service-entry">
                                     <div class="alert alert-info">
-                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                        <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                     </div>
                                     <div class="card-body">
-                                        <h3 class="card-title">Eligibility Information
+                                        <h3 class="card-title">Civil Service Eligibility
                                             <a href="javascript:void(0);" class="delete-icon remove-civil-service">
                                                 <i class="fa fa-trash"></i>
                                             </a>
@@ -792,7 +714,7 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Rating <span class="text-danger">*</span></label>
-                                                    <input class="form-control" type="text" name="rating[]" placeholder="Enter rating">
+                                                    <input class="form-control" type="number" name="rating[]" placeholder="Enter rating">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -841,7 +763,7 @@
                         <div id="eligibility-template" style="display:none;">
                             <div class="card civil-service-entry">
                                 <div class="alert alert-info">
-                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                 </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
@@ -860,7 +782,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>Rating <span class="text-danger">*</span></label>
-                                                <input class="form-control" type="text" name="rating[]" placeholder="Enter rating">
+                                                <input class="form-control" type="number" name="rating[]" placeholder="Enter rating">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -924,7 +846,7 @@
                             <div id="experience-container">
                                 <div class="card work-experience-entry">
                                     <div class="alert alert-info">
-                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                        <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                     </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Work Experience
@@ -1007,7 +929,7 @@
                         <div id="experience-template" style="display:none;">
                             <div class="card work-experience-entry">
                                 <div class="alert alert-info">
-                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                 </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
@@ -1107,7 +1029,7 @@
                             <div id="voluntary-work-container">
                                 <div class="card voluntary-work-entry">
                                     <div class="alert alert-info">
-                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                        <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                     </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Voluntary Work
@@ -1167,7 +1089,7 @@
                         <div id="voluntary-work-template" style="display:none;">
                             <div class="card voluntary-work-entry">
                                 <div class="alert alert-info">
-                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                 </div>
                                 <div class="card-body">
                                     <h3 class="card-title">
@@ -1243,7 +1165,7 @@
                             <div id="training-container">
                                 <div class="card training-entry">
                                     <div class="alert alert-info">
-                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                        <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                     </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Training Program
@@ -1309,7 +1231,7 @@
                         <div id="training-template" style="display:none;">
                             <div class="card training-entry">
                                 <div class="alert alert-info">
-                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                 </div>
                                 <div class="card-body">
                                     <h3 class="card-title">Training Program
@@ -1392,7 +1314,7 @@
                             <div id="other-info-container">
                                 <div class="card other-info-entry">
                                     <div class="alert alert-info">
-                                        <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                        <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                     </div>
                                     <div class="card-body">
                                         <h3 class="card-title">Other Information
@@ -1434,7 +1356,7 @@
                         <div id="other-info-template" style="display:none;">
                             <div class="card other-info-entry">
                                 <div class="alert alert-info">
-                                    <strong>Note:</strong> Fields marked with <span class="text-danger">*</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
+                                    <strong>Note:</strong> <span class="text-danger">ALL FIELDS</span> are required. If a field is not applicable, please enter <strong>N/A</strong> or click the <strong>delete or trash icon</strong> to remove.
                                 </div>
                                 <div class="card-body">
                                     <h3 class="card-title">Other Information
@@ -1726,11 +1648,19 @@
             }
         });
 
-        reviewHtml += `<div class="review-section"><h3 class="section-title">Job Assignment</h3><ul>`;
-        reviewHtml += `<li><strong>Department:</strong> ${formData.department}</li>`;
-        reviewHtml += `<li><strong>Position:</strong> ${formData.position}</li>`;
-        reviewHtml += `<li><strong>Employment Status:</strong> ${formData.employmentStatus}</li>`;
-        reviewHtml += `<li><strong>Date Hired:</strong> ${formData.dateHired}</li>`;
+        reviewHtml += `<div class="review-section"><h3 class="section-title">Employment Details</h3><ul>`;
+        if (formData.department && formData.department !== 'No department selected') {
+            reviewHtml += `<li><strong>Department:</strong> ${formData.department}</li>`;
+        }
+        if (formData.position && formData.position !== 'No position selected') {
+            reviewHtml += `<li><strong>Position:</strong> ${formData.position}</li>`;
+        }
+        if (formData.employmentStatus && formData.employmentStatus !== 'No employment status selected') {
+            reviewHtml += `<li><strong>Employment Status:</strong> ${formData.employmentStatus}</li>`;
+        }
+        if (formData.dateHired) {
+            reviewHtml += `<li><strong>Date Hired:</strong> ${formData.dateHired}</li>`;
+        }
         reviewHtml += `<li><strong>Photo Filename:</strong> ${formData.imageFileName}</li>`;
         reviewHtml += `</ul></div>`;
 
@@ -1750,9 +1680,9 @@
                 ${edu.degree ? `<li>Degree: ${edu.degree}</li>` : ""}
                 ${edu.yearFrom ? `<li>From: ${edu.yearFrom}</li>` : ""}
                 ${edu.yearTo ? `<li>To: ${edu.yearTo}</li>` : ""}
-                ${edu.highestUnitsEarned ? `<li>Units: ${edu.highestUnitsEarned}</li>` : ""}
+                ${edu.highestUnitsEarned ? `<li>Highest Level/Units Earned (if not graduated): ${edu.highestUnitsEarned}</li>` : ""}
                 ${edu.yearGraduated ? `<li>Graduated: ${edu.yearGraduated}</li>` : ""}
-                ${edu.scholarship ? `<li>Honors: ${edu.scholarship}</li>` : ""}
+                ${edu.scholarship ? `<li>Scholarship/Academic Honors: ${edu.scholarship}</li>` : ""}
             </ul>
         </li>`;
         }).join("") + `</ul>`;
@@ -1779,9 +1709,9 @@
                 <li>From: ${item.fromDate}</li>
                 <li>To: ${item.toDate}</li>
                 <li>Salary: ${item.monthlySalary}</li>
-                <li>Grade: ${item.salaryGrade}</li>
-                <li>Status: ${item.appointmentStatus}</li>
-                <li>Gov't: ${item.govtService == "1" ? "Yes" : "No"}</li>
+                <li>Salary Grade: ${item.salaryGrade}</li>
+                <li>Status of Appointment: ${item.appointmentStatus}</li>
+                <li>Gov't Service: ${item.govtService == "1" ? "Yes" : "No"}</li>
             </ul>
         </li>`;
         }).join("") + `</ul>`;
@@ -1794,7 +1724,7 @@
                 <li>From: ${item.fromDate}</li>
                 <li>To: ${item.toDate}</li>
                 <li>Hours: ${item.hours}</li>
-                <li>Position: ${item.position}</li>
+                <li>Position / Nature of Work: ${item.position}</li>
             </ul>
         </li>`;
         }).join("") + `</ul>`;
@@ -1807,8 +1737,8 @@
                 <li>From: ${item.fromDate}</li>
                 <li>To: ${item.toDate}</li>
                 <li>Hours: ${item.hours}</li>
-                <li>Type: ${item.type}</li>
-                <li>Sponsored By: ${item.sponsoredBy}</li>
+                <li>Type of L&D: ${item.type}</li>
+                <li>Conducted/Sponsored By: ${item.sponsoredBy}</li>
             </ul>
         </li>`;
         }).join("") + `</ul>`;
@@ -1818,9 +1748,9 @@
         return `<ul>` + list.map(item => {
             return `<li>
             <ul>
-                <li>Skills & Hobbies: ${item.skillsHobbies}</li>
-                <li>Distinctions: ${item.nonAcademicDistinctions}</li>
-                <li>Memberships: ${item.membership}</li>
+                <li>Special Skills & Hobbies: ${item.skillsHobbies}</li>
+                <li>Non-Academic Distinctions: ${item.nonAcademicDistinctions}</li>
+                <li>Membership in Associations: ${item.membership}</li>
             </ul>
         </li>`;
         }).join("") + `</ul>`;
@@ -1980,41 +1910,36 @@
         const yearsGraduated = document.querySelectorAll("input[name='year_graduated[]']");
         const highestUnits = document.querySelectorAll("input[name='highest_units_earned[]']");
         const scholarships = document.querySelectorAll("input[name='scholarship_honors[]']");
-        const yearFromCheckboxes = document.querySelectorAll("input[name='year_from[]']:checked");
-        const yearToCheckboxes = document.querySelectorAll("input[name='year_to[]']:checked");
-        const yearGraduatedCheckboxes = document.querySelectorAll("input[name='year_graduated[]']:checked");
 
         educationLevels.forEach((level, index) => {
             let education = {
-                educationLevel: level.value
-                , schoolName: schoolNames[index].value
-                , degree: degrees[index].value
-                , yearFrom: yearsFrom[index].value
-                , yearTo: yearsTo[index].value
-                , yearGraduated: yearsGraduated[index].value
-                , highestUnitsEarned: highestUnits[index].value
-                , scholarship: scholarships[index].value
+                educationLevel: level.value.trim()
+                , schoolName: schoolNames[index].value.trim()
+                , degree: degrees[index].value.trim()
+                , yearFrom: yearsFrom[index].value.trim(), // No more "N/A"
+                yearTo: yearsTo[index].value.trim(), // No more "N/A"
+                yearGraduated: yearsGraduated[index].value.trim(), // No more "N/A"
+                highestUnitsEarned: highestUnits[index].value.trim()
+                , scholarship: scholarships[index].value.trim()
             };
 
-            // Check if the year fields are marked as N/A via checkbox
-            if (yearFromCheckboxes[index] && yearFromCheckboxes[index].value === "N/A") {
-                education.yearFrom = "N/A";
-            }
-            if (yearToCheckboxes[index] && yearToCheckboxes[index].value === "N/A") {
-                education.yearTo = "N/A";
-            }
-            if (yearGraduatedCheckboxes[index] && yearGraduatedCheckboxes[index].value === "N/A") {
-                education.yearGraduated = "N/A";
-            }
-
-            // Check if any required field is filled before adding to the list
-            if (education.schoolName || education.degree || education.yearFrom || education.yearTo || education.yearGraduated || education.highestUnitsEarned || education.scholarship) {
+            // Only add if at least one field is filled (besides educationLevel)
+            if (
+                education.schoolName || education.degree ||
+                education.yearFrom || education.yearTo ||
+                education.yearGraduated || education.highestUnitsEarned ||
+                education.scholarship
+            ) {
                 educationData.push(education);
             }
         });
 
         return educationData;
     }
+
+
+
+
 
 
     function getChildrenInfo() {
@@ -2108,6 +2033,33 @@
                     input.classList.remove('is-invalid');
                     removeValidationMessage(input);
                 }
+
+                if (["from_date[]", "voluntary_from_date[]", "training_from_date[]"].includes(input.name)) {
+                    const fromInput = input;
+                    // Find the correct corresponding 'to' input next to this 'from' input
+                    const inputsArray = Array.from(inputs);
+                    const fromIndex = inputsArray.indexOf(fromInput);
+                    const toInput = inputsArray.find((el, idx) => idx > fromIndex && el.name === input.name.replace('from', 'to'));
+
+                    if (fromInput && toInput && fromInput.value && toInput.value) {
+                        const fromDate = new Date(fromInput.value);
+                        const toDate = new Date(toInput.value);
+
+                        if (fromDate > toDate) {
+                            valid = false;
+                            fromInput.classList.add('is-invalid');
+                            toInput.classList.add('is-invalid');
+                            showValidationMessage(fromInput, 'From date cannot be later than To date.');
+                            showValidationMessage(toInput, 'To date cannot be earlier than From date.');
+                        } else {
+                            removeValidationMessage(fromInput);
+                            removeValidationMessage(toInput);
+                            fromInput.classList.remove('is-invalid');
+                            toInput.classList.remove('is-invalid');
+                        }
+                    }
+                }
+
 
                 // Email validation (only on email field)
                 if (input.name === "email" && inputValue !== "") {
@@ -2222,6 +2174,7 @@
             , "rating[]": {
                 required: true
                 , number: true
+                , min: 1
             }
             , "exam_date[]": {
                 required: true
@@ -2241,8 +2194,8 @@
                 required: true
             }
             , "to_date[]": {
-                required: true, // Optional field
-                date: true
+                required: true
+                , date: true
             }
             , "monthly_salary[]": {
                 required: true
@@ -2376,6 +2329,9 @@
     }
 
     function checkEmailExists(email) {
+        const nextBtn = document.getElementById("nextBtn");
+        nextBtn.disabled = true;
+        nextBtn.innerText = "Please wait...";
         return new Promise((resolve, reject) => {
             $.ajax({
                 url: '{{ route("check/email") }}'
@@ -2385,9 +2341,13 @@
                     , _token: '{{ csrf_token() }}'
                 }
                 , success: function(response) {
+                    nextBtn.disabled = false;
+                    nextBtn.innerText = "Next";
                     resolve(response.valid);
                 }
                 , error: function() {
+                    nextBtn.disabled = false;
+                    nextBtn.innerText = "Next";
                     reject(false);
                 }
             });
@@ -2419,30 +2379,6 @@
 
 </script>
 
-
-<script>
-    $(document).ready(function() {
-        // Check if N/A checkbox is checked on page load
-        $(".form-check-input").each(function() {
-            if ($(this).is(":checked")) {
-                $(this).closest(".form-group").find(".yearpicker").prop("disabled", true);
-            }
-        });
-
-        // Toggle the state of the date picker based on the checkbox
-        $(".form-check-input").on("change", function() {
-            var inputField = $(this).closest(".form-group").find(".yearpicker");
-            if ($(this).is(":checked")) {
-                inputField.prop("disabled", true); // Disable date picker
-                inputField.val("N/A"); // Clear any selected date
-            } else {
-                inputField.prop("disabled", false); // Enable date picker
-                inputField.val("");
-            }
-        });
-    });
-
-</script>
 
 <script>
     $(document).ready(function() {
@@ -2492,13 +2428,7 @@
 </script>
 
 <script>
-    $(document).ready(function() {
-        $('.yearpicker').datetimepicker({
-            format: 'YYYY'
-            , viewMode: 'years'
-            , maxDate: moment()
-        });
-    });
+
 
 </script>
 

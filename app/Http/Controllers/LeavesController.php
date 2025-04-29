@@ -27,7 +27,7 @@ class LeavesController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role_name == 'Admin') {
+        if ($user->role_name == 'Admin' || $user->role_name == 'Super Admin') {
             // Admin can access all employees and all leave data
             $userList = DB::table('users')
                 ->where('role_name', 'Employee')
@@ -38,35 +38,47 @@ class LeavesController extends Controller
             $getLeave = DB::table('leaves')
                 ->join('users', 'leaves.staff_id', '=', 'users.user_id')
                 ->where('users.status', '!=', 'Disabled')
+                ->where('users.role_name', 'Employee')
                 ->select('leaves.*') // Ensure only columns from `leaves` are returned
                 ->get();
             $stats = $this->getLeaveStats();
         } elseif ($user->role_name == 'Employee') {
-            // Get job details (assume relation is jobdetails, and it's a hasMany)
-            $jobDetail = optional($user->employee->jobdetails->first());
+            $jobDetails = $user->employee->jobdetails; // Get all job details
 
-            if ($jobDetail && $jobDetail->is_head == 1) {
-                // Head of department — get employees under same department
+            // Check if the employee is a department head in any of their job details
+            $headDepartments = $jobDetails->filter(function ($jobDetail) {
+                return $jobDetail->is_head == 1; // Filter heads of departments
+            });
+
+            if ($headDepartments->isNotEmpty()) {
+                // Employee is a department head — get employees under the same department(s)
                 $userList = DB::table('users')
                     ->join('employees', 'users.user_id', '=', 'employees.emp_id')
                     ->join('employee_job_details', 'employees.emp_id', '=', 'employee_job_details.emp_id')
-                    ->where('employee_job_details.department_id', $jobDetail->department_id)
+                    ->whereIn('employee_job_details.department_id', $headDepartments->pluck('department_id'))  // Get all departments where the user is a head
                     ->where('users.role_name', 'Employee')
-                    ->where('status', '!=', 'Disabled')
+                    ->where('users.status', '!=', 'Disabled')
+                    ->select('employees.emp_id', 'users.*')  // Make sure to select emp_id from the employees table
                     ->get();
+
+                // Group by emp_id to avoid duplicates, even if the employee has multiple departments
+                $userList = $userList->unique(function ($item) {
+                    return $item->emp_id;  // Group by emp_id
+                });
 
                 $empIds = $userList->pluck('emp_id');
 
-                // Assuming staff_id is a JSON array in LeaveInformation model
+                // Assuming staff_id is the correct column for employee leaves
                 $leaveInformation = LeaveInformation::all();
 
-                // Ensure the 'emp_id' is the correct column in 'leaves' table
+                // Get all leaves for employees in the head's department(s)
                 $getLeave = DB::table('leaves')
                     ->join('users', 'leaves.staff_id', '=', 'users.user_id')
-                    ->whereIn('leaves.staff_id', $empIds)
+                    ->whereIn('leaves.staff_id', $empIds)  // Query all employees under the department heads
                     ->where('users.status', '!=', 'Disabled')
+                    ->where('users.role_name', 'Employee')
                     ->select('leaves.*')
-                    ->get();  // Change 'emp_id' to 'employee_id' or the correct column name
+                    ->get();
 
                 $stats = $this->getLeaveStats($empIds);
             } else {
@@ -247,12 +259,7 @@ class LeavesController extends Controller
 
                     $counterRemainingLeaves = $countertotalRemainingLeaves -= $numberOfDay;
 
-                    $leaveData = [
-                        'timestamp' => $latestTimestamp,
-                        'original_leave_days' => $originalLeaveDays,
-                        'remaining_leave_days' => $remainingLeaveDays,
-                        'counter_remaining_leave_day' => ceil($counterRemainingLeaves * 1000) / 1000,
-                    ];
+
                 } else {
                     throw new \Exception("Invalid remaining leave days data structure.");
                 }
@@ -265,12 +272,14 @@ class LeavesController extends Controller
                 }
             }
 
+            $counterRemainingLeaves = ceil($counterRemainingLeaves * 1000) / 1000;
+
             return response()->json([
                 'response_code' => 200,
                 'status' => 'success',
                 'message' => 'Leave information retrieved successfully.',
                 'leave_type' => $remainingLeaveDays,
-                'counter_remaining_leave_day' => ceil($counterRemainingLeaves * 1000) / 1000,
+                'counter_remaining_leave_day' => $counterRemainingLeaves,
                 'staff_id' => $staffId,
                 'number_of_day' => $numberOfDay,
                 'existing_leave_dates' => $existingLeaveDates
@@ -605,7 +614,7 @@ class LeavesController extends Controller
         }
 
         // Role-based filtering
-        if ($user->role_name == 'Admin') {
+        if ($user->role_name == 'Admin' || $user->role_name == 'Super Admin') {
             // Admin sees all filtered leaves
             $userList = DB::table('users')
                 ->where('role_name', 'Employee')
@@ -616,20 +625,32 @@ class LeavesController extends Controller
             $getLeave = $query->get();
             $stats = $this->getLeaveStats();
         } elseif ($user->role_name == 'Employee') {
-            $jobDetail = optional($user->employee->jobdetails->first());
+            $jobDetails = $user->employee->jobdetails; // Get all job details
 
-            if ($jobDetail && $jobDetail->is_head == 1) {
-                // Head sees only department employees
+            // Check if the employee is a department head in any of their job details
+            $headDepartments = $jobDetails->filter(function ($jobDetail) {
+                return $jobDetail->is_head == 1; // Filter heads of departments
+            });
+
+            if ($headDepartments->isNotEmpty()) {
+                // Employee is a department head — get employees under the same department(s)
                 $userList = DB::table('users')
                     ->join('employees', 'users.user_id', '=', 'employees.emp_id')
                     ->join('employee_job_details', 'employees.emp_id', '=', 'employee_job_details.emp_id')
-                    ->where('employee_job_details.department_id', $jobDetail->department_id)
+                    ->whereIn('employee_job_details.department_id', $headDepartments->pluck('department_id'))  // Get all departments where the user is a head
                     ->where('users.role_name', 'Employee')
-                    ->where('status', '!=', 'Disabled')
+                    ->where('users.status', '!=', 'Disabled')
+                    ->select('employees.emp_id', 'users.*')  // Make sure to select emp_id from the employees table
                     ->get();
+
+                // Group by emp_id to avoid duplicates, even if the employee has multiple departments
+                $userList = $userList->unique(function ($item) {
+                    return $item->emp_id;  // Group by emp_id
+                });
 
                 $empIds = $userList->pluck('emp_id');
 
+                // Assuming staff_id is the correct column for employee leaves
                 $leaveInformation = LeaveInformation::all();
 
                 $query->whereIn('leaves.staff_id', $empIds);
@@ -1091,10 +1112,17 @@ class LeavesController extends Controller
 
             // Calculate the earned leave after deduction for those who need it
             if ($leaveBalance && $leaveBalance->total_leave_days < $leaveBalance->used_leave_days) {
-                $deduction = $leaveBalance->used_leave_days * 0.042; // Deduction factor
-                $earnedLeaveAfterDeduction = max(0, $earnedLeave - $deduction);
-                \Log::info('Earned Leave After Deduction for Staff ID ' . $staffId . ': ' . $earnedLeaveAfterDeduction);
+                $leaveDifference = abs(intval($leaveBalance->used_leave_days - $leaveBalance->total_leave_days));
 
+                // Multiply the difference by leavePerDay
+                $deductionRaw = $leaveDifference * $leavePerDay;
+                
+                // Convert the result to a whole number, no rounding up or down, just the whole part
+                $deduction = ceil($deductionRaw * 1000) / 1000; 
+            
+                // Calculate the earned leave after deduction
+                $earnedLeaveAfterDeduction = $earnedLeave - $deduction;
+            
                 // Update the leave record or insert if not present
                 $this->updateOrInsertLeaveRecord($staffId, $earnedLeaveAfterDeduction, $currentYear);
             } else {
@@ -1152,25 +1180,7 @@ class LeavesController extends Controller
             $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
 
 
-            $leaveBalance = LeaveBalance::where('staff_id', $staffId)
-                ->where('leave_type', 'Sick Leave')
-                ->latest('created_at')
-                ->first();
-
-            // Debug: Log the leave balance for each employee
-
-            // Calculate the earned leave after deduction for those who need it
-            if ($leaveBalance && $leaveBalance->total_leave_days < $leaveBalance->used_leave_days) {
-                $deduction = $leaveBalance->used_leave_days * 0.042; // Deduction factor
-                $earnedLeaveAfterDeduction = max(0, $earnedLeave - $deduction);
-                \Log::info('Earned Leave After Deduction for Staff ID ' . $staffId . ': ' . $earnedLeaveAfterDeduction);
-
-                // Update the leave record or insert if not present
-                $this->updateOrInsertLeaveRecord($staffId, $earnedLeaveAfterDeduction, $currentYear);
-            } else {
-                // If no deduction, use the regular earned leave value
-                $this->updateOrInsertLeaveRecord($staffId, $earnedLeave, $currentYear);
-            }
+            $this->updateOrInsertLeaveRecord($staffId, $earnedLeave, $currentYear);
         }
 
         return response()->json(['message' => 'Vacation leave assigned and adjusted successfully.']);

@@ -32,7 +32,7 @@ class UserFactory extends Factory
 
         // Ensure there's a fallback if no employees exist
         return [
-            'user_id' => $employee ? $employee->emp_id : 'KH-0002', // Using emp_id from the Employee table
+            'user_id' => $employee ? $employee->emp_id : 'CYP-0002', // Using emp_id from the Employee table
             'name' => $employee ? $employee->name : $this->faker->name,
             'first_name' => $employee->first_name,
             'middle_name' => $employee->middle_name,

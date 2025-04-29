@@ -14,7 +14,8 @@
                     @endphp
                     <h3 class="page-title">Job Applicants</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('jobs') }}">Jobs</a></li>
                         <li class="breadcrumb-item active">Job Applicants{{ $positionName ? ' / ' . $positionName : '' }}</li>
                     </ul>
                 </div>

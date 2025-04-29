@@ -46,7 +46,7 @@ class ResetPasswordController extends Controller
         DB::table('password_resets')->where('email', $request->email)->delete();
 
         flash()->success('Your password has been changed! :)');
-        if ($user->role_name == 'Admin') {
+        if ($user->role_name == 'Admin' || $user->role_name == 'Super Admin') {
             return redirect()->route('loginadmin');
         } else {
             return redirect()->route('login');

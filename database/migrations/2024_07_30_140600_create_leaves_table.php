@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('approved_by')->nullable();
             $table->string('status')->nullable();
 
+            $table->string('commutation')->nullable();
+
             $table->string('vacation_location')->nullable();  // For vacation location (Philippines/Abroad)
             $table->string('abroad_specify')->nullable();    // For specifying country if "Abroad"
             $table->string('sick_location')->nullable();     // For sick leave location (In Hospital/Out Patient)

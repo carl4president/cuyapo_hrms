@@ -189,7 +189,7 @@
                 <div class="col">
                     <h3 class="page-title">Employee</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         <li class="breadcrumb-item active">Employee</li>
                     </ul>
                 </div>
@@ -283,10 +283,14 @@
                     <div class="small text-muted mt-2">
                         <i><strong>Designation:</strong></i>
                     </div>
-                    @foreach ($otherJobs as $otherJob)
+
+                    @foreach ($otherJobs->groupBy('department.department') as $departmentName => $jobs)
+                    <h6 class="mb-0 mt-2 text-ellipsis">{{ $departmentName ?? 'No Department' }}</h6>
+                    @foreach ($jobs as $job)
                     <div class="small text-muted">
-                        <i>{{ $otherJob->position->position_name ?? 'Other Responsibility' }} - {{ $otherJob->department->department ?? 'No Department' }}</i>
+                        <i>{{ $job->position->position_name ?? 'Other Responsibility' }}</i>
                     </div>
+                    @endforeach
                     @endforeach
                     @endif
                 </div>

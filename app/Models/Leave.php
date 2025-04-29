@@ -29,6 +29,7 @@ class Leave extends Model
         'illness_specify',
         'women_illness',
         'study_reason',
+        'commutation',
     ];
     
 
@@ -130,6 +131,7 @@ class Leave extends Model
                         'leave_day'       => json_encode($request->select_leave_day),
                         'status'          => auth()->user()->role_name === 'Employee' ? 'New' : 'Pending',
                         'approved_by'     => null,
+                        'commutation'     => $request->commutation,
                         'vacation_location' => $request->vacation_location,
                         'abroad_specify'   => $request->abroad_specify,
                         'sick_location'    => $request->sick_location,
@@ -257,6 +259,7 @@ class Leave extends Model
                     'leave_day'       => $select_leave_day,
                     'status'          => auth()->user()->role_name === 'Employee' ? 'New' : 'Pending',
                     'approved_by'     => Session::get('line_manager', null),
+                    'commutation'     => $request->commutation,
 
                     'vacation_location' => $request->vacation_location,
                     'abroad_specify'    => $request->abroad_specify,

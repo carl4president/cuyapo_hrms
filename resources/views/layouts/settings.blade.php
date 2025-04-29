@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-    <title>Settings - HRMS</title>
-    <!-- Favicon -->
     @php
     use App\Models\CompanySettings;
     $company = CompanySettings::first();
     @endphp
+    <title>Settings - HRMS - {{ !empty($company) && !empty($company->company_name) ? $company->company_name : 'Local Government Unit of Cuyapo' }}</title>
+    <!-- Favicon -->
 
     @if (!empty($company) && !empty($company->logo))
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/' . $company->logo) }}">
@@ -26,9 +26,6 @@
     <!-- Main CSS -->
     <link rel="stylesheet" href="{{ URL::to('assets/css/style.css') }}">
     {{-- message toastr --}}
-    <link rel="stylesheet" href="{{ URL::to('assets/css/toastr.min.css') }}">
-    <script src="{{ URL::to('assets/js/toastr_jquery.min.js') }}"></script>
-    <script src="{{ URL::to('assets/js/toastr.min.js') }}"></script>
 
 </head>
 @yield('style')

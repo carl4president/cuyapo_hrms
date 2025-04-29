@@ -917,7 +917,7 @@ class EmployeeController extends Controller
                 'from_date'                           => 'nullable|array',
                 'from_date.*'                         => 'nullable|string|max:255',
                 'to_date'                             => 'nullable|array',
-                'to_date.*'                           => 'nullable|string|max:255|after_or_equal:from_date.*',
+                'to_date.*'                           => 'nullable|string|max:255',
                 'monthly_salary'                      => 'nullable|array',
                 'monthly_salary.*'                    => 'nullable|numeric|min:0',
                 'salary_grade'                        => 'nullable|array',
@@ -997,7 +997,7 @@ class EmployeeController extends Controller
             'voluntary_from_date'     => 'nullable|array',
             'voluntary_from_date.*'     => 'nullable|string|max:255',
             'voluntary_to_date'         => 'nullable|array',
-            'voluntary_to_date.*'       => 'nullable|string|max:255|after_or_equal:voluntary_from_date.*',
+            'voluntary_to_date.*'       => 'nullable|string|max:255',
             'voluntary_hours'           => 'nullable|array',
             'voluntary_hours.*'         => 'nullable|numeric|min:0',
             'position_nature_of_work'   => 'nullable|array',
@@ -1071,7 +1071,7 @@ class EmployeeController extends Controller
             'training_from_date'   => 'nullable|array',
             'training_from_date.*' => 'nullable|string|max:255',
             'training_to_date'     => 'nullable|array',
-            'training_to_date.*'   => 'nullable|string|max:255|after_or_equal:training_from_date.*',
+            'training_to_date.*'   => 'nullable|string|max:255',
             'training_hours'       => 'nullable|array',
             'training_hours.*'     => 'nullable|numeric|min:0',
             'type_of_ld'          => 'nullable|array',
@@ -1232,12 +1232,12 @@ class EmployeeController extends Controller
         DB::beginTransaction();
 
         try {
-
-
+            // Find the employee
             $employee = Employee::where('emp_id', $request->emp_id)->firstOrFail();
 
             $educationIds = [];
 
+            // Process each education level
             if (!empty($validatedData['education_level'])) {
                 foreach ($validatedData['education_level'] as $index => $level) {
                     if (!empty(trim($level))) {
@@ -1247,15 +1247,15 @@ class EmployeeController extends Controller
                             'school_name'          => $validatedData['school_name'][$index] ?? null,
                             'year_from'            => $validatedData['year_from'][$index] ?? null,
                             'year_to'              => $validatedData['year_to'][$index] ?? null,
-                            'highest_units_earned' => $validatedData['highest_units_earned'][$index] ?? null,
+                            'highest_units_earned' => ($level != 'Graduate Studies') ? ($validatedData['highest_units_earned'][$index] ?? null) : null, // Ignore for Graduate Studies
                             'year_graduated'       => $validatedData['year_graduated'][$index] ?? null,
                             'scholarship_honors'   => $validatedData['scholarship_honors'][$index] ?? null,
                         ];
 
-                        // If an ID is present, update; if not, create
-                        if (!empty($validatedData['emp_id'][$index] ?? null)) {
+                        // If an education record has a valid ID, update it, otherwise create a new one
+                        if (!empty($validatedData['education_id'][$index] ?? null)) {
                             $education = $employee->education()->updateOrCreate(
-                                ['id' => $validatedData['emp_id'][$index]],
+                                ['id' => $validatedData['education_id'][$index]],
                                 $educationData
                             );
                         } else {
@@ -1267,6 +1267,7 @@ class EmployeeController extends Controller
                 }
             }
 
+            // Remove education records that are no longer present in the request
             $employee->education()->whereNotIn('id', $educationIds)->delete();
 
             DB::commit();
@@ -1287,6 +1288,7 @@ class EmployeeController extends Controller
             return redirect()->back()->withInput();
         }
     }
+
     /** /Update Record For Education Info */
 
 
@@ -1318,7 +1320,6 @@ class EmployeeController extends Controller
             $employee->trainings()->delete();
             $employee->otherInformations()->delete();
             $employee->user()->delete();
-            $employee->positionHistory()->delete();
             $employee->jobDetails()->delete();
 
             Leave::where('staff_id', $emp_id)->delete();
@@ -1940,76 +1941,7 @@ class EmployeeController extends Controller
 
     /** Page Designations */
 
-    public function getGraphData(Request $request)
-    {
-        $inputColumn = strtolower(str_replace(' ', '_', $request->input('column')));
-        $dbColumns = Schema::getColumnListing('employees');
-        $validColumns = array_map(fn($col) => strtolower($col), $dbColumns);
 
-        $bestMatch = null;
-        $highestSimilarity = 0;
-
-        foreach ($validColumns as $column) {
-            similar_text($inputColumn, $column, $percent);
-            if ($percent > $highestSimilarity) {
-                $highestSimilarity = $percent;
-                $bestMatch = $column;
-            }
-        }
-
-        if ($highestSimilarity < 60) {
-            return response()->json(['error' => 'Column not found'], 400);
-        }
-
-        $realColumnName = $dbColumns[array_search($bestMatch, $validColumns)];
-
-        $data = Employee::select($realColumnName, DB::raw('count(*) as count'))
-            ->groupBy($realColumnName)
-            ->get();
-
-        $graphData = [
-            'labels' => $data->pluck($realColumnName)->toArray(),
-            'values' => $data->pluck('count')->toArray()
-        ];
-
-        $graph = GraphData::create([
-            'graph_type' => $request->input('graph_type'),
-            'filter_column' => $realColumnName,
-            'data' => json_encode($graphData),
-        ]);
-
-        return response()->json([
-            'message' => 'Graph saved successfully!',
-            'graph_id' => $graph->id,
-            'labels' => $graphData['labels'],
-            'values' => $graphData['values']
-        ]);
-    }
-
-    public function deleteGraph($graphId)
-    {
-        $graph = GraphData::findOrFail($graphId);
-        $graph->delete();
-
-        return response()->json(['message' => 'Graph deleted successfully']);
-    }
-
-    public function getAllStoredGraphs()
-    {
-        $graphs = GraphData::all(); // Fetch all graphs
-
-        return response()->json($graphs->map(function ($graph) {
-            $formattedColumn = ucwords(str_replace('_', ' ', $graph->filter_column));
-
-            return [
-                'id' => $graph->id,
-                'graph_type' => $graph->graph_type,
-                'labels' => json_decode($graph->data, true)['labels'] ?? [],
-                'values' => json_decode($graph->data, true)['values'] ?? [],
-                'filter_column' => $formattedColumn
-            ];
-        }));
-    }
 
 
 

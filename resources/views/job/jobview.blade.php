@@ -186,7 +186,7 @@
     <div class="header">
         <!-- Logo -->
         <div class="header-left">
-            <a href="{{ route('login') }}" class="logo">
+            <a href="{{ url('/') }}" class="logo">
                 @php
                 use App\Models\CompanySettings;
                 $company = CompanySettings::first();
@@ -343,7 +343,7 @@
                         <div class="modal-btn delete-action">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="button" id="agreePrivacy" class="btn btn-primary continue-btn submit-btn">I Agree</button>
+                                    <button style="width: 100%;" type="button" id="agreePrivacy" class="btn btn-primary continue-btn">I Agree</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Decline</a>

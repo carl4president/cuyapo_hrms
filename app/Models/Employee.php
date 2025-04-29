@@ -103,8 +103,8 @@ class Employee extends Model
 
         self::creating(function ($model) {
             $latestEmployee = self::orderBy('emp_id', 'desc')->first();
-            $nextID = $latestEmployee ? intval(substr($latestEmployee->emp_id, 3)) + 1 : 1;
-            $model->emp_id = 'KH-' . sprintf("%04d", $nextID);
+            $nextID = $latestEmployee ? intval(substr($latestEmployee->emp_id, 4)) + 1 : 1;
+            $model->emp_id = 'CYP-' . sprintf("%04d", $nextID);
 
             \Log::info('Generated emp_id: ' . $model->emp_id); // Debugging log
 
@@ -113,7 +113,7 @@ class Employee extends Model
                 \DB::table('users')->where('user_id', $model->emp_id)->exists() // Check in users table
             ) {
                 $nextID++;
-                $model->emp_id = 'KH-' . sprintf("%04d", $nextID);
+                $model->emp_id = 'CYP-' . sprintf("%04d", $nextID);
                 \Log::info('Retrying emp_id: ' . $model->emp_id);
             }
         });

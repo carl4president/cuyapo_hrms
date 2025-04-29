@@ -187,10 +187,10 @@
                                 <td>
                                     @foreach($profiles as $key => $profile)
                                     <h2 class="table-avatar">
-                                        <a href="#" class="avatar">
+                                        <a href="{{ (auth()->user()->role_name == 'Super Admin' || auth()->user()->role_name == 'Admin') ? url('all/employee/view/edit/'.$items->staff_id) : '#' }}" class="avatar">
                                             <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
                                         </a>
-                                        <a href="#">{{ $items->employee_name }}<span>{{ $profile->position }}</span></a>
+                                        <a href="{{ (auth()->user()->role_name == 'Super Admin' || auth()->user()->role_name == 'Admin') ? url('all/employee/view/edit/'.$items->staff_id) : '#' }}">{{ $items->employee_name }}<span>{{ $profile->position }}</span></a>
                                     </h2>
                                     @endforeach
                                 </td>
@@ -269,10 +269,10 @@
                                 <td style="pointer-events: none; opacity: 0.5;">
                                     @foreach($profiles as $profile)
                                     <h2 class="table-avatar">
-                                        <a href="#" class="avatar">
+                                        <a href="{{ (auth()->user()->role_name == 'Super Admin' || auth()->user()->role_name == 'Admin') ? url('all/employee/view/edit/'.$items->staff_id) : '#' }}" class="avatar">
                                             <img src="{{ URL::to('/assets/images/'.$profile->avatar) }}" alt="">
                                         </a>
-                                        <a href="#">{{ $items->employee_name }}<span>{{ $profile->position }}</span></a>
+                                        <a href="{{ (auth()->user()->role_name == 'Super Admin' || auth()->user()->role_name == 'Admin') ? url('all/employee/view/edit/'.$items->staff_id) : '#' }}">{{ $items->employee_name }}<span>{{ $profile->position }}</span></a>
                                     </h2>
                                     @endforeach
                                 </td>
@@ -358,17 +358,6 @@
                                     <label>Leave Type <span class="text-danger">*</span></label>
                                     <select class="select" id="leave_type" name="leave_type">
                                         <option selected disabled>Select Leave Type</option>
-                                        @php
-                                        $currentYear = date('Y');
-                                        @endphp
-                                        @foreach($leaveInformation as $key => $leaves)
-                                        @if($leaves->leave_type != 'Total Leave Balance' &&
-                                        $leaves->leave_type != 'Use Leave' &&
-                                        $leaves->leave_type != 'Remaining Leave' &&
-                                        isset($leaves->year_leave) && $leaves->year_leave == $currentYear)
-                                        <option value="{{ $leaves->leave_type }}">{{ $leaves->leave_type }}</option>
-                                        @endif
-                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -464,6 +453,18 @@
                                 <div class="form-check">
                                     <input type="checkbox" class="form-check-input" name="study_reason[]" value="BAR/Board Examination Review" id="study_bar">
                                     <label class="form-check-label" for="study_bar">BAR/Board Examination Review</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div id="commutation_select" class="col-md-12">
+                                <div class="form-group">
+                                    <label>Commutation <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="commutation" id="commutation">
+                                        <option value="" selected disabled>-- Select Commutation --</option>
+                                        <option value="Requested">Requested</option>
+                                        <option value="Not Requested">Not Requested</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -611,6 +612,19 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div id="commutation_select" class="col-md-12">
+                                <div class="form-group">
+                                    <label>Commutation <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="commutation" id="edit_commutation">
+                                        <option value="" selected disabled>-- Select Commutation --</option>
+                                        <option value="Requested" {{ old('commutation') == 'Requested' ? 'selected' : '' }}>Requested</option>
+                                        <option value="Not Requested" {{ old('commutation') == 'Not Requested' ? 'selected' : '' }}>Not Requested</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="submit-section">
                             <button type="submit" id="editleave" class="btn btn-primary submit-btn">Submit</button>
                         </div>
@@ -636,7 +650,7 @@
                         <div class="modal-btn delete-action">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Approve</button>
+                                    <button style="width: 100%;" type="submit" class="btn btn-primary continue-btn">Approve</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -676,7 +690,7 @@
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Decline</button>
+                                    <button style="width: 100%;" type="submit" class="btn btn-primary continue-btn">Decline</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -705,7 +719,7 @@
                         <div class="modal-btn delete-action">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" class="btn btn-primary continue-btn submit-btn">Mark as Pending</button>
+                                    <button style="width: 100%;" type="submit" class="btn btn-primary continue-btn">Mark as Pending</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -736,7 +750,7 @@
                             <input type="hidden" name="id" class="e_id">
                             <div class="row">
                                 <div class="col-6">
-                                    <button type="submit" id="delete_leave" class="btn btn-primary continue-btn submit-btn">Delete</button>
+                                    <button style="width: 100%;" type="submit" id="delete_leave" class="btn btn-primary continue-btn">Delete</button>
                                 </div>
                                 <div class="col-6">
                                     <a href="javascript:void(0);" data-dismiss="modal" class="btn btn-primary cancel-btn">Cancel</a>
@@ -756,27 +770,36 @@
 
 <script>
     $(document).ready(function() {
-        $('form').on('submit', function() {
-            // General button finder inside the submitting form
+        $('form').on('submit', function(e) {
             var $submitBtn = $(this).find('button[type="submit"].submit-btn');
 
-            if ($submitBtn.length) {
-                let originalText = $submitBtn.text().trim().toLowerCase();
+            // Check for validation errors before proceeding
+            var formValid = $(this).valid(); // Check if the form is valid (no errors)
 
-                if (originalText.includes('apply') || originalText.includes('edit') || originalText.includes('submit')) {
-                    $submitBtn.prop('disabled', true).text('Submitting...');
-                } else if (originalText.includes('delete')) {
-                    $submitBtn.prop('disabled', true).text('Deleting...');
-                } else if (originalText.includes('approve')) {
-                    $submitBtn.prop('disabled', true).text('Approving...');
-                } else if (originalText.includes('decline')) {
-                    $submitBtn.prop('disabled', true).text('Declining...');
-                } else if (originalText.includes('pending')) {
-                    $submitBtn.prop('disabled', true).text('Marking...');
-                } else {
-                    // fallback
-                    $submitBtn.prop('disabled', true).text('Processing...');
+            if (formValid) {
+                // Proceed with changing the button's state
+                if ($submitBtn.length) {
+                    let originalText = $submitBtn.text().trim().toLowerCase();
+
+                    // Change the button text and disable based on its current text
+                    if (originalText.includes('apply') || originalText.includes('edit') || originalText.includes('submit')) {
+                        $submitBtn.prop('disabled', true).text('Submitting...');
+                    } else if (originalText.includes('delete')) {
+                        $submitBtn.prop('disabled', true).text('Deleting...');
+                    } else if (originalText.includes('approve')) {
+                        $submitBtn.prop('disabled', true).text('Approving...');
+                    } else if (originalText.includes('decline')) {
+                        $submitBtn.prop('disabled', true).text('Declining...');
+                    } else if (originalText.includes('pending')) {
+                        $submitBtn.prop('disabled', true).text('Marking...');
+                    } else {
+                        // fallback
+                        $submitBtn.prop('disabled', true).text('Processing...');
+                    }
                 }
+            } else {
+                // If there are validation errors, prevent form submission
+                e.preventDefault();
             }
         });
     });
@@ -1100,6 +1123,7 @@
                     $("#edit_date_from").val(leave.date_from);
                     $("#edit_date_to").val(leave.date_to);
                     $("#edit_number_of_day").val(leave.number_of_day);
+                    $("#edit_commutation").val(leave.commutation);
 
                     renderLeaveDetails(leave);
 
@@ -1358,6 +1382,7 @@
 
     // ✅ Update remaining leave count
     function updateeditRemainingLeave(numDays) {
+        $('#edit_counter_remaining_leave').val('Loading...');
         $.post(urlEdit, {
             number_of_day: numDays
             , date_from: $('#edit_date_from').val()
@@ -1416,6 +1441,7 @@
             return $(this).val(); // Collect selected study reasons
         }).get();
 
+        var commutation = $("#edit_commutation").val();
         // Sending the data via POST request
         $.post("{{ route('form/leaves/edit') }}", {
                 leave_id: leave_id
@@ -1433,7 +1459,8 @@
                 illness_specify: illness_specify, // Adding illness specify
                 women_illness: women_illness, // Adding women illness
                 study_reason: study_reason, // Adding study reason
-                _token: $('meta[name="csrf-token"]').attr('content')
+                commutation: commutation
+                , _token: $('meta[name="csrf-token"]').attr('content')
             })
             .done(function(response) {
                 // ✅ Force a full-page reload to display flash messages
@@ -1458,6 +1485,7 @@
         var leaveType = $('#leave_type').val();
         var numberOfDay = $('#number_of_day').val();
         var staffId = $('#employee_id').val();
+        $('#counter_remaining_leave').val('Loading...');
         $.post(url, {
             leave_type: leaveType
             , staff_id: staffId
@@ -1599,6 +1627,7 @@
 
     // Function to update remaining leave
     function updateRemainingLeave(numDays) {
+        $('#counter_remaining_leave').val('Loading...');
         $.post(url, {
             number_of_day: numDays
             , staff_id: $('#employee_id').val()
@@ -1679,12 +1708,16 @@
                 , date_to: {
                     required: true
                 }
+                , commutation: {
+                    required: true
+                , }
             }
             , messages: {
                 employee_name: "Please select employee name"
                 , leave_type: "Please select leave type"
                 , date_from: "Please select date from"
                 , date_to: "Please select date to"
+                , commutation: "Please select commutation"
             }
             , errorElement: 'span'
             , errorClass: 'text-danger'

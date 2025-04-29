@@ -112,7 +112,7 @@
     <div class="header">
         <!-- Logo -->
         <div class="header-left">
-            <a href="{{ route('login') }}" class="logo">
+            <a href="{{ url('/') }}" class="logo">
                 @php
                     use App\Models\CompanySettings;
                     $company = CompanySettings::first();

@@ -80,17 +80,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::get('company/settings/page', 'companySettings')->name('company/settings/page');
             /** index page */
             Route::post('company/settings/save', 'saveRecord')->name('company/settings/save');
-            /** save record or update */
-            Route::get('roles/permissions/page', 'rolesPermissions')->name('roles/permissions/page');
-            Route::post('roles/permissions/save', 'addRecord')->name('roles/permissions/save');
-            Route::post('roles/permissions/update', 'editRolesPermissions')->name('roles/permissions/update');
-            Route::post('roles/permissions/delete', 'deleteRolesPermissions')->name('roles/permissions/delete');
-            Route::get('localization/page', 'localizationIndex')->name('localization/page');
-            /** index page localization */
-            Route::get('salary/settings/page', 'salarySettingsIndex')->name('salary/settings/page');
-            /** index page salary settings */
-            Route::get('email/settings/page', 'emailSettingsIndex')->name('email/settings/page');
-            /** index page email settings */
         });
     });
 
@@ -105,7 +94,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::post('user/delete', 'delete')->name('user/delete');
             Route::get('change/password', 'changePasswordView')->name('change/password');
             Route::post('change/password/db', 'changePasswordDB')->name('change/password/db');
-            Route::post('user/profile/emergency/contact/save', 'emergencyContactSaveOrUpdate')->name('user/profile/emergency/contact/save');
             /** save or update emergency contact */
             Route::get('get-users-data', 'getUsersData')->name('get-users-data');
             /** get all data users */
@@ -122,15 +110,7 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
         Route::post('get/information/apppos', 'getInformationApppos')->name('hr/get/information/apppos');
         
         Route::middleware('auth')->group(function () {
-            Route::get('user/dashboard/index', 'userDashboard')->name('user/dashboard/index');
             Route::get('jobs/dashboard/index', 'jobsDashboard')->name('jobs/dashboard/index');
-            Route::get('user/dashboard/all', 'userDashboardAll')->name('user/dashboard/all');
-            Route::get('user/dashboard/save', 'userDashboardSave')->name('user/dashboard/save');
-            Route::get('user/dashboard/applied/jobs', 'userDashboardApplied')->name('user/dashboard/applied/jobs');
-            Route::get('user/dashboard/interviewing', 'userDashboardInterviewing')->name('user/dashboard/interviewing');
-            Route::get('user/dashboard/offered/jobs', 'userDashboardOffered')->name('user/dashboard/offered/jobs');
-            Route::get('user/dashboard/visited/jobs', 'userDashboardVisited')->name('user/dashboard/visited/jobs');
-            Route::get('user/dashboard/archived/jobs', 'userDashboardArchived')->name('user/dashboard/archived/jobs');
             Route::get('jobs', 'Jobs')->name('jobs');
             Route::get('jobsTypes', 'JobsTypes')->name('jobsTypes');
             Route::post('form/jobTypes/save', 'JobTypesSaveRecord')->name('form/jobTypes/save');
@@ -139,17 +119,10 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::get('job/applicants/{job_title}', 'jobApplicants');
             Route::get('applicant/view/edit/{applicant_id}', 'viewRecord');
             Route::get('job/details/{id}', 'jobDetails');
-            Route::get('cv/download/{id}', 'downloadCV');
             Route::post('form/jobs/save', 'JobsSaveRecord')->name('form/jobs/save');
             Route::post('form/apply/job/update', 'applyJobUpdateRecord')->name('form/apply/job/update');
             Route::post('form/apply/job/delete', 'applyJobDeleteRecord')->name('form/apply/job/delete');
             Route::get('page/shortlist/candidates', 'shortlistCandidatesIndex')->name('page/shortlist/candidates');
-            Route::get('page/interview/questions', 'interviewQuestionsIndex')->name('page/interview/questions'); // view page
-            Route::post('save/category', 'categorySave')->name('save/category'); // save record category
-            Route::post('save/questions', 'questionSave')->name('save/questions'); // save record questions
-            Route::post('questions/update', 'questionsUpdate')->name('questions/update'); // update question
-            Route::post('questions/delete', 'questionsDelete')->name('questions/delete'); // delete question
-            Route::get('page/offer/approvals', 'offerApprovalsIndex')->name('page/offer/approvals');
             Route::get('page/rejected/applicant', 'rejectedApplicantIndex')->name('page/rejected/applicant');
             Route::get('page/candidates', 'candidatesIndex')->name('page/candidates');
             Route::post('save/candidates', 'saveRecord')->name('all/applicant/save');
@@ -200,9 +173,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                 Route::post('/delete/{employee_id}', 'deleteRecord')->name('employee/delete');
                 Route::post('/search', 'employeeSearch')->name('all/employee/search');
                 Route::post('/list/search', 'employeeListSearch')->name('all/employee/list/search');
-                Route::post('/employee-graph', 'getGraphData')->name('all/employee/graph/data');
-                Route::get('/employee-storedgraph', 'getAllStoredGraphs')->name('all/employee/storedgraph/data');
-                Route::delete('/delete-graph/{graphId}', 'deleteGraph')->name('all/employee/delete-graph');
             });
             Route::prefix('form')->group(function () {
                 // ----------------------- Departments -------------------------
@@ -226,20 +196,6 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
                     Route::post('/update', 'updateRecordPositions')->name('form/positions/update');
                     Route::post('/delete', 'deleteRecordPositions')->name('form/positions/delete');
                     Route::get('/check-position-employees/{id}', 'checkPositionEmployees')->name('check/employeesPosition');
-                });
-                // ------------------------- Time Sheet -----------------------
-                Route::prefix('timesheet')->group(function () {
-                    Route::get('/page', 'timeSheetIndex')->name('form/timesheet/page');
-                    Route::post('/save', 'saveRecordTimeSheets')->name('form/timesheet/save');
-                    Route::post('/update', 'updateRecordTimeSheets')->name('form/timesheet/update');
-                    Route::post('/delete', 'deleteRecordTimeSheets')->name('form/timesheet/delete');
-                });
-                // ------------------------ Over Time -------------------------
-                Route::prefix('overtime')->group(function () {
-                    Route::get('/page', 'overTimeIndex')->name('form/overtime/page');
-                    Route::post('/save', 'saveRecordOverTime')->name('form/overtime/save');
-                    Route::post('/update', 'updateRecordOverTime')->name('form/overtime/update');
-                    Route::post('/delete', 'deleteRecordOverTime')->name('form/overtime/delete');
                 });
             });
             // ------------------------- Profile Employee --------------------------//
@@ -295,60 +251,17 @@ Route::group(['namespace' => 'App\Http\Controllers'], function () {
             Route::get('get/session_user_id', 'getSessionUserId')->name('hr/get/userId');
             Route::get('leave/details/{id}', 'leaveDetails');
             Route::get('form/leavesettings/page', 'leaveSettings')->name('form/leavesettings/page');
-            Route::get('attendance/page', 'attendanceIndex')->name('attendance/page');
-            Route::get('attendance/employee/page', 'AttendanceEmployee')->name('attendance/employee/page');
-            Route::get('form/shiftscheduling/page', 'shiftScheduLing')->name('form/shiftscheduling/page');
-            Route::get('form/shiftlist/page', 'shiftList')->name('form/shiftlist/page');
         });
     });
 
-    // ------------------------- Form Payroll ---------------------------//
 
 
     // ---------------------------- Reports  ----------------------------//
     Route::controller(ExpenseReportsController::class)->group(function () {
-        Route::get('form/expense/reports/page', 'index')->middleware('auth')->name('form/expense/reports/page');
-        Route::get('form/invoice/reports/page', 'invoiceReports')->middleware('auth')->name('form/invoice/reports/page');
-        Route::get('form/daily/reports/page', 'dailyReport')->middleware('auth')->name('form/daily/reports/page');
-        Route::get('form/leave/reports/page', 'leaveReport')->middleware('auth')->name('form/leave/reports/page');
-        Route::get('form/payments/reports/page', 'paymentsReportIndex')->middleware('auth')->name('form/payments/reports/page');
         Route::get('form/employee/reports/page', 'employeeReportsIndex')->middleware('auth')->name('form/employee/reports/page');
-        Route::get('form/payslip/reports/page', 'payslipReports')->middleware('auth')->name('form/payslip/reports/page');
-        Route::get('form/attendance/reports/page', 'attendanceReports')->middleware('auth')->name('form/attendance/reports/page');
+        Route::post('/employee-graph', 'getGraphData')->name('all/employee/graph/data');
+        Route::get('/employee-storedgraph', 'getAllStoredGraphs')->name('all/employee/storedgraph/data');
+        Route::delete('/delete-graph/{graphId}', 'deleteGraph')->name('all/employee/delete-graph');
     });
 
-    // --------------------------- Performance  -------------------------//
-    
-
-    // --------------------------- Training  ----------------------------//
-    
-
-    // --------------------------- Trainers  ----------------------------//
-    
-
-    // ------------------------- Training Type  -------------------------//
-    
-
-    // ----------------------------- Sales  ----------------------------//
-
-    // ---------------------- Personal Information ----------------------//
-    Route::controller(PersonalInformationController::class)->group(function () {
-        Route::middleware('auth')->group(function () {
-            Route::post('user/information/save', 'saveRecord')->name('user/information/save');
-        });
-    });
-
-    // ---------------------- Bank Information  -----------------------//
-    Route::controller(BankInformationController::class)->group(function () {
-        Route::middleware('auth')->group(function () {
-            Route::post('bank/information/save', 'saveRecord')->name('bank/information/save');
-        });
-    });
-
-    // ---------------------- Chat -----------------------//
-    Route::controller(ChatController::class)->group(function () {
-        Route::middleware('auth')->group(function () {
-            Route::get('chat', 'chat')->name('chat');
-        });
-    });
 });

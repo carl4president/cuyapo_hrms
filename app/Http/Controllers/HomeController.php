@@ -337,56 +337,82 @@ class HomeController extends Controller
 
     private function getHiringChartData($employees)
     {
-        return $employees->filter(fn($e) => $e->employment && $e->employment->date_hired)
-            ->filter(fn($e) => Carbon::parse($this->formatDate($e->employment->date_hired))->year <= now()->year)
+        $earliestYear = $employees->min(function ($employee) {
+            $datetime = $this->formatDate($employee->employment->date_hired);
+            try {
+                return Carbon::createFromFormat('Y-m-d', $datetime)->year;
+            } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+                return null;
+            }
+        });
+
+        $latestYear = $employees->max(function ($employee) {
+            $datetime = $this->formatDate($employee->employment->date_hired);
+            try {
+                return Carbon::createFromFormat('Y-m-d', $datetime)->year;
+            } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+                return null;
+            }
+        });
+
+        $yearRanges = [];
+        $startYear = $earliestYear;
+
+        while ($startYear <= $latestYear) {
+            $endYear = $startYear + 4; 
+            if ($endYear > $latestYear) {
+                $endYear = $latestYear;
+            }
+            $yearRanges[] = "$startYear-$endYear";
+            $startYear = $endYear + 1;
+        }
+
+        $groupedData = $employees->filter(fn($e) => $e->employment && $e->employment->date_hired)
+            ->filter(fn($e) => Carbon::createFromFormat('Y-m-d', $this->formatDate($e->employment->date_hired))
+                ->year <= now()->year)
             ->groupBy(function ($employee) {
-                $year = Carbon::parse($this->formatDate($employee->employment->date_hired))->year;
+                $datetime = $this->formatDate($employee->employment->date_hired);
+                $year = Carbon::createFromFormat('Y-m-d', $datetime)->year;
 
-                // Calculate the start of the 5-year range (e.g., 1970, 1976, 1981, ...)
-                $startRange = floor(($year - 1) / 5) * 5 + 1;  // Start the range from the first year of the range (e.g., 1970, 1976)
-                $endRange = $startRange + 4;  // The end of the 5-year range (e.g., 1975, 1980)
+                $startRange = floor(($year - 1) / 5) * 5 + 1; 
+                $endRange = $startRange + 4;
 
-                return "$startRange-$endRange";
-            })
-            ->map(function ($group, $range) {
-                $activeCount = 0;
-                $inactiveCount = 0;
-                $resignationCount = 0;
+                return "$startRange-" . ($endRange > 2025 ? 2025 : $endRange);
+            });
 
-                foreach ($group as $employee) {
-                    // Check user status and increment counters accordingly
-                    $user = $employee->user;
+        $finalData = $groupedData->map(function ($group, $range) {
+            $activeCount = 0;
+            $inactiveCount = 0;
+            $resignationCount = 0;
 
-                    if ($user->status === 'Active' || $user->status === 'Inactive') {
-                        // Count based on the date_hired for active and inactive
-                        $activeCount++;
-                    } elseif ($user->status === 'Disabled') {
-                        // Count based on updated_at (resignation date) for disabled employees
-                        $resignationCount++;
-                    }
+            foreach ($group as $employee) {
+                $user = $employee->user;
+
+                if ($user->status === 'Active' || $user->status === 'Inactive') {
+                    $activeCount++;
+                } elseif ($user->status === 'Disabled') {
+                    $resignationCount++;
                 }
+            }
 
-                return [
-                    'y' => $range,
-                    'onboard' => $activeCount + $inactiveCount, // Employee onboard count (active and inactive)
-                    'resigned' => $resignationCount, // Resigned employees
-                ];
-            })
+            return [
+                'y' => $range,
+                'onboard' => $activeCount + $inactiveCount,
+                'resigned' => $resignationCount,
+            ];
+        })
             ->sortKeys()
             ->values();
+
+        return $finalData;
     }
-
-
 
 
 
     private function formatDate($date)
     {
-        try {
-            return Carbon::parse($date);
-        } catch (\Exception $e) {
-            return Carbon::createFromFormat('d M, Y', $date);
-        }
+        // Convert '02 APR, 2025' to '2025-04-02'
+        return Carbon::createFromFormat('d M, Y', $date)->format('Y-m-d');
     }
 
 
@@ -563,7 +589,7 @@ class HomeController extends Controller
         // Monitor the current user's leave status
         $userId = auth()->user()->user_id;
 
-        $leaveBalance = LeaveBalance::where('staff_id', $userId)->first();
+        $leaveBalances = LeaveBalance::where('staff_id', $userId)->get();
 
         $pendingLeavesCount = Leave::where('staff_id', $userId)
             ->where('status', 'Pending')
@@ -582,8 +608,8 @@ class HomeController extends Controller
         // Calculate total leave days by summing all leave types
         $totalLeaveDays = $leaveInformation->sum('leave_days');
 
-        // Calculate the total leave taken (used_leave_days) and remaining leave
-        $leaveTaken = $leaveBalance ? $leaveBalance->used_leave_days : 0;
+        $leaveTaken = $leaveBalances->sum('used_leave_days');
+
         $remainingLeave = $totalLeaveDays - $leaveTaken;
 
         $employeeId = auth()->user()->user_id;

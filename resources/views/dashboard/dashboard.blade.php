@@ -88,7 +88,7 @@
                     <div class="col-md-6 text-center">
                         <div class="card">
                             <div class="card-body">
-                                <h3 class="card-title">Employees Hired Per Decade (Onboard vs Resigned)</h3>
+                                <h3 class="card-title">Employee Onboard vs Resigned (5-Year Periods)</h3>
                                 <div id="gender-date-hired-line-charts-container" style="overflow-x: auto;">
                                     <div id="gender-date-hired-line-charts" style="height: 300px;"></div>
                                 </div>
@@ -106,7 +106,7 @@
                         <div class="d-flex justify-content-between mb-3 align-items-start">
                             <div>
                                 <i class="fa fa-calendar text-primary me-1" data-bs-toggle="tooltip" title="New leave requests vs All-Time leave count"></i>
-                                <span class="d-block">New Leave Requests</span>
+                                <span class="d-block">This Month New Leave</span>
                             </div>
                             <div>
                                 <span class="{{ $leaveStatistics['newPercentageChange'] >= 0 ? 'text-success' : 'text-danger' }}">
@@ -130,7 +130,7 @@
                         <div class="d-flex justify-content-between mb-3 align-items-start">
                             <div>
                                 <i class="fa fa-clock-o text-warning me-1" data-bs-toggle="tooltip" title="Pending leave requests vs all-time leave count"></i>
-                                <span class="d-block">Pending Leaves</span>
+                                <span class="d-block" style="font-size: 13px;">This Month Pending Leaves</span>
                             </div>
                             <div>
                                 <span class="{{ $leaveStatistics['pendingPercentageChange'] >= 0 ? 'text-success' : 'text-danger' }}">
@@ -233,7 +233,7 @@
 
 
             <!-- Department & Designation Overview -->
-            <div class="col-md-12 col-lg-6 col-xl-4 d-flex">
+            <div class="col-12 col-md-6 col-lg-4 d-flex">
                 <div class="card flex-fill">
                     <div class="card-body">
                         <h4 class="card-title">Department Overview</h4>
@@ -255,33 +255,46 @@
                             </div>
                         </div>
 
-                        <!-- Scrollable progress section -->
-                        <div class="progress mb-4">
+                        @php
+                        // List of colors for departments
+                        $colors = [ '#6f42c1', '#28a745', '#ffc107', '#17a2b8', '#dc3545', '#007bff', '#6c757d', '#343a40', '#fd7e14', '#20c997', '#6610f2', '#e83e8c', '#ff5733', '#c70039', '#900c3f', '#3c763d', '#5bc0de', '#f39c12', '#2c3e50', '#f1c40f' ];
+                        @endphp
+
+                        <!-- Progress section -->
+                        <div class="progress mb-4" style="height: 15px;">
                             @foreach($departmentProgress as $dept)
-                            <div class="progress-bar 
-                        {{ $loop->iteration == 1 ? 'bg-purple' : ($loop->iteration == 2 ? 'bg-success' : 'bg-warning') }}" role="progressbar" style="width: {{ $dept['percentage'] }}%" aria-valuenow="{{ $dept['percentage'] }}" aria-valuemin="0" aria-valuemax="100">
-                                {{ $dept['percentage'] }}%
+                            @php
+                            $color = $colors[$loop->index % count($colors)];
+                            @endphp
+                            <div class="progress-bar" role="progressbar" style="width: {{ $dept['percentage'] }}%; background-color: {{ $color }};" aria-valuenow="{{ $dept['percentage'] }}" aria-valuemin="0" aria-valuemax="100" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $dept['percentage'] }}%">
                             </div>
                             @endforeach
                         </div>
 
-                        <!-- Scrollable department list -->
-                        <div style="max-height: 200px; overflow-y: auto;">
+                        <!-- Department list with scroll -->
+                        <div class="department-list" style="max-height: 200px; overflow-y: auto; font-size: 13px;">
                             @foreach($departmentProgress as $dept)
-                            <p class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="fa fa-dot-circle-o 
-                        {{ $loop->iteration == 1 ? 'text-purple' : ($loop->iteration == 2 ? 'text-success' : 'text-warning') }} me-2"></i>
+                            @php
+                            $color = $colors[$loop->index % count($colors)];
+                            @endphp
+                            <div class="d-flex align-items-center" style="margin-bottom: 8px;">
+                                <span style="width: 80%; align-items: center;">
+                                    <i class="fa fa-dot-circle-o me-2" style="color: {{ $color }};"></i>
                                     {{ $dept['name'] }}
                                 </span>
-                                <span>{{ $dept['staff_count'] }} Staff</span>
-                            </p>
+                                <span style="width: 20%; text-align: right;">
+                                    {{ $dept['staff_count'] }} Staff
+                                </span>
+                            </div>
                             @endforeach
                         </div>
 
                     </div>
                 </div>
             </div>
+
+
+
 
 
 
@@ -475,7 +488,7 @@
                                     'approved' => 'bg-inverse-success',
                                     'pending' => 'bg-inverse-warning',
                                     'rejected' => 'bg-inverse-danger',
-                                    default => 'bg-secondary',
+                                    default => 'bg-inverse-purple',
                                     };
 
                                     $formattedDateDateFrom = \Carbon\Carbon::parse($item->date_from)->format('d M, Y');
@@ -571,9 +584,13 @@
                                                     {{ round($employee->progressPercentageIncrement, 2) }}%
                                                 </div>
                                             </div>
-                                            @if($employee->stepIncrement > 0)
+                                            @if($employee->stepIncrement > 0 && $employee->stepIncrement < 8)
                                             <small>
                                                 Step increment of {{ $employee->nextStepIncrement }} will be awarded once the progress bar completes.
+                                            </small>
+                                            @elseif($employee->stepIncrement == 8)
+                                            <small>
+                                                The maximum step increment has been reached.
                                             </small>
                                             @else
                                             <small>
@@ -740,6 +757,10 @@
         const departmentGenderData = @json($departmentGenderChartData);
 
         if (Array.isArray(departmentGenderData) && departmentGenderData.length > 0) {
+            // Dynamically calculate the width of the chart based on the number of departments
+            const chartWidth = Math.max(1200, departmentGenderData.length * 60); // Adjust 60 for more width per department
+            const barWidth = Math.max(30, 1000 / departmentGenderData.length); // Reduce space between bars to increase visibility
+
             Morris.Bar({
                 element: 'gender-dep-bar-charts'
                 , data: departmentGenderData.map(dep => ({
@@ -754,7 +775,11 @@
                 resize: true, // Resize the chart on window resize
                 redraw: true, // Redraw the chart if necessary
                 xLabelAngle: 45, // Rotate x-axis labels for readability
-                hideHover: 'auto', // Hide hover effect on mobile screens
+                barWidth: barWidth, // Adjusted bar width
+                xLabelMargin: 10, // Increased space between bars
+                gridTextSize: 12, // Slightly larger font for better readability
+                width: chartWidth, // Dynamically set chart width
+                height: 400 // Set custom height for the bar chart (adjust as needed)
             });
         } else {
             console.error("Invalid or empty departmentGenderChartData:", departmentGenderData);
@@ -776,10 +801,8 @@
             lineWidth: 3
             , resize: true
             , redraw: true
-            , hideHover: 'auto'
+            , height: 300 // Set custom height for the line chart (adjust as needed)
         });
-
-
     });
 
 </script>

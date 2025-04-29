@@ -73,13 +73,13 @@ class User extends Authenticatable
 
         self::creating(function ($model) {
             $latestUser = self::orderBy('user_id', 'desc')->first();
-            $nextID = $latestUser ? intval(substr($latestUser->user_id, 3)) + 1 : 1;
-            $model->user_id = 'KH-' . sprintf("%04d", $nextID);
+            $nextID = $latestUser ? intval(substr($latestUser->user_id, 4)) + 1 : 1;
+            $model->user_id = 'CYP-' . sprintf("%04d", $nextID);
 
             // Ensure the user_id is unique
             while (self::where('user_id', $model->user_id)->exists()) {
                 $nextID++;
-                $model->user_id = 'KH-' . sprintf("%04d", $nextID);
+                $model->user_id = 'CYP-' . sprintf("%04d", $nextID);
             }
         });
     }

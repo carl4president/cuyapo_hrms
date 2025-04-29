@@ -87,7 +87,7 @@
         <div class="header">
             <!-- Logo -->
             <div class="header-left">
-                <a href="{{ Auth::user()->role_name === 'Admin' ? route('home') : route('em/dashboard') }}" class="logo">
+                <a href="{{ Auth::user()->role_name === 'Admin' || Auth::user()->role_name === 'Super Admin' ? route('home') : route('em/dashboard') }}" class="logo">
                     @if (!empty($company) && !empty($company->logo))
                     <img src="{{ asset('assets/images/' . $company->logo) }}" width="40" height="40" alt="">
                     @else

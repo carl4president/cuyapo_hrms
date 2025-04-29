@@ -9,7 +9,11 @@
                 <div class="col-sm-12">
                     <h3 class="page-title">Profile</h3>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item">@if (Auth::user()->role_name == 'Employee')
+                            <a href="{{ url('em/dashboard') }}">Dashboard</a>
+                            @else
+                            <a href="{{ route('home') }}">Dashboard</a>
+                            @endif</li>
                         <li class="breadcrumb-item active">Profile</li>
                     </ul>
                 </div>

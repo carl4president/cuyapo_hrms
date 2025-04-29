@@ -109,7 +109,7 @@
                     <div class="form-group form-focus select-focus">
                         <select name="leave_type" class="select floating">
                             <option value=""> -- Select -- </option>
-                            @foreach($leaveInformation as $leave)
+                            @foreach($leaveInformation->unique('leave_type') as $leave)
                             <option value="{{ $leave->leave_type }}">{{ $leave->leave_type }}</option>
                             @endforeach
                         </select>

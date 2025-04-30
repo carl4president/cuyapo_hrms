@@ -1105,6 +1105,7 @@ class LeavesController extends Controller
             // Get leave balance for the employee
             $leaveBalance = LeaveBalance::where('staff_id', $staffId)
                 ->where('leave_type', 'Vacation Leave')
+                ->whereYear('created_at', $currentYear)
                 ->latest('created_at')
                 ->first();
 
@@ -1122,12 +1123,13 @@ class LeavesController extends Controller
             
                 // Calculate the earned leave after deduction
                 $earnedLeaveAfterDeduction = $earnedLeave - $deduction;
-            
+                
                 // Update the leave record or insert if not present
-                $this->updateOrInsertLeaveRecord($staffId, $earnedLeaveAfterDeduction, $currentYear);
+                $this->updateOrInsertVacationLeaveRecord($staffId, $earnedLeaveAfterDeduction, $currentYear);
             } else {
                 // If no deduction, use the regular earned leave value
-                $this->updateOrInsertLeaveRecord($staffId, $earnedLeave, $currentYear);
+                $this->updateOrInsertVacationLeaveRecord($staffId, $earnedLeave, $currentYear);
+
             }
         }
 
@@ -1180,34 +1182,32 @@ class LeavesController extends Controller
             $earnedLeave = ceil($earnedLeaveRaw * 1000) / 1000; // Round up to 3 decimal places
 
 
-            $this->updateOrInsertLeaveRecord($staffId, $earnedLeave, $currentYear);
+            $this->updateOrInsertSickLeaveRecord($staffId, $earnedLeave, $currentYear);
         }
 
         return response()->json(['message' => 'Vacation leave assigned and adjusted successfully.']);
     }
 
     // Helper function to update or insert the leave record
-    private function updateOrInsertLeaveRecord($staffId, $leaveDays, $year)
+    private function updateOrInsertVacationLeaveRecord($staffId, $leaveDays, $year)
     {
-        // Check if a leave record exists for this staff_id and year_leave
+        // Check if vacation leave record exists
         $existingLeave = DB::table('leave_information')
             ->where('leave_type', 'Vacation Leave')
             ->where('year_leave', $year)
             ->whereJsonContains('staff_id', $staffId)
             ->first();
-
+    
         if (!$existingLeave) {
-            // Insert a new record if it doesn't exist
             DB::table('leave_information')->insert([
-                'staff_id'   => json_encode([$staffId]), // Store the staff_id as JSON
+                'staff_id'   => json_encode([$staffId]), 
                 'leave_type' => 'Vacation Leave',
-                'leave_days' => $leaveDays, // After deduction
+                'leave_days' => $leaveDays, 
                 'year_leave' => $year,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         } else {
-            // Update the existing record with the correct leave days
             DB::table('leave_information')
                 ->where('leave_type', 'Vacation Leave')
                 ->where('year_leave', $year)
@@ -1217,25 +1217,27 @@ class LeavesController extends Controller
                     'updated_at'  => now(),
                 ]);
         }
-
+    }
+    
+    private function updateOrInsertSickLeaveRecord($staffId, $leaveDays, $year)
+    {
+        // Check if sick leave record exists
         $existingSickLeave = DB::table('leave_information')
             ->where('leave_type', 'Sick Leave')
             ->where('year_leave', $year)
             ->whereJsonContains('staff_id', $staffId)
             ->first();
-
+    
         if (!$existingSickLeave) {
-            // Insert a new record if it doesn't exist
             DB::table('leave_information')->insert([
-                'staff_id'   => json_encode([$staffId]), // Store the staff_id as JSON
+                'staff_id'   => json_encode([$staffId]),
                 'leave_type' => 'Sick Leave',
-                'leave_days' => $leaveDays, // After deduction
+                'leave_days' => $leaveDays,
                 'year_leave' => $year,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         } else {
-            // Update the existing record with the correct leave days
             DB::table('leave_information')
                 ->where('leave_type', 'Sick Leave')
                 ->where('year_leave', $year)
@@ -1246,6 +1248,7 @@ class LeavesController extends Controller
                 ]);
         }
     }
+    
 
 
     public function updateMaPaternityLeaveSettings(Request $request)

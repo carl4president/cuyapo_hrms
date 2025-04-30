@@ -323,6 +323,41 @@
                         <div class="info-list text-center application-ends">
                             <a class="app-ends" href="#" id="countdown">Calculating...</a>
                         </div>
+                        <div class="info-list text-center mt-3">
+                            <p style="font-size: 12px;"> © <?php echo date("Y"); ?> Local Government Unit of Cuyapo & <a href="javascript:void(0);" data-toggle="modal" data-target="#creditsModal"> Team Cuyapo Olshco Interns (<?php echo date("Y"); ?>) </a> . All rights reserved. </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal custom-modal fade" id="creditsModal" tabindex="-1" aria-labelledby="creditsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true"><i class="fa fa-times"></i></span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-header mb-4">
+                            <h3 class="text-center mb-3">Developer Credits</h3>
+                            <ul class="text-justify" style="list-style-type: none; padding-left: 0;">
+                                <li class="text-center mb-4">
+                                    <img src="{{ asset('assets/img/yasay-credits.jpg') }}" alt="Carl John Quibuyen Yasay" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+                                    <div>
+                                        <strong>Carl John Quibuyen Yasay</strong><br>
+                                        <span>Main Programmer (Backend & Frontend Development), Cybersecurity Specialist</span>
+                                    </div>
+                                </li>
+                                <li class="text-center mb-4">
+                                    <img src="{{ asset('assets/img/lucas-credits.jpg') }}" alt="Jhon Henrick Surat Lucas" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+                                    <div>
+                                        <strong>Jhon Henrick Surat Lucas</strong><br>
+                                        <span>Cybersecurity Specialist</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

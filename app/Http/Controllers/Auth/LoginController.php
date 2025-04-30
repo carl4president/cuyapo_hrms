@@ -51,10 +51,6 @@ class LoginController extends Controller
         $departments = department::all();
         $typeJobs = TypeJob::all();
 
-        if ($employee->isEmpty() || $userList->isEmpty() || $departments->isEmpty() || $typeJobs->isEmpty()) {
-            abort(404); // Laravel's built-in 404 error
-        }
-
         return view('auth.login', compact('employee', 'userList', 'departments', 'typeJobs'));
     }
 

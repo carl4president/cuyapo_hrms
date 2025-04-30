@@ -25,7 +25,12 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-Auth::routes();
+Route::get('/login', function () {
+    return redirect()->route('login');
+});
+
+
+// Auth::routes();
 
 Route::group(['namespace' => 'App\Http\Controllers\Auth'], function () {
     // -----------------------------login--------------------------------------//

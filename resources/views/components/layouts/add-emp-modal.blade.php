@@ -1447,6 +1447,7 @@
 
 @section('script')
 
+
 <script>
     let currentStep = 1;
     const totalSteps = 13;
@@ -2017,6 +2018,22 @@
                     input.classList.add('is-invalid');
                     showValidationMessage(input, 'Please enter a valid email.');
                 }
+                // Birth date validation
+                else if (input.name === "birth_date" && inputValue !== "") {
+                    const birthDate = new Date(inputValue);
+                    const today = new Date();
+                    const minDate = new Date(today.getFullYear() - 15, today.getMonth(), today.getDate()); // 15 years ago from today
+
+                    if (birthDate > minDate) {
+                        valid = false;
+                        input.classList.add('is-invalid');
+                        showValidationMessage(input, 'You must be at least 15 years old.');
+                    } else {
+                        // Remove invalid class and validation message if validation passes
+                        input.classList.remove('is-invalid');
+                        removeValidationMessage(input);
+                    }
+                }
                 // Check number validation for height, weight, etc.
                 else if (validationRules.number && inputValue !== "" && !isValidNumber(input, validationRules)) {
                     valid = false;
@@ -2028,6 +2045,10 @@
                     valid = false;
                     input.classList.add('is-invalid');
                     showValidationMessage(input, `Please enter a valid ${input.name}.`);
+                } else if (validationRules.pattern && inputValue !== "" && !validationRules.pattern.test(inputValue)) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                    showValidationMessage(input, validationRules.message || `Please enter a valid ${input.name}.`);
                 } else {
                     // Remove invalid class and validation message if validation passes
                     input.classList.remove('is-invalid');
@@ -2083,12 +2104,18 @@
         const rules = {
             "fname": {
                 required: true
+                , pattern: /^[A-Za-z\s.,\/]+$/
+                , message: "Please enter a valid first name."
             }
             , "mname": {
                 required: true
+                , pattern: /^[A-Za-z\s.,\/]+$/
+                , message: "Please enter a valid middle name."
             }
             , "lname": {
                 required: true
+                , pattern: /^[A-Za-z\s.,\/]+$/
+                , message: "Please enter a valid surname."
             }
             , "email": {
                 required: true
@@ -2145,7 +2172,7 @@
             , "phone_number": {
                 required: true
                 , digits: true
-                , minlength: 11
+                , minlength: 7
                 , maxlength: 11
             }
             , "mobile_number": {
@@ -2156,12 +2183,18 @@
             }
             , "father_name": {
                 required: true
+                , pattern: /^[A-Za-z\s.,\/]+$/
+                , message: "Please enter a valid name."
             }
             , "mother_name": {
                 required: true
+                , pattern: /^[A-Za-z\s.,\/]+$/
+                , message: "Please enter a valid name."
             }
             , "child_name[]": {
                 required: true
+                , pattern: /^[A-Za-z\s.,\/]+$/
+                , message: "Please enter a valid name."
             }
             , "child_birthdate[]": {
                 required: true
@@ -2659,13 +2692,13 @@
                     required: true
                     , digits: true
                     , minlength: 7
-                    , maxlength: 15
+                    , maxlength: 11
                 }
                 , "mobile_number": {
                     required: true
                     , digits: true
-                    , minlength: 10
-                    , maxlength: 15
+                    , minlength: 11
+                    , maxlength: 11
                 }
                 , "father_name": {
                     required: true
@@ -2842,13 +2875,13 @@
                     required: "Please enter your phone number"
                     , digits: "Phone number must be numeric"
                     , minlength: "Phone number must be at least 7 digits"
-                    , maxlength: "Phone number can be a maximum of 15 digits"
+                    , maxlength: "Phone number must not exceed 11 digits"
                 }
                 , "mobile_number": {
                     required: "Please enter your mobile number"
                     , digits: "Mobile number must be numeric"
-                    , minlength: "Mobile number must be at least 10 digits"
-                    , maxlength: "Mobile number can be a maximum of 15 digits"
+                    , minlength: "Mobile number must be exactly 11 digits"
+                    , maxlength: "Mobile number must be exactly 11 digits"
                 }
                 , "father_name": "Please enter father's name"
                 , "mother_name": "Please enter mother's name",

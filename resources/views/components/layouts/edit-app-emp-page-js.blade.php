@@ -226,6 +226,10 @@
             });
         }
 
+        $.validator.addMethod("alphaSpaces", function(value, element) {
+            return this.optional(element) || /^[A-Za-z\s.,\/]+$/.test(value);
+        }, "Only letters, spaces, commas, periods, and slashes are allowed.");
+
         if ($('#eligibilityForm').length) {
             validateDynamicForm('#eligibilityForm', {
                 "eligibility_type[]": {
@@ -291,6 +295,7 @@
             validateDynamicForm('#childInfo', {
                 "child_name[]": {
                     required: true
+                    , alphaSpaces: true
                 }
                 , "child_birthdate[]": {
                     required: true
@@ -315,7 +320,12 @@
                     childName.addClass('is-invalid');
                     childName.after('<span class="text-danger">Please enter child name</span>');
                     valid = false;
+                } else if (!/^[A-Za-z\s.,\/]+$/.test(childName.val())) { // Manually check the alphaSpaces pattern
+                    childName.addClass('is-invalid');
+                    childName.after('<span class="text-danger">Child name can only contain letters, spaces, commas, periods, and slashes</span>');
+                    valid = false;
                 }
+                
                 if (childBirthdate.val().trim() === '') {
                     childBirthdate.addClass('is-invalid');
                     childBirthdate.after('<span class="text-danger">Please select birthdate</span>');
@@ -872,18 +882,40 @@
 
         $('#family_validate').validate({
             rules: {
-                father_name: 'required'
-                , mother_name: 'required'
-                , spouse_name: 'required'
-                , spouse_occupation: 'required'
-                , spouse_employer: 'required'
+                father_name: {
+                    required: true
+                    , alphaSpaces: true
+                }
+                , mother_name: {
+                    required: true
+                    , alphaSpaces: true
+                }
+                , spouse_name: {
+                    required: true
+                    , alphaSpaces: true
+                }
+                , spouse_occupation: {
+                    required: true
+                }
+                , spouse_employer: {
+                    required: true
+                }
             }
             , messages: {
-                father_name: 'Please enter father\'s name'
-                , mother_name: 'Please enter mother\'s name'
-                , spouse_name: 'Please enter spouse\'s name'
-                , spouse_occupation: 'Please enter spouse\'s occupation'
-                , spouse_employer: 'Please enter spouse\'s employer'
+                father_name: {
+                    required: "Please enter father's name"
+                    , alphaSpaces: "Father's name can only contain letters, spaces, commas, and periods"
+                }
+                , mother_name: {
+                    required: "Please enter mother's name"
+                    , alphaSpaces: "Mother's name can only contain letters, spaces, commas, and periods"
+                }
+                , spouse_name: {
+                    required: "Please enter spouse's name"
+                    , alphaSpaces: "Spouse's name can only contain letters, spaces, commas, and periods"
+                }
+                , spouse_occupation: "Please enter spouse's occupation"
+                , spouse_employer: "Please enter spouse's employer"
             }
             , submitHandler: function(form) {
                 form.submit();
@@ -894,16 +926,20 @@
             rules: {
                 fname: {
                     required: true
+                    , alphaSpaces: true
                 }
                 , mname: {
                     required: true
+                    , alphaSpaces: true
                 }
                 , lname: {
                     required: true
+                    , alphaSpaces: true
                 }
                 , birth_date: {
                     required: true
                     , date: true
+                    , minAge: 15
                 }
                 , residential_address: {
                     required: true
@@ -926,7 +962,7 @@
                 , phone_number: {
                     required: true
                     , digits: true
-                    , minlength: 11
+                    , minlength: 7
                     , maxlength: 11
                 }
                 , mobile_number: {
@@ -937,10 +973,19 @@
                 }
             }
             , messages: {
-                fname: "Please enter first name"
-                , mname: "Please enter middle name"
-                , lname: "Please enter last name"
-                , birth_date: "Please enter a valid birth date"
+                fname: {
+                    required: "Please enter your first name"
+                    , alphaSpaces: "First name can only contain letters and spaces"
+                }
+                , mname: {
+                    required: "Please enter your middle name"
+                    , alphaSpaces: "Middle name can only contain letters and spaces"
+                }
+                , lname: {
+                    required: "Please enter your last name"
+                    , alphaSpaces: "Last name can only contain letters and spaces"
+                }
+                , birth_date: "Please enter a valid birth date. You must be at least 15 years old."
                 , residential_address: "Please enter residential address"
                 , residential_zip: {
                     required: "Please enter your residential zip code"
@@ -958,8 +1003,8 @@
                 , phone_number: {
                     required: "Please enter your phone number"
                     , digits: "Phone number must contain only digits"
-                    , minlength: "Phone number must be exactly 11 digits"
-                    , maxlength: "Phone number must be exactly 11 digits"
+                    , minlength: "Phone number must be at least 7 digits"
+                    , maxlength: "Phone number must not exceed 11 digits"
                 }
                 , mobile_number: {
                     required: "Please enter your mobile number"
@@ -972,6 +1017,19 @@
                 form.submit();
             }
         });
+
+        $.validator.addMethod("minAge", function(value, element, minAge) {
+            var currentDate = new Date();
+            var birthDate = new Date(value);
+            var age = currentDate.getFullYear() - birthDate.getFullYear();
+            var month = currentDate.getMonth() - birthDate.getMonth();
+
+            if (month < 0 || (month === 0 && currentDate.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            return age >= minAge;
+        }, "You must be at least 15 years old.");
     });
 
 </script>

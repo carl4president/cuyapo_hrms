@@ -2004,7 +2004,14 @@
             // Only validate visible fields
             if (input.offsetParent !== null) {
                 const validationRules = getValidationRules(input);
-                const inputValue = input.value.trim(); // Ensure leading/trailing spaces are removed
+                const inputValue = input.value.trim();
+
+                input.classList.remove('is-invalid');
+                removeValidationMessage(input);
+
+                if (/^n[\/\-\.]?a$/i.test(inputValue)) {
+                    continue;
+                }
 
                 // Check for required fields (if no rules, treat them as required)
                 if ((validationRules.required || Object.keys(validationRules).length === 0) && inputValue === "") {
@@ -2017,6 +2024,19 @@
                     valid = false;
                     input.classList.add('is-invalid');
                     showValidationMessage(input, 'Please enter a valid email.');
+                }
+                // ID Validation (SSS, GSIS, Pag-IBIG, PhilHealth, TIN)
+                else if (validationRules.pattern && inputValue !== "") {
+                    const valueToTest = (validationRules.numericOnly && !validationRules.pattern) ?
+                        inputValue.replace(/[^0-9]/g, '') :
+                        inputValue;
+
+
+                    if (!validationRules.pattern.test(valueToTest)) {
+                        valid = false;
+                        input.classList.add('is-invalid');
+                        showValidationMessage(input, validationRules.message || `Please enter a valid ${input.name}.`);
+                    }
                 }
                 // Birth date validation
                 else if (input.name === "birth_date" && inputValue !== "") {
@@ -2045,10 +2065,6 @@
                     valid = false;
                     input.classList.add('is-invalid');
                     showValidationMessage(input, `Please enter a valid ${input.name}.`);
-                } else if (validationRules.pattern && inputValue !== "" && !validationRules.pattern.test(inputValue)) {
-                    valid = false;
-                    input.classList.add('is-invalid');
-                    showValidationMessage(input, validationRules.message || `Please enter a valid ${input.name}.`);
                 } else {
                     // Remove invalid class and validation message if validation passes
                     input.classList.remove('is-invalid');
@@ -2298,18 +2314,33 @@
             // Government details validation for required fields
             "sss_no": {
                 required: true
+                , numericOnly: true
+                , pattern: /^[0-9]{2}-[0-9]{7}-[0-9]{1}$/
+                , message: "Please enter a valid SSS number (e.g., 12-3456789-0) or 'N/A'."
             }
             , "gsis_id_no": {
                 required: true
+                , numericOnly: true
+                , pattern: /^[0-9]{2}-[0-9]{9}$/
+                , message: "Please enter a valid GSIS ID number (e.g., 12-345678901) or 'N/A'."
             }
             , "pagibig_no": {
                 required: true
+                , numericOnly: true
+                , pattern: /^[0-9]{4}-[0-9]{4}-[0-9]{4}$/
+                , message: "Please enter a valid Pag-IBIG number (e.g., 1234-5678-9012) or 'N/A'."
             }
             , "philhealth_no": {
                 required: true
+                , numericOnly: true
+                , pattern: /^[0-9]{2}-[0-9]{4}-[0-9]{4}-[0-9]{1}$/
+                , message: "Please enter a valid PhilHealth number (e.g., 12-3456-7890-1) or 'N/A'."
             }
             , "tin_no": {
                 required: true
+                , numericOnly: true
+                , pattern: /^[0-9]{3}-[0-9]{3}-[0-9]{3}$/
+                , message: "Please enter a valid TIN number (e.g., 123-456-789) or 'N/A'."
             }
             , "agency_employee_no": {
                 required: true

@@ -325,7 +325,7 @@
                     childName.after('<span class="text-danger">Child name can only contain letters, spaces, commas, periods, and slashes</span>');
                     valid = false;
                 }
-                
+
                 if (childBirthdate.val().trim() === '') {
                     childBirthdate.addClass('is-invalid');
                     childBirthdate.after('<span class="text-danger">Please select birthdate</span>');
@@ -787,22 +787,27 @@
                 gsis_id_no: {
                     required: true
                     , maxlength: 20
+                    , validId: true // Custom validation for valid ID or "N/A"
                 }
                 , pagibig_no: {
                     required: true
                     , maxlength: 20
+                    , validId: true
                 }
                 , philhealth_no: {
                     required: true
                     , maxlength: 20
+                    , validId: true
                 }
                 , sss_no: {
                     required: true
                     , maxlength: 20
+                    , validId: true
                 }
                 , tin_no: {
                     required: true
                     , maxlength: 20
+                    , validId: true
                 }
                 , agency_employee_no: {
                     maxlength: 50
@@ -810,24 +815,29 @@
             }
             , messages: {
                 gsis_id_no: {
-                    required: "Please enter your GSIS ID No."
+                    required: "Please enter your GSIS ID No. or 'N/A'."
                     , maxlength: "GSIS ID No. must not exceed 20 characters."
+                    , validId: "Please enter a valid GSIS ID number (e.g., 12-345678901) or 'N/A'."
                 }
                 , pagibig_no: {
-                    required: "Please enter your Pag-IBIG No."
+                    required: "Please enter your Pag-IBIG No. or 'N/A'."
                     , maxlength: "Pag-IBIG No. must not exceed 20 characters."
+                    , validId: "Please enter a valid Pag-IBIG number (e.g., 1234-5678-9012) or 'N/A'."
                 }
                 , philhealth_no: {
-                    required: "Please enter your PhilHealth No."
+                    required: "Please enter your PhilHealth No. or 'N/A'."
                     , maxlength: "PhilHealth No. must not exceed 20 characters."
+                    , validId: "Please enter a valid PhilHealth number (e.g., 12-3456-7890-1) or 'N/A'."
                 }
                 , sss_no: {
-                    required: "Please enter your SSS No."
+                    required: "Please enter your SSS No. or 'N/A'."
                     , maxlength: "SSS No. must not exceed 20 characters."
+                    , validId: "Please enter a valid SSS number (e.g., 12-3456789-0) or 'N/A'."
                 }
                 , tin_no: {
-                    required: "Please enter your TIN No."
+                    required: "Please enter your TIN No. or 'N/A'."
                     , maxlength: "TIN No. must not exceed 20 characters."
+                    , validId: "Please enter a valid TIN number (e.g., 123-456-789) or 'N/A'."
                 }
                 , agency_employee_no: {
                     maxlength: "Agency Employee No. must not exceed 50 characters."
@@ -837,6 +847,13 @@
                 form.submit();
             }
         });
+
+        $.validator.addMethod("validId", function(value, element) {
+
+            value = value.toLowerCase().trim();
+            // Allow "N/A" or validate against the pattern
+            return this.optional(element) || value === "n/a" || value === "na" || /^[0-9]{2}-[0-9]{7}-[0-9]{1}$/.test(value) || /^[0-9]{2}-[0-9]{9}$/.test(value) || /^[0-9]{4}-[0-9]{4}-[0-9]{4}$/.test(value) || /^[0-9]{2}-[0-9]{4}-[0-9]{4}-[0-9]{1}$/.test(value) || /^[0-9]{3}-[0-9]{3}-[0-9]{3}$/.test(value);
+        }, "Please enter a valid ID or 'N/A'.");
 
         $('#personalInfo').validate({
             rules: {
